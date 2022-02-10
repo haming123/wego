@@ -1,4 +1,4 @@
-module wego
+module github.com/haming123/wego
 
 go 1.16
 
