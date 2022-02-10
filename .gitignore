@@ -1,0 +1,21 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+.idea
+
+*.test
+*_test_conf.go
+*.out
+
+cache/main
+config/main
+dlog/main
+klog/main
+worm/main
+worm
+doc
+demo
+example
