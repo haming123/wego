@@ -4,7 +4,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"wego"
+	"github.com/haming123/wego"
 )
 
 type maxBytesReader struct {

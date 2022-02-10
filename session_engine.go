@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"math/rand"
-	"wego/cache"
+	"github.com/haming123/wego/cache"
 )
 
 type SessionEngine struct {

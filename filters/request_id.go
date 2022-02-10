@@ -3,7 +3,7 @@ package filters
 import (
 	"encoding/hex"
 	"math/rand"
-	"wego"
+	"github.com/haming123/wego"
 )
 
 func genRequestID() string {

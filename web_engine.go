@@ -11,8 +11,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
-	log "wego/dlog"
-	"wego/klog"
+	log "github.com/haming123/wego/dlog"
+	"github.com/haming123/wego/klog"
 )
 
 type ShutdownFunc func()

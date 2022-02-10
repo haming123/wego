@@ -5,7 +5,7 @@ import (
 	"errors"
 	"reflect"
 	"time"
-	"wego/cache/mod/redis"
+	"github.com/haming123/wego/cache/mod/redis"
 )
 
 var cache_store CacheStore

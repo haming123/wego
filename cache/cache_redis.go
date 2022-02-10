@@ -3,7 +3,7 @@ package cache
 import (
 	"context"
 	"errors"
-	"wego/cache/mod/redis"
+	"github.com/haming123/wego/cache/mod/redis"
 )
 
 //"github.com/gomodule/redigo/redis"

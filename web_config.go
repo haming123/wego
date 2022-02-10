@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-	"wego/cache"
-	"wego/config"
-	log "wego/dlog"
-	"wego/klog"
+	"github.com/haming123/wego/cache"
+	"github.com/haming123/wego/config"
+	"github.com/haming123/wego/klog"
+	log "github.com/haming123/wego/dlog"
 )
 
 type ServerConfig struct {

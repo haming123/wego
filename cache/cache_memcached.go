@@ -3,7 +3,7 @@ package cache
 import (
 	"context"
 	"errors"
-	"wego/cache/mod/memcache"
+	"github.com/haming123/wego/cache/mod/memcache"
 )
 
 //"github.com/bradfitz/gomemcache/memcache"
