@@ -15,7 +15,6 @@ config/main
 dlog/main
 klog/main
 worm/main
-worm
 doc
 demo
 example
