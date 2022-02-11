@@ -51,7 +51,7 @@ func TestLogger_Output(t *testing.T) {
 }
 
 func TestLoggerFile(t *testing.T) {
-	InitFileLogger("../demo/logs", LOG_DEBUG)
+	InitFileLogger("./logs", LOG_DEBUG)
 	defer Close()
 
 	Debug("This is a Debug Message")
@@ -59,7 +59,7 @@ func TestLoggerFile(t *testing.T) {
 }
 
 func TestLoggerShowCaller(t *testing.T) {
-	InitFileLogger("../demo/logs", LOG_DEBUG)
+	InitFileLogger("./logs", LOG_DEBUG)
 	ShowCaller(false)
 	defer Close()
 
@@ -75,7 +75,7 @@ func BenchmarkTermLog(b *testing.B) {
 }
 
 func BenchmarkFileLog(b *testing.B) {
-	log := InitFileLogger("./", LOG_DEBUG)
+	log := InitFileLogger("./logs", LOG_DEBUG)
 	defer log.Close()
 	b.StopTimer()
 
@@ -102,7 +102,7 @@ BenchmarkFileLog-2   	  407358		2546 ns/op			456 B/op		10 allocs/op
 */
 
 func BenchmarkFileLogNoCaller(b *testing.B) {
-	log := InitFileLogger("./", LOG_DEBUG)
+	log := InitFileLogger("./logs", LOG_DEBUG)
 	log.ShowCaller(false)
 	defer log.Close()
 	b.StopTimer()

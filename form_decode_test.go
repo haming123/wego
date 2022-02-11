@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
-	log "wego/dlog"
 )
 
 func CreateTestContext(w http.ResponseWriter, req *http.Request) (*WebEngine, *WebContext) {
@@ -37,7 +36,7 @@ func TestContextGetStruct4Query(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log(log.JsonMarshal(user))
+	t.Log(user)
 }
 
 func TestContextGetStruct4Error(t *testing.T) {

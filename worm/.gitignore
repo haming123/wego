@@ -7,8 +7,8 @@
 *.md
 *.test
 *.out
+*.conf
 conf.go
-reverse
 .idea
 main
 demo

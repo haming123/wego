@@ -3,12 +3,8 @@
 *.dll
 *.so
 *.dylib
-.idea
+*.yaml
 *.test
-*_test_conf.go
 *.out
 *.conf
-doc
 .idea
-main
-demo

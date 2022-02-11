@@ -5,8 +5,8 @@ import (
 	"math/rand"
 	"testing"
 	"time"
-	"wego/cache/mod/memcache"
-	"wego/cache/mod/redis"
+	"github.com/haming123/wego/cache/mod/memcache"
+	"github.com/haming123/wego/cache/mod/redis"
 )
 
 type UserData struct {

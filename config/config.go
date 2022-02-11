@@ -9,7 +9,7 @@ import (
 var config_data ConfigData
 func InitConfigData(file_name ...string) (*ConfigData, error) {
 	fileName := "app.conf"
-	if len(file_name) > 0 {
+	if len(file_name) > 0 && file_name[0] != "" {
 		fileName = file_name[0]
 	}
 
