@@ -2,16 +2,15 @@ package worm
 
 import (
 	"testing"
-	"wego/worm/conf"
 )
 
 func NewEngine4Test() (*DbEngine, error) {
-	_, err := conf.OpenDb()
+	_, err := OpenDb()
 	if err != nil {
 		return nil, err
 	}
 
-	eng, err := NewEngine("mysql", conf.DbConn)
+	eng, err := NewEngine("mysql", DbConn)
 	if err != nil {
 		return nil, err
 	}
@@ -19,12 +18,12 @@ func NewEngine4Test() (*DbEngine, error) {
 }
 
 func InitEngine4Test() error {
-	_, err := conf.OpenDb()
+	_, err := OpenDb()
 	if err != nil {
 		return err
 	}
 
-	err = InitEngine("mysql", conf.DbConn)
+	err = InitEngine("mysql", DbConn)
 	if err != nil {
 		return err
 	}

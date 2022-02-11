@@ -2,7 +2,6 @@ package worm
 
 import (
 	"testing"
-	"wego/worm/conf"
 )
 
 func TestNewSession (t *testing.T) {
@@ -135,7 +134,7 @@ func TestSessionUsePrepare (t *testing.T) {
 
 func TestSessionUseSlave (t *testing.T) {
 	InitEngine4Test()
-	db_slave, err := conf.OpenSalveDb()
+	db_slave, err := OpenSalveDb()
 	if err != nil {
 		t.Error(err)
 		return
@@ -176,7 +175,7 @@ func TestSessionUseSlave (t *testing.T) {
 func TestSessionUseSlaveAndPrepare (t *testing.T) {
 	InitEngine4Test()
 	UsePrepare(true)
-	db_slave, err := conf.OpenSalveDb()
+	db_slave, err := OpenSalveDb()
 	if err != nil {
 		t.Error(err)
 		return

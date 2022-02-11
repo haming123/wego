@@ -1,13 +1,12 @@
 package worm
 
 import (
-	"wego/worm/conf"
 	"testing"
 )
 
 func TestUseMaster (t *testing.T) {
 	InitEngine4Test()
-	db_slave, err := conf.OpenSalveDb()
+	db_slave, err := OpenSalveDb()
 	if err != nil {
 		t.Error(err)
 		return

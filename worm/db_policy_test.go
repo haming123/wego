@@ -2,7 +2,6 @@ package worm
 
 import (
 	"testing"
-	. "wego/worm/conf"
 )
 
 func TestWeightSlave(t *testing.T)  {
