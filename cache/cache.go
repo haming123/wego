@@ -71,7 +71,13 @@ func GetBytes(key string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return data, nil
+
+	var val []byte
+	err = json.Unmarshal(data, &val)
+	if err != nil {
+		return val, err
+	}
+	return val, nil
 }
 
 func GetString(key string) (string, error) {

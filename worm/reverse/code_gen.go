@@ -45,22 +45,6 @@ func gen_model_header(dialect worm.Dialect, flds []worm.ColumnInfo) string {
 	return buff.String()
 }
 
-func add_space(buff *bytes.Buffer, name string, v_len int)  {
-	/*
-	num := v_len - len(name)
-	for i := 0; i < num ; i++{
-		buff.WriteString(" ")
-	}*/
-
-	if len(name) < 4 {
-		buff.WriteString("\t\t\t")
-	} else if len(name) < 8 {
-		buff.WriteString("\t\t")
-	} else if len(name) < 12 {
-		buff.WriteString("\t")
-	}
-}
-
 func gen_model_struct(dialect worm.Dialect, flds []worm.ColumnInfo, table_name string) string {
 	strs :=strings.Split(table_name, ".")
 	if len(strs) != 2 {
@@ -90,12 +74,10 @@ func gen_model_struct(dialect worm.Dialect, flds []worm.ColumnInfo, table_name s
 		}
 		buff.WriteString("\n")
 		if g_cfg.UseFieldTag {
-			name := FirstToUpper(field.Name)
-			buff.WriteString("\t")
-			buff.WriteString(name)
-			add_space(&buff, name, 15)
-			buff.WriteString("\t")
-			buff.WriteString(go_type)
+			name_str := fmt.Sprintf("\t%-20s", FirstToUpper(field.Name))
+			buff.WriteString(name_str)
+			go_type_str := fmt.Sprintf("\t%-6s", go_type)
+			buff.WriteString(go_type_str)
 			buff.WriteString("\t`db:\"")
 			buff.WriteString(field.Name)
 			if field.IsAutoIncrement {
@@ -105,12 +87,10 @@ func gen_model_struct(dialect worm.Dialect, flds []worm.ColumnInfo, table_name s
 			}
 			buff.WriteString("\"`\n")
 		} else {
-			name := "DB_" + field.Name
-			buff.WriteString("\t")
-			buff.WriteString(name)
-			add_space(&buff, name, 15)
-			buff.WriteString("\t")
-			buff.WriteString(go_type)
+			name_str := fmt.Sprintf("\t%-20s", "DB_" + field.Name)
+			buff.WriteString(name_str)
+			go_type_str := fmt.Sprintf("\t%-6s", go_type)
+			buff.WriteString(go_type_str)
 			buff.WriteString("\n")
 		}
 	}
