@@ -1,4 +1,4 @@
-# 介绍
+## 简介
 wego是一个Go语言编写的高性能的Web框架，可以用来快速开发RESTful服务以及后端服务等各种应用。
 wego框架是一个完整的MVC框架，包括路由模块、数据库ORM模块、view模板处理以及Session模块。
 wego具有性能高、方便易用，兼容性好，扩展性强等特点，具体特征如下：
@@ -17,10 +17,10 @@ wego具有性能高、方便易用，兼容性好，扩展性强等特点，具�
 13. 良好的兼容性，wego支持go原生的func(http.ResponseWriter, *http.Request)路由处理函数，这样您的代码少量修改就可以使用wego了。
 14. wego兼容两种编码习惯，可以使用普通函数作为路由处理函数，也可以使用strcut的成员函数作为路由处理函数。
 
-# 安装
+### 安装
 go get github.com/haming123/wego
 
-# 简单http server
+### 简单http server
 创建一个main.go文件，代码如下：
 ```go
 package main
@@ -50,40 +50,77 @@ func main() {
 world
 ```
 
-## 路由模式
-wego支持三种路由模式的注册：
-* 静态路由（url的path与路由pattern完全一致）
-* 冒号路由（除了冒号所在“段”，其他部分必须完全一致， 例如：/user/:id 匹配：/user/666，但不匹配/user/666/tom）
-* 星号路由（星号之前的需要完全一致， 例如：/user/*info匹配/user/666/user/666/tom）
+### 项目结构
+wego框没有对项目结构做出限制，这里给出一个MVC框架项目的建议结构：
+```
+demo
+├── app             
+│   └── router.go       - 路由配置文件
+│   └── templfun.go     - 模板函数文件
+├── controllers         - 控制器目录，必要的时候可以继续划分子目录
+│   └── controller_xxx.go
+├── models              - 模型目录
+│   └── model_xxx.go
+├── logs                - 日志文件目录，主要保存项目运行过程中产生的日志
+│   └── applog_20211203.log
+├── static              - 静态资源目录
+│   ├── css
+│   ├── img
+│   └── js
+├── utils               - 公共代码目录
+│   └── util_xxx.go
+├── views               - 视图模板目录
+│   └── html_xxx.html
+├── app.conf            - 应用配置文件
+└── main.go             - 入口文件
+```
 
-以下代码注册了三种模式的路由：
+### 注册参数路由
 ```go
-func TestRoutePattern(t *testing.T) {
+func main() {
 	web, err := wego.NewWeb()
 	if err != nil{
-		t.Error(err)
+		log.Error(err)
 		return
 	}
 
-	web.PATH("/static", func(c *wego.WebContext) {
-		c.WriteText(200, "this is a static route")
-	})
 	web.PATH("/user/:id", func(c *wego.WebContext) {
 		c.WriteTextF(200, "param id=%s", c.RouteParam.GetString("id").Value)
 	})
-	web.PATH("/files/*name", func(c *wego.WebContext) {
-		c.WriteTextF(200, "param name=%s", c.RouteParam.GetString("name").Value)
-	})
+
+	err = web.Run(":8080")
+	if err != nil {
+		log.Error(err)
+	}
 }
 ```
 
-## RESTful路由
-wego支持RESTful API路由的注册：
+### 注册模糊匹配路由
 ```go
-func TestRouteRestful(t *testing.T) {
+func main() {
 	web, err := wego.NewWeb()
 	if err != nil{
-		t.Error(err)
+		log.Error(err)
+		return
+	}
+
+	web.PATH("/files/*name", func(c *wego.WebContext) {
+		c.WriteTextF(200, "param name=%s", c.RouteParam.GetString("name").Value)
+	})
+
+	err = web.Run(":8080")
+	if err != nil {
+		log.Error(err)
+	}
+}
+```
+
+### 注册RESTful路由
+```go
+func main() {
+	web, err := wego.NewWeb()
+	if err != nil{
+		log.Error(err)
 		return
 	}
 
@@ -102,19 +139,24 @@ func TestRouteRestful(t *testing.T) {
 	web.DELETE("/users/:id", func(c *wego.WebContext) {
 		//删除用户
 	})
+
+	err = web.Run(":8080")
+	if err != nil {
+		log.Error(err)
+	}
 }
 ```
-wego支持三种路由模式的注册：
-* 静态路由（url的path与路由pattern完全一致）
-* 冒号路由（除了冒号所在“段”，其他部分必须完全一致， 例如：/user/:id 匹配：/user/666，但不匹配/user/666/tom）
-* 星号路由（星号之前的需要完全一致， 例如：/user/*info匹配/user/666/user/666/tom）
 
-
-## 获取参数
+### 获取参数
 在wego中通过c.Param.GetXXX函数来获取请求参数：
- ```go
-func TestGetParam(t *testing.T) {
-	web, _ := NewWeb()
+```go
+func main() {
+	web, err := wego.NewWeb()
+	if err != nil{
+		log.Error(err)
+		return
+	}
+
 	web.GET("/user", func(c *WebContext) {
 		name := c.Param.GetString("name")
 		if name.Error != nil {
@@ -127,17 +169,46 @@ func TestGetParam(t *testing.T) {
         c.WriteText(200, name.Value)
 	})
 
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/user?name=lisi&age=12", nil)
-	web.ServeHTTP(w, req)
+	err = web.Run(":8080")
+	if err != nil {
+		log.Error(err)
+	}
 }
- ```
+```
 
-## ReadJSON
+### 使用MustXXX便捷函数获取参数
+```go
+func main() {
+	web, err := wego.NewWeb()
+	if err != nil{
+		log.Error(err)
+		return
+	}
+
+	web.GET("/user", func(c *WebContext) {
+		name := c.Param.MustString("name")
+		t.Log(name)
+		age := c.Param.MustInt("age")
+		t.Log(age)
+	})
+
+	err = web.Run(":8080")
+	if err != nil {
+		log.Error(err)
+	}
+}
+```
+
+### 使用ReadJSON获取参数
 若POST请求中Body的数据的格式为JSON格式，可以直接使用WebContext的ReadJSON函数来读取：
  ```go
-func TestReadJson(t *testing.T) {
-	web, _ := NewWeb()
+func main() {
+	web, err := wego.NewWeb()
+	if err != nil{
+		log.Error(err)
+		return
+	}
+
 	web.POST("/user", func(c *WebContext) {
 		var user2 User
 		err := c.ReadJSON(&user2)
@@ -147,54 +218,44 @@ func TestReadJson(t *testing.T) {
 		t.Log(user2)
 	})
 
-	user := User{}
-	user.ID = 1
-	user.Name = "lisi"
-	user.Age = 12
-	data, _ := json.Marshal(user)
-
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/user",  bytes.NewBuffer(data))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	web.ServeHTTP(w, req)
+	err = web.Run(":8080")
+	if err != nil {
+		log.Error(err)
+	}
 }
 ```
 
-## 输出JSON
+### 输出JSON数据
 wego对于JSON的支持非常好，可以让我们非常方便的开发一个基于JSON的API。若要返回JSON请求结果，您可以使用WriteJSON函数：
 ```go
 func writeJson(c *wego.WebContext) {
 	var user User
 	user.ID = 1
-	user.Name = "lisi"
+	user.Name = "demo"
 	user.Age = 12
 	c.WriteJSON(200, user)
 }
 ```
 
-## 输出HTML
+### 输出HTML数据
 wego框架的html结果的输出是基于html/template实现的。以下是一个输出html页面的例子：
 ```go
 func writeHtml(c *wego.WebContext) {
 	var user User
 	user.ID = 1
-	user.Name = "lisi"
+	user.Name = "demo"
 	user.Age = 12
 	c.WriteHTML(200, "./views/index.html", user)
 }
 ```
-若您的页面有多个html模板组成，您可以使用WriteHTMLS：
-```
-WriteHTMLS(code int, filenames []string, data interface{})
-其中filenames是模板文件的数组，数字的第一个文件是模板的主文件
-```
 
-## 使用模板函数
+### 使用模板函数
 如果您的模板文件中使用了模板函数，需要预先将所需的模板函数进行登记：
 ```go
 func GetUserID(id int64) string {
 	return fmt.Sprintf("ID_%d", id)
 }
+
 func main() {
 	web, err := wego.NewWeb()
 	if err != nil{
@@ -218,14 +279,13 @@ func main() {
 }
 ```
 
-## 设置cookie
+### 设置cookie
 ```go
 func setCookie(c *wego.WebContext)  {
 	val, err := c.Input.Cookie("demo")
 	if err != nil {
 		log.Error(err)
 	}
-	log.Debug(val)
 	cookie := &http.Cookie{
 		Name:     "demo",
 		Value:    "test",
@@ -236,7 +296,7 @@ func setCookie(c *wego.WebContext)  {
 }
 ```
 
-## 重定向
+### 重定向
 ```go
 func main() {
 	web, err := wego.NewWeb()
@@ -256,7 +316,7 @@ func main() {
 }
 ```
 
-## 错误处理
+### 错误处理
 ```go
 func main() {
 	web, err := wego.NewWeb()
@@ -281,93 +341,20 @@ func main() {
 }
 ```
 
-## 文件上传
-```go
-func upload(c *wego.WebContext) {
-	fh, err := c.GetFile("file")
-	if err != nil {
-		log.Error(err)
-		c.AbortWithError(500, err)
-		return
-	}
-
-	file, err := fh.Open()
-	if err != nil {
-		log.Error(err)
-		c.AbortWithError(500, err)
-		return
-	}
-	defer file.Close()
-
-	data, err := ioutil.ReadAll(file)
-	if err != nil {
-		log.Error(err)
-		c.AbortWithError(500, err)
-		return
-	}
-
-	c.WriteText(200, string(data))
-}
-```
-
-## Session
-首先初始化Session:
-```go
-func main() {
-	web, err := wego.NewWeb()
-	if err != nil{
-		log.Error(err)
-		return
-	}
-
-	/*
-    也可以在配置文件中开启session
-	[session]
-	session_on = true
-	session_store=cookie
-	life_time = 3600
-	hash_key = 123456
-	*/
-	web.Config.SessionParam.SessionOn=true
-	web.Config.SessionParam.LifeTime = 3600
-	web.Config.SessionParam.HashKey = "123456"
-
-	web.GET("/login", login)
-	web.GET("/index", index)
-
-	err = web.Run(":8080")
-	if err != nil {
-		log.Error(err)
-	}
-}
-```
-
-然后再login处理器函数中保存session数据：
-```go
-func login(c *wego.WebContext)  {
-	c.Session.Set("uid", 1)
-	c.Session.Save()
-	c.Redirect(302, "/index")
-}
-```
-
-然后index处理器函数中就可以访问session数据了：
-```go
-func index(c *wego.WebContext)  {
-	id , _ := c.Session.GetInt("uid")
-	c.WriteTextF(200, "uid=%d", id)
-}
-```
-
-## 配置文件
-wego使用了INI格式的配置文件，通常在项目中会存在很多系统参数、业务参数，这些参数通常都是通过配置文件进行管理。例如：
+### 使用配置文件
+* 首先定义一个简单的配置文件
 ```ini
 #应用名称
-app_name = demo2
+app_name = demo
 #mysql数据库的配置参数
 mysql = root:rootpwd@tcp(127.0.0.1:3306)/demp?charset=utf8
+
+[server]
+#http监听端口
+http_port = 8080
 ```
-wego.InitWeb()初始化函数的参数是配置文件的地址，若没有指定配置文件，则使用缺省的配置文件：./app.conf。
+
+* 使用InitWeb()函数初始化Web服务器
 ```go
 func main() {
     web, err := wego.InitWeb()
@@ -382,9 +369,10 @@ func main() {
 	}
 }
 ```
+说明：调用InitWeb()函数时可以指定一个配置文件，若没有指定配置文件，则使用缺省的配置文件：./app.conf。
 
-## 获取业务参数
-调用wego.InitWeb()后wego会自动将系统参数解析到WebEngine.Config中，业务参数则需要用户自己调用配置数据的GetXXX函数来获取。例如：
+### 获取业务参数
+调用InitWeb()后wego会自动将系统参数解析到WebEngine.Config中，业务参数则需要用户自己调用配置数据的GetXXX函数来获取。例如：
 ```go
 func main() {
 	web, err := wego.InitWeb()
@@ -407,8 +395,66 @@ func main() {
 }
 ```
 
-## 输出日志
-dlog的缺省日志类型为：TermLogger（终端日志类型），使用TermLogger时不需要初始化，可直接使用日志输出函数输出日志。
+### 使用Session
+* 首选定义配置文件：
+```ini
+#应用名称
+app_name = demo
+
+[server]
+#http监听端口
+http_port = 8080
+
+[session]
+#session 是否开启
+session_on = true
+#session类型：cookie、cache
+session_store=cookie
+#客户端的cookie的名称
+cookie_name = "wego"
+#session 过期时间, 单位秒
+life_time = 3600
+#session数据的hash字符串
+hash_key = demohash
+```
+
+* 然后在入口函数中加载配置文件
+```go
+func main() {
+	web, err := wego.NewWeb()
+	if err != nil{
+		log.Error(err)
+		return
+	}
+
+	web.GET("/login", login)
+	web.GET("/index", index)
+
+	err = web.Run(":8080")
+	if err != nil {
+		log.Error(err)
+	}
+}
+```
+
+* 然后再login处理器函数中保存session数据：
+```go
+func login(c *wego.WebContext)  {
+	c.Session.Set("uid", 1)
+	c.Session.Save()
+	c.Redirect(302, "/index")
+}
+```
+
+* 然后index处理器函数中就可以访问session数据了：
+```go
+func index(c *wego.WebContext)  {
+	id , _ := c.Session.GetInt("uid")
+	c.WriteTextF(200, "uid=%d", id)
+}
+```
+
+### 输出日志
 ```go
 package main
 import log "wego/dlog"
@@ -419,19 +465,4 @@ func main()  {
 //执行后的输出结果为：
 //2021/11/30 07:20:06 [D] main.go:31 This is a Debug Message
 //2021/11/30 07:20:06 [I] main.go:32 This is a Debug Info
-```
-
-## 输出日志到文件
-FileLogger是dlog提供的一种将日志输出到文件的日志类型。使用FileLogger日志类型前需要对FileLogger进行初始化，为FileLogger指定日志文件的存放目录以及日志文件的轮换方式。
-日志文件可以按照天（log.ROTATE_DAY）或小时（log.ROTATE_HOUR）进行进行轮换。
-```go
-package main
-import log "wego/dlog"
-func main()  {
-	log.InitFileLogger("./logs", log.LOG_DEBUG)
-	defer log.Close()
-
-	log.Debug("This is a Debug Message")
-	log.Info("This is a Debug Info")
-}
 ```
