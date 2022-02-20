@@ -8,6 +8,7 @@
 *_test_conf.go
 *.out
 *.conf
+test.html
 doc
 .idea
 main
