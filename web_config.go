@@ -2,13 +2,13 @@ package wego
 
 import (
 	"errors"
+	"github.com/haming123/wego/wini"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 	"github.com/haming123/wego/cache"
-	"github.com/haming123/wego/config"
 	"github.com/haming123/wego/klog"
 	log "github.com/haming123/wego/dlog"
 )
@@ -99,7 +99,7 @@ type KlogConfig struct {
 }
 
 type WebConfig struct {
-	config.ConfigData
+	wini.ConfigData
 	//应用名称
 	AppName      	string        	`ini:"app_name"`
 	//服务器名称
@@ -147,7 +147,7 @@ func (this *WebConfig)LoadConfig(file_name ...string) error {
 	}
 
 	file_path := filepath.Join(cur_path, fileName)
-	err = config.ParseFile(file_path, &this.ConfigData)
+	err = wini.ParseFile(file_path, &this.ConfigData)
 	if err != nil {
 		return err
 	}
