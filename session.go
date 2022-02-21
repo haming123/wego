@@ -53,7 +53,13 @@ func (this *SessionInfo) GetString (key string) (string, error) {
 	if has == false {
 		return "", errNotFind
 	}
-	return str_data, nil
+
+	var val string
+	err := json.Unmarshal([]byte(str_data), &val)
+	if err != nil {
+		return val, err
+	}
+	return val, nil
 }
 
 func (this *SessionInfo) GetBool (key string) (bool, error) {

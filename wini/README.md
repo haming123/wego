@@ -1,13 +1,9 @@
-# wego/wini
-
 ### 介绍
 wego/wini是一款GO语言版本的ini配置文件解析工具，wego/wini具有以下特征：
-首先准备app.conf配置文件:
-```
-1）提供了GetString、GetInt...以及MustrString、MustInt...函数，方便配置数据的获取。
-2）支持通过struct的tag来自动将配置数据赋值给struct的字段。
-3）支持使用环境变量配置项的值。
-```
+1. 提供了GetString、GetInt...以及MustrString、MustInt...函数，方便配置数据的获取。
+2. 支持通过struct的tag来自动将配置数据赋值给struct的字段。
+3. 支持使用环境变量配置项的值。
+
 ### 安装
 go get github.com/haming123/wego/wini
 
@@ -32,7 +28,7 @@ db_pwd = demopwd
 package main
 import (
 	"fmt"
-	"wego/wini"
+	"github.com/haming123/wego/wini"
 )
 func main()  {
 	var cfg wini.ConfigData

@@ -67,6 +67,7 @@ BenchmarkMarshalHtml-6             98636             11932 ns/op            6921
 pkg: blackfriday
 BenchmarkMarshalHtml2-6            42728             27885 ns/op           18900 B/op        242 allocs/op
 ```
+
 #### README.md解析测试
 README.md文件主要是代码和文字，测试结果如下：
 ```
