@@ -21,7 +21,7 @@ wego具有性能高、方便易用，兼容性好，扩展性强等特点，具�
 go get github.com/haming123/wego
 
 ### 使用文档
-请点击：[详细文档](http://39.108.252.54:8080/docs/start)
+请点击：[详细文档](http://39.108.252.54:8080)
 
 ### 简单http server
 创建一个main.go文件，代码如下：

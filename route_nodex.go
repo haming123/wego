@@ -212,7 +212,9 @@ func (n *TreeNodeX) GetRoute(method string, url_path string, params *PathParam) 
 
 	node_cur := n
 	for {
-		//若不存在对应槽位的子结点，则返回nil
+		//若不存在对应槽位的子结点，则查询":"结点
+		//若不匹配":"结点， 则查询"*"结点，
+		//若不匹配"*"结点， 则返回nil
 		child := node_cur.items[url_path[0]]
 		if child != nil {
 			str_child := child.part
@@ -225,10 +227,11 @@ func (n *TreeNodeX) GetRoute(method string, url_path string, params *PathParam) 
 				node_cur = child
 				url_path = url_path[ss+1:]
 				continue
-			} else {
-				return nil
 			}
-		} else if child = node_cur.items[':']; child != nil {
+		}
+
+		//查询":"结点
+		if child = node_cur.items[':']; child != nil {
 			value, str2 := trimValue(url_path)
 			params.SetValue(child.name, value)
 			if str2 == "" {
@@ -239,7 +242,10 @@ func (n *TreeNodeX) GetRoute(method string, url_path string, params *PathParam) 
 				node_cur = child
 				continue
 			}
-		} else if child = node_cur.items['*']; child != nil {
+		}
+
+		//查询"*"结点
+		if child = node_cur.items['*']; child != nil {
 			params.SetValue(child.name, url_path)
 			return child.getHander(method)
 		} else {

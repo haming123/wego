@@ -209,3 +209,21 @@ func TestGetRouteNotMatch2(t *testing.T) {
 		t.Logf("%s: not find\n", path)
 	}
 }
+
+
+func TestGetRoute5(t *testing.T) {
+	var r TreeNodeX
+	r.AddRoute("GET", "/docs/:name", &RouteInfo{handler_ctx: web_hello})
+	r.AddRoute("GET", "/docs/demo/:name", &RouteInfo{handler_ctx: web_hello_dir})
+	ctx := new(WebContext)
+
+	path := "/docs/dlog"
+	hd := r.GetRoute("GET", path, &ctx.RouteParam)
+	if hd != nil {
+		hd.handler_ctx(ctx)
+		t.Logf("%s => %s : %v\n", path, ctx.Path, ctx.RouteParam)
+	} else {
+		t.Errorf("%s: not find\n", path)
+	}
+}
+
