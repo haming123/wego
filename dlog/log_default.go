@@ -39,6 +39,12 @@ func GetLogger() *Logger {
 	return log_default
 }
 
+func Flush() {
+	if log_default != nil {
+		log_default.Flush()
+	}
+}
+
 func Close() {
 	if log_default != nil {
 		log_default.Close()

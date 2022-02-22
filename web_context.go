@@ -283,19 +283,19 @@ func StringToBytes(s string) []byte {
 }
 
 func (c *WebContext) WriteText(code int, data string) {
-	c.SetHeader("Content-Type", ContentTypeText)
+	//c.SetHeader("Content-Type", ContentTypeText)
 	c.Status(code)
 	c.Output.Write(StringToBytes(data))
 }
 
 func (c *WebContext) WriteTextF(code int, format string, values ...interface{}) {
-	c.SetHeader("Content-Type", ContentTypeText)
+	//c.SetHeader("Content-Type", ContentTypeText)
 	c.Status(code)
 	fmt.Fprintf(&c.Output, format, values...)
 }
 
 func (c *WebContext) WriteTextBytes(code int, data []byte) {
-	c.SetHeader("Content-Type", ContentTypeText)
+	//c.SetHeader("Content-Type", ContentTypeText)
 	c.Status(code)
 	c.Output.Write(data)
 }
@@ -303,7 +303,6 @@ func (c *WebContext) WriteTextBytes(code int, data []byte) {
 func (c *WebContext) WriteJSON(code int, obj interface{}) {
 	c.SetHeader("Content-Type", ContentTypeJSON)
 	c.Status(code)
-
 	err := json.NewEncoder(&c.Output).Encode(obj)
 	if err != nil {
 		c.fail(500, err)

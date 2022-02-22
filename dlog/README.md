@@ -1,18 +1,14 @@
-# wego/dlog
-
 #### 介绍
 dlog是用GO语言实现的一个简单高效、支持文件轮换以及日志分级的日志SDK。其特征如下：
-```
-1）采用文件日志类型采用了内存缓存，满足高性能输出日志。
-2）支持日志分级，具体分级如下：
-    fatal (log.LOG_FATAL)
-    error (log.LOG_ERROR)
-    warn  (log.LOG_WARN)
-    info  (log.LOG_INFO)
-    debug (log.LOG_DEBUG)
-3）支持终端日志类型以及可按照时间进行轮换的文件日志类型。
-4）文件日志类型支持按照天或小时进行轮换输出。
-```
++ 采用文件日志类型采用了内存缓存，满足高性能输出日志。
++ 支持日志分级，具体分级如下：
+    * fatal (log.LOG_FATAL)
+    * error (log.LOG_ERROR)
+    * warn  (log.LOG_WARN)
+    * info  (log.LOG_INFO)
+    * debug (log.LOG_DEBUG)
++ 支持终端日志类型以及可按照时间进行轮换的文件日志类型。
++ 文件日志类型支持按照天或小时进行轮换输出。
 
 #### 安装说明
 go get github.com/haming123/wego/dlog
