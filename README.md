@@ -11,7 +11,7 @@ wego具有性能高、方便易用，兼容性好，扩展性强等特点，具�
 7. 内置Crash处理机制，wego可以recover一个HTTP请求中的panic，这样可确保您的服务器始终可用。
 8. 内置Config模块，方便对应用的参数进行管理。
 9. 内置Session模块，您可以选择cookie、redis、memcache、memory缓存引擎存储Session数据。
-10. 内置ORM模块（开发中）。
+10. 支持混合路由，固定路由、参数路由、通配符路由可以混合，不冲突。
 11. 内置log模块，用于生成应用日志。
 12. 采用缓存来管理HTML的Template，既方便输出Html页面，又可以使用缓存提升系统性能。
 13. 良好的兼容性，wego支持go原生的func(http.ResponseWriter, *http.Request)路由处理函数，这样您的代码少量修改就可以使用wego了。
