@@ -36,6 +36,16 @@ func (md *DbModel)gen_sql_insert() string {
 	}
 	buffer.WriteString(")")
 
+	if md.db_ptr.engine.db_driver == "mssql" {
+		if len(md.field_id) > 0 {
+			buffer.WriteString(" OUTPUT Inserted.")
+			buffer.WriteString(md.field_id)
+			buffer.WriteString(" ")
+		} else {
+			buffer.WriteString(" OUTPUT 0 ")
+		}
+	}
+
 	index = 0;
 	buffer.WriteString(" values (")
 	for i, _ := range md.flds_addr {
@@ -49,10 +59,6 @@ func (md *DbModel)gen_sql_insert() string {
 		index += 1
 	}
 	buffer.WriteString(")")
-
-	if md.db_ptr.engine.db_driver == "mssql" {
-		buffer.WriteString(";select ID=convert(bigint, SCOPE_IDENTITY())")
-	}
 
 	return buffer.String()
 }
