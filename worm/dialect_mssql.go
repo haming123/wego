@@ -64,7 +64,7 @@ func (p *dialectMssql) DbType2GoType(colType string) string {
 }
 
 func (db *dialectMssql) GetColumns(db_raw *sql.DB, table_name string) ([]ColumnInfo, error) {
-	sql_str := "select a.name as name, b.name as ctype, a.is_nullable as nullable, ISNULL(p.is_primary_key, 0), a.is_identity as is_identity "
+	sql_str := "select a.name as name, b.name as ctype, a.is_nullable as nullable, a.is_identity as is_identity "
 	sql_str += "from sys.columns a left join sys.types b on a.user_type_id=b.user_type_id "
 	sql_str += "where a.object_id=object_id('" + table_name + "')"
 	rows, err := db_raw.Query(sql_str)
@@ -76,8 +76,8 @@ func (db *dialectMssql) GetColumns(db_raw *sql.DB, table_name string) ([]ColumnI
 	cols := make([]ColumnInfo, 0)
 	for rows.Next() {
 		var col_name, ctype string
-		var nullable, isPK, isIncrement bool
-		err = rows.Scan(&col_name, &ctype, &nullable, &isPK, &isIncrement)
+		var nullable, isIncrement bool
+		err = rows.Scan(&col_name, &ctype, &nullable, &isIncrement)
 		if err != nil {
 			return nil, err
 		}
@@ -85,7 +85,6 @@ func (db *dialectMssql) GetColumns(db_raw *sql.DB, table_name string) ([]ColumnI
 		var col ColumnInfo
 		col.Name = strings.Trim(col_name, "` ")
 		col.Nullable = nullable
-		col.IsPrimaryKey = isPK
 		col.IsAutoIncrement = isIncrement
 		col.SQLType = strings.ToUpper(ctype)
 		col.DbType = col.SQLType
