@@ -50,6 +50,10 @@ func (md *DbModel)gen_sql_insert() string {
 	}
 	buffer.WriteString(")")
 
+	if md.db_ptr.engine.db_driver == "mssql" {
+		buffer.WriteString(";select ID=convert(bigint, SCOPE_IDENTITY())")
+	}
+
 	return buffer.String()
 }
 
