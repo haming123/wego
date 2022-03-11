@@ -1,7 +1,6 @@
 package worm
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"reflect"
@@ -244,63 +243,6 @@ func (lk *DbJoint)Page(rows int64, page_no int64) *DbJoint {
 	return lk
 }
 
-func (lk *DbJoint)gen_select() string {
-	var buffer bytes.Buffer
-
-	buffer.WriteString("select ")
-	buffer.WriteString(lk.md_ptr.gen_select_fields())
-	for _, table := range  lk.md_arr {
-		str := table.gen_select_fields()
-		if len(str) < 1 {
-			continue
-		}
-		buffer.WriteString(",")
-		buffer.WriteString(table.gen_select_fields())
-	}
-
-	buffer.WriteString(" from ")
-	buffer.WriteString(lk.md_ptr.table_name)
-	if len(lk.md_ptr.table_alias) > 0 {
-		buffer.WriteString(" ")
-		buffer.WriteString(lk.md_ptr.table_alias)
-	}
-
-	for _, table := range lk.md_arr {
-		buffer.WriteString(" ")
-		buffer.WriteString(get_join_type_str(table.join_type))
-		buffer.WriteString(" ")
-		buffer.WriteString(table.table_name)
-		if len(table.table_alias) > 0 {
-			buffer.WriteString(" ")
-			buffer.WriteString(table.table_alias)
-		}
-		if len(table.join_on) > 0 {
-			buffer.WriteString(" on ")
-			buffer.WriteString(table.join_on)
-		}
-	}
-
-	if len(lk.db_where.Tpl_sql)>0 {
-		buffer.WriteString(" where ")
-		buffer.WriteString(lk.db_where.Tpl_sql)
-	}
-
-	if len(lk.order_by) > 0 {
-		buffer.WriteString(" order by ")
-		buffer.WriteString(lk.order_by)
-	}
-
-	if lk.db_limit > 0 {
-		//buffer.WriteString(" limit ")
-		//buffer.WriteString(fmt.Sprintf("%d,%d", lk.db_offset, lk.db_limit))
-		dialect := lk.db_ptr.engine.db_dialect
-		str_val := dialect.LimitSql(lk.db_offset, lk.db_limit)
-		buffer.WriteString(str_val)
-	}
-
-	return buffer.String()
-}
-
 func (lk *DbJoint)get_scan_valus() []interface{} {
 	vals:= lk.md_ptr.get_scan_valus()
 	for _, table := range lk.md_arr {
@@ -320,7 +262,7 @@ func (lk *DbJoint)Scan() (bool, error) {
 	if lk.Err != nil {
 		return false, lk.Err
 	}
-	sql_str := lk.gen_select() + " limit 1"
+	sql_str := lk.db_ptr.engine.db_dialect.GenJointGetSql(lk)
 	rows, err := lk.db_ptr.ExecQuery(&lk.SqlContex, sql_str, lk.db_where.Values...)
 	if err != nil {
 		return false, err
@@ -442,7 +384,7 @@ func (lk *DbJoint)Get(args ...interface{}) (bool, error) {
 		lk.BindAddr2Struct(v_ent)
 	}
 
-	sql_str := lk.gen_select() + " limit 1"
+	sql_str := lk.db_ptr.engine.db_dialect.GenJointGetSql(lk)
 	rows, err := lk.db_ptr.ExecQuery(&lk.SqlContex, sql_str, lk.db_where.Values...)
 	if err != nil {
 		return false, err
@@ -506,7 +448,7 @@ func (lk *DbJoint)Find(arr_ptr interface{}) error {
 		lk.BindAddr2Struct(v_item_base)
 	}
 
-	sql_str := lk.gen_select()
+	sql_str := lk.db_ptr.engine.db_dialect.GenJointFindSql(lk)
 	vals:= lk.get_scan_valus()
 	rows, err := lk.db_ptr.ExecQuery(&lk.SqlContex, sql_str, lk.db_where.Values...)
 	if err != nil {

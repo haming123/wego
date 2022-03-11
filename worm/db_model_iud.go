@@ -1,13 +1,11 @@
 package worm
 
 import (
-	"bytes"
 	"errors"
-	"fmt"
 	"reflect"
 )
 
-func (md *DbModel)get_feild_flag_insert(i int) bool {
+func (md *DbModel)GetFieldFlag4Insert(i int) bool {
 	if md.flds_addr[i].Flag == false {
 		return false
 	}
@@ -20,53 +18,10 @@ func (md *DbModel)get_feild_flag_insert(i int) bool {
 	return true
 }
 
-func (md *DbModel)gen_sql_insert() string {
-	var buffer bytes.Buffer
-	index := 0;
-	buffer.WriteString(fmt.Sprintf("insert into %s (", md.table_name))
-	for i, item := range md.flds_addr {
-		if md.get_feild_flag_insert(i) == false {
-			continue
-		}
-		if index > 0{
-			buffer.WriteString(",")
-		}
-		buffer.WriteString(item.FName)
-		index += 1
-	}
-	buffer.WriteString(")")
-
-	if md.db_ptr.engine.db_driver == "mssql" {
-		if len(md.field_id) > 0 {
-			buffer.WriteString(" OUTPUT Inserted.")
-			buffer.WriteString(md.field_id)
-			buffer.WriteString(" ")
-		} else {
-			buffer.WriteString(" OUTPUT 0 ")
-		}
-	}
-
-	index = 0;
-	buffer.WriteString(" values (")
-	for i, _ := range md.flds_addr {
-		if md.get_feild_flag_insert(i) == false {
-			continue
-		}
-		if index > 0 {
-			buffer.WriteString(",")
-		}
-		buffer.WriteString("?")
-		index += 1
-	}
-	buffer.WriteString(")")
-
-	return buffer.String()
-}
-
 func (md *DbModel) get_fieldaddr_insert() []interface{} {
 	cc := 0
 	for i, _ := range md.flds_addr {
-		if md.get_feild_flag_insert(i) == false {
+		if md.GetFieldFlag4Insert(i) == false {
 			continue
 		}
 		cc+=1
@@ -75,7 +30,7 @@ func (md *DbModel) get_fieldaddr_insert() []interface{} {
 	index := 0
 	vals:= make([]interface{}, cc)
 	for i, _ := range md.flds_addr {
-		if md.get_feild_flag_insert(i) == false {
+		if md.GetFieldFlag4Insert(i) == false {
 			continue
 		}
 		vals[index] = md.flds_addr[i].VAddr
@@ -84,7 +39,7 @@ func (md *DbModel) get_fieldaddr_insert() []interface{} {
 	return vals
 }
 
-func (md *DbModel)exec_insert() (int64, error) {
+func (md *DbModel)exec_insert_output() (int64, error) {
 	if md.Err != nil {
 		return 0, md.Err
 	}
@@ -93,8 +48,46 @@ func (md *DbModel)exec_insert() (int64, error) {
 		hook.BeforeInsert(md.ctx)
 	}
 
-	sql_str := md.gen_sql_insert()
-	values:= md.get_fieldaddr_insert()
+	sql_str := md.db_ptr.engine.db_dialect.GenModelInsert(md)
+	values := md.get_fieldaddr_insert()
+	rows, err := md.db_ptr.ExecQuery(&md.SqlContex, sql_str, values...)
+	if err != nil {
+		return 0, err
+	}
+
+	if hook, ok := md.ent_ptr.(AfterInsertInterface); ok {
+		hook.AfterInsert(md.ctx)
+	}
+
+	if !rows.Next() {
+		rows.Close()
+		return 0, nil
+	}
+
+	var id int64 = 0
+	err = rows.Scan(&id)
+	if err != nil {
+		rows.Close()
+		return 0, err
+	}
+	return id, nil
+}
+
+func (md *DbModel)exec_insert() (int64, error) {
+	if md.db_ptr.engine.db_driver == "mssql" {
+		return md.exec_insert_output()
+	}
+
+	if md.Err != nil {
+		return 0, md.Err
+	}
+
+	if hook, ok := md.ent_ptr.(BeforeInsertInterface); ok {
+		hook.BeforeInsert(md.ctx)
+	}
+
+	sql_str := md.db_ptr.engine.db_dialect.GenModelInsert(md)
+	values := md.get_fieldaddr_insert()
 	res, err := md.db_ptr.ExecSQL(&md.SqlContex, sql_str, values...)
 	if err != nil {
 		return 0, err
@@ -155,7 +148,7 @@ func (md *DbModel)Insert(args ...interface{}) (int64, error) {
 	return md.exec_insert()
 }
 
-func (md *DbModel)get_feild_flag_update(i int) bool {
+func (md *DbModel)GetFieldFlag4Update(i int) bool {
 	if md.flds_addr[i].Flag == false {
 		return false
 	}
@@ -168,36 +161,10 @@ func (md *DbModel)get_feild_flag_update(i int) bool {
 	return true
 }
 
-func (md *DbModel)gen_sql_update() string {
-	var buffer bytes.Buffer
-	buffer.WriteString("update ")
-	buffer.WriteString(md.table_name)
-	buffer.WriteString(" set ")
-	index := 0;
-	for i, item := range md.flds_addr {
-		if md.get_feild_flag_update(i) == false {
-			continue
-		}
-		if index > 0{
-			buffer.WriteString(",")
-		}
-		buffer.WriteString(item.FName)
-		buffer.WriteString("=?")
-		index += 1
-	}
-
-	if len(md.db_where.Tpl_sql)>0 {
-		buffer.WriteString(" where ")
-		buffer.WriteString(md.db_where.Tpl_sql)
-	}
-
-	return buffer.String()
-}
-
 func (md *DbModel)get_fieldaddr_update() []interface{} {
 	cc := 0
 	for i, _ := range md.flds_addr {
-		if md.get_feild_flag_update(i) == false {
+		if md.GetFieldFlag4Update(i) == false {
 			continue
 		}
 		cc+=1
@@ -206,7 +173,7 @@ func (md *DbModel)get_fieldaddr_update() []interface{} {
 	index := 0
 	vals:= make([]interface{}, cc)
 	for i, _ := range md.flds_addr {
-		if md.get_feild_flag_update(i) == false {
+		if md.GetFieldFlag4Update(i) == false {
 			continue
 		}
 		vals[index] = md.flds_addr[i].VAddr
@@ -228,7 +195,7 @@ func (md *DbModel)exec_update() (int64, error) {
 		hook.BeforeUpdate(md.ctx)
 	}
 
-	sql_str := md.gen_sql_update()
+	sql_str := md.db_ptr.engine.db_dialect.GenModelUpdate(md)
 	values := md.get_fieldaddr_update()
 	values = append(values, md.db_where.Values...)
 	res, err := md.db_ptr.ExecSQL(&md.SqlContex, sql_str, values...)
@@ -291,17 +258,6 @@ func (md *DbModel)Update(args ...interface{}) (int64, error) {
 	return md.exec_update()
 }
 
-func (md *DbModel)gen_delete() string {
-	var buffer bytes.Buffer
-	buffer.WriteString("delete from ")
-	buffer.WriteString(md.table_name)
-	if len(md.db_where.Tpl_sql)>0 {
-		buffer.WriteString(" where ")
-		buffer.WriteString(md.db_where.Tpl_sql)
-	}
-	return buffer.String()
-}
-
 func (md *DbModel)Delete() (int64, error) {
 	if md.auto_put && md.md_pool != nil {
 		pool := md.split_pool()
@@ -319,7 +275,7 @@ func (md *DbModel)Delete() (int64, error) {
 		hook.BeforeDelete(md.ctx)
 	}
 
-	sql_str := md.gen_delete()
+	sql_str := md.db_ptr.engine.db_dialect.GenModelDelete(md)
 	res, err := md.db_ptr.ExecSQL(&md.SqlContex, sql_str, md.db_where.Values...)
 	if err != nil {
 		return 0, err

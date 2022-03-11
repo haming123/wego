@@ -7,7 +7,7 @@ import (
 	"reflect"
 )
 
-func (md *DbModel)get_feild_flag_select(i int) bool {
+func (md *DbModel)GetFieldFlag4Select(i int) bool {
 	if md.flds_addr[i].Flag == false {
 		return false
 	}
@@ -21,7 +21,7 @@ func (md *DbModel)gen_select_fields() string {
 	var buffer bytes.Buffer
 	index := 0;
 	for i, item := range md.flds_addr {
-		if md.get_feild_flag_select(i) == false {
+		if md.GetFieldFlag4Select(i) == false {
 			continue
 		}
 		if index > 0 {
@@ -40,44 +40,6 @@ func (md *DbModel)gen_select_fields() string {
 		}
 		index += 1
 	}
-	return buffer.String()
-}
-
-func (md *DbModel)gen_select() string {
-	var buffer bytes.Buffer
-
-	buffer.WriteString("select ")
-	buffer.WriteString(md.gen_select_fields())
-	buffer.WriteString(" from ")
-	buffer.WriteString(md.table_name)
-	if len(md.table_alias) > 0 {
-		buffer.WriteString(" ")
-		buffer.WriteString(md.table_alias)
-	}
-
-	if len(md.db_where.Tpl_sql)>0 {
-		buffer.WriteString(" where ")
-		buffer.WriteString(md.db_where.Tpl_sql)
-	}
-
-	if len(md.group_by) > 0 {
-		buffer.WriteString(" group by ")
-		buffer.WriteString(md.group_by)
-	}
-
-	if len(md.order_by) > 0 {
-		buffer.WriteString(" order by ")
-		buffer.WriteString(md.order_by)
-	}
-
-	if md.db_limit > 0 {
-		//buffer.WriteString(" limit ")
-		//buffer.WriteString(fmt.Sprintf("%d,%d", md.db_offset, md.db_limit))
-		dialect := md.db_ptr.engine.db_dialect
-		str_val := dialect.LimitSql(md.db_offset, md.db_limit)
-		buffer.WriteString(str_val)
-	}
-
 	return buffer.String()
 }
 
@@ -105,7 +67,7 @@ func (md *DbModel)get_scan_valus() []interface{} {
 	index := 0
 	vals:= make([]interface{}, len(md.flds_addr))
 	for i, _ := range md.flds_addr {
-		if md.get_feild_flag_select(i) == false {
+		if md.GetFieldFlag4Select(i) == false {
 			continue
 		}
 		//vals[index] = md.flds_addr[i].VAddr
@@ -128,7 +90,7 @@ func (md *DbModel)Scan() (bool, error) {
 		hook.BeforeQuery(md.ctx)
 	}
 
-	sql_str := md.gen_select() + " limit 1"
+	sql_str := md.db_ptr.engine.db_dialect.GenModelGet(md)
 	rows, err := md.db_ptr.ExecQuery(&md.SqlContex, sql_str, md.db_where.Values...)
 	if err != nil {
 		return false, err
@@ -236,7 +198,7 @@ func (md *DbModel)Exist() (bool, error) {
 		hook.BeforeQuery(md.ctx)
 	}
 
-	sql_str := md.gen_select() + " limit 1"
+	sql_str := md.db_ptr.engine.db_dialect.GenModelGet(md)
 	rows, err := md.db_ptr.ExecQuery(&md.SqlContex, sql_str, md.db_where.Values...)
 	if err != nil {
 		return false, err
@@ -274,7 +236,7 @@ func (md *DbModel)Count(field ...string) (int64, error) {
 
 	sql_str := md.gen_count_sql(count_field)
 	if len(md.group_by) > 0 {
-		sub_sql := md.gen_select()
+		sub_sql := md.db_ptr.engine.db_dialect.GenModelFind(md)
 		sql_str = fmt.Sprintf("select %s from (%s) tmp", count_field, sub_sql)
 	}
 
@@ -311,7 +273,7 @@ func (md *DbModel)DistinctCount(field string) (int64, error) {
 	count_field := fmt.Sprintf("count(distinct %s)", field)
 	sql_str := md.gen_count_sql(count_field)
 	if len(md.group_by) > 0 {
-		sub_sql := md.gen_select()
+		sub_sql := md.db_ptr.engine.db_dialect.GenModelFind(md)
 		sql_str = fmt.Sprintf("select %s from (%s) tmp", count_field, sub_sql)
 	}
 
@@ -341,7 +303,7 @@ func (md *DbModel)Rows() (*ModelRows, error) {
 		hook.BeforeQuery(md.ctx)
 	}
 
-	sql_str := md.gen_select()
+	sql_str := md.db_ptr.engine.db_dialect.GenModelFind(md)
 	rows, err := md.db_ptr.ExecQuery(&md.SqlContex, sql_str, md.db_where.Values...)
 	if err != nil {
 		return nil, err
@@ -406,7 +368,7 @@ func (md *DbModel)Find(arr_ptr interface{}) error {
 		hook.BeforeQuery(md.ctx)
 	}
 
-	sql_str := md.gen_select()
+	sql_str := md.db_ptr.engine.db_dialect.GenModelFind(md)
 	rows, err := md.db_ptr.ExecQuery(&md.SqlContex, sql_str, md.db_where.Values...)
 	if err != nil {
 		return err

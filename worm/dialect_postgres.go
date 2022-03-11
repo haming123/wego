@@ -8,6 +8,7 @@ import (
 )
 
 type postgresDialect struct {
+	dialectBase
 }
 
 func init() {
@@ -16,10 +17,6 @@ func init() {
 
 func (db *postgresDialect) GetName() string {
 	return "postgres"
-}
-
-func (db *postgresDialect) Quote(key string) string {
-	return fmt.Sprintf("\"%s\"", key)
 }
 
 func (db *postgresDialect) LimitSql(offset int64, limit int64) string  {
@@ -68,5 +65,4 @@ func (p *postgresDialect) DbType2GoType(colType string) string {
 func (db *postgresDialect) GetColumns(db_raw *sql.DB,tableName string) ([]ColumnInfo, error) {
 	return  nil, nil
 }
-
 

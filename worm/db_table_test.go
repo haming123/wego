@@ -57,11 +57,11 @@ func TestSqlBuildIUD (t *testing.T) {
 func TestSqlBuildSelectSql (t *testing.T) {
 	InitEngine4Test()
 
-	sql := Table("user").Select("*").Where("id>?", 0).OrderBy("name desc").Limit(5).Offset(2)
-	t.Log(sql.gen_select())
+	tb := Table("user").Select("*").Where("id>?", 0).OrderBy("name desc").Limit(5).Offset(2)
+	t.Log(tb.db_ptr.engine.db_dialect.GenTableFindSql(tb))
 
-	sql = Table("user").Select("*").Where("id>?", 0).OrderBy("name desc").Having("age>?", 20)
-	t.Log(sql.gen_select())
+	tb = Table("user").Select("*").Where("id>?", 0).OrderBy("name desc").Having("age>?", 20)
+	t.Log(tb.db_ptr.engine.db_dialect.GenTableFindSql(tb))
 }
 
 func TestSQLBuilderRows (t *testing.T) {

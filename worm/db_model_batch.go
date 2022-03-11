@@ -45,10 +45,10 @@ func (md *DbModel)BatchInsert(arr_ptr interface{}) (sql.Result, error) {
 	}
 
 	dbs := md.db_ptr
-	sql_str := md.gen_sql_insert()
+	sql_str := md.db_ptr.engine.db_dialect.GenModelInsert(md)
 	vals:= []interface{}{}
 	for i, item := range md.flds_addr {
-		if md.get_feild_flag_insert(i) == false  {
+		if md.GetFieldFlag4Insert(i) == false  {
 			continue
 		}
 		vals = append(vals, item.VAddr)

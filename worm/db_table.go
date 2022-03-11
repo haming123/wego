@@ -29,6 +29,7 @@ type DbTable struct {
 	table_name string
 	table_alias string
 	select_str string
+	output_str string
 	join_str string
 	db_where DbWhere
 	group_by string
@@ -76,6 +77,11 @@ func (tb *DbTable)UseMaster(val bool) *DbTable {
 
 func (tb *DbTable)Select(fields ...string) *DbTable {
 	tb.select_str = strings.Join(fields, ",")
+	return tb
+}
+
+func (tb *DbTable)Output(output string) *DbTable {
+	tb.output_str = output
 	return tb
 }
 
@@ -227,137 +233,33 @@ func (tb *DbTable)OrderBy(val string) *DbTable {
 	return tb
 }
 
-//生成insert sql语句
-//sql语句与values数组必须在一个循环中生成，因为map多次遍历时次序可能不同
-func (tb *DbTable)gen_insert() (string, []interface{}) {
-	index := 0;
-	vals:= []interface{}{}
-
-	var buffer1 bytes.Buffer
-	buffer1.WriteString(fmt.Sprintf("insert into %s (", tb.table_name))
-	var buffer2 bytes.Buffer
-	buffer2.WriteString(" values (")
-	for name, val := range tb.fld_values {
-		if index > 0 {
-			buffer1.WriteString(",")
-			buffer2.WriteString(",")
-		}
-
-		buffer1.WriteString(name)
-		if val == nil {
-			buffer2.WriteString("null")
-		} else if exp, ok := val.(SqlExp); ok {
-			buffer2.WriteString(exp.Tpl_sql)
-			if exp.Values != nil {
-				vals = append(vals, exp.Values...)
-			}
-		} else {
-			buffer2.WriteString("?")
-			vals = append(vals, val)
-		}
-
-		index += 1
-	}
-	buffer1.WriteString(")")
-	buffer2.WriteString(")")
-
-	buffer1.Write(buffer2.Bytes())
-	return buffer1.String(), vals
-}
-
-//生成 update sql语句
-//sql语句与values数组必须在一个循环中生成，因为map多次遍历时次序可能不同
-func (tb *DbTable)gen_update() (string, []interface{}) {
-	var buffer bytes.Buffer
-	buffer.WriteString("update ")
-	buffer.WriteString(tb.table_name)
-	buffer.WriteString(" set ")
-
-	index := 0;
-	vals:= []interface{}{}
-	for name, val := range tb.fld_values {
-		if index > 0{
-			buffer.WriteString(",")
-		}
-		buffer.WriteString(name)
-		if val == nil {
-			buffer.WriteString("=null")
-		} else if exp, ok := val.(SqlExp); ok {
-			buffer.WriteString("=")
-			buffer.WriteString(exp.Tpl_sql)
-			if exp.Values != nil {
-				vals = append(vals, exp.Values...)
-			}
-		} else {
-			buffer.WriteString("=?")
-			vals = append(vals, val)
-		}
-		index += 1
+func (tb *DbTable)InsertWithOutput() (int64, error) {
+	sql_str, vals := tb.db_ptr.engine.db_dialect.GenTableInsertSql(tb)
+	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, sql_str, vals...)
+	if err != nil {
+		return 0, err
 	}
 
-	if len(tb.db_where.Tpl_sql)>0 {
-		buffer.WriteString(" where ")
-		buffer.WriteString(tb.db_where.Tpl_sql)
+	if !rows.Next() {
+		rows.Close()
+		return 0, nil
 	}
 
-	return buffer.String(), vals
-}
-
-func (tb *DbTable)gen_delete() string {
-	sql_str := fmt.Sprintf("delete from %s", tb.table_name)
-	if len(tb.db_where.Tpl_sql)>0 {
-		sql_str += " where " + tb.db_where.Tpl_sql
+	var id int64 = 0
+	err = rows.Scan(&id)
+	if err != nil {
+		rows.Close()
+		return 0, err
 	}
-	return sql_str
-}
-
-func (tb *DbTable)gen_select() string {
-	var buffer bytes.Buffer
-
-	buffer.WriteString("select ")
-	buffer.WriteString(tb.select_str)
-	buffer.WriteString(" from ")
-	buffer.WriteString(tb.table_name)
-	if len(tb.table_alias) > 0 {
-		buffer.WriteString(" ")
-		buffer.WriteString(tb.table_alias)
-	}
-
-	if len(tb.join_str)>0 {
-		buffer.WriteString(tb.join_str)
-	}
-
-	if len(tb.db_where.Tpl_sql)>0 {
-		buffer.WriteString(" where ")
-		buffer.WriteString(tb.db_where.Tpl_sql)
-	}
-
-	if len(tb.group_by) > 0 {
-		buffer.WriteString(" group by ")
-		buffer.WriteString(tb.group_by)
-	}
-
-	if len(tb.db_having.Tpl_sql)>0 {
-		buffer.WriteString(" having ")
-		buffer.WriteString(tb.db_having.Tpl_sql)
-	}
-
-	if len(tb.order_by) > 0 {
-		buffer.WriteString(" order by ")
-		buffer.WriteString(tb.order_by)
-	}
-
-	if tb.db_limit > 0 {
-		dialect := tb.db_ptr.engine.db_dialect
-		str_val := dialect.LimitSql(tb.db_offset, tb.db_limit)
-		buffer.WriteString(str_val)
-	}
-
-	return buffer.String()
+	return id, nil
 }
 
 func (tb *DbTable)Insert() (int64, error) {
-	sql_str, vals := tb.gen_insert()
+	if tb.output_str != "" {
+		return tb.InsertWithOutput()
+	}
+
+	sql_str, vals := tb.db_ptr.engine.db_dialect.GenTableInsertSql(tb)
 	res, err :=  tb.db_ptr.ExecSQL(&tb.SqlContex, sql_str, vals...)
 	if err != nil{
 		return 0, err
@@ -375,7 +277,7 @@ func (tb *DbTable)Update() (int64, error) {
 		return  0, errors.New("no where clause")
 	}
 
-	sql_str, vals := tb.gen_update()
+	sql_str, vals := tb.db_ptr.engine.db_dialect.GenTableUpdateSql(tb)
 	vals = append(vals, tb.db_where.Values...)
 	res, err := tb.db_ptr.ExecSQL(&tb.SqlContex, sql_str, vals...)
 	if err != nil{
@@ -394,7 +296,7 @@ func (tb *DbTable)Delete() (int64, error) {
 		return  0, errors.New("no where clause")
 	}
 
-	sql_str := tb.gen_delete()
+	sql_str := tb.db_ptr.engine.db_dialect.GenTableDeleteSql(tb)
 	vals := append([]interface{}{}, tb.db_where.Values...)
 	res, err := tb.db_ptr.ExecSQL(&tb.SqlContex, sql_str, vals...)
 	if err != nil{
@@ -408,8 +310,16 @@ func (tb *DbTable)Delete() (int64, error) {
 	return num, nil
 }
 
+func (tb *DbTable)Row() (*sql.Rows, error) {
+	sql_str := tb.db_ptr.engine.db_dialect.GenTableGetSql(tb)
+	vals:= []interface{}{}
+	vals = append(vals, tb.db_where.Values...)
+	vals = append(vals, tb.db_having.Values...)
+	return tb.db_ptr.ExecQuery(&tb.SqlContex, sql_str, vals...)
+}
+
 func (tb *DbTable)Rows() (*sql.Rows, error) {
-	sql_str := tb.gen_select()
+	sql_str := tb.db_ptr.engine.db_dialect.GenTableFindSql(tb)
 	vals:= []interface{}{}
 	vals = append(vals, tb.db_where.Values...)
 	vals = append(vals, tb.db_having.Values...)
@@ -417,7 +327,7 @@ func (tb *DbTable)Rows() (*sql.Rows, error) {
 }
 
 func (tb *DbTable)Exist() (bool, error) {
-	rows, err := tb.Rows()
+	rows, err := tb.Row()
 	if err != nil {
 		return false, err
 	}
@@ -432,7 +342,7 @@ func (tb *DbTable)Exist() (bool, error) {
 }
 
 func (tb *DbTable)Get(arg ...interface{}) (bool, error) {
-	rows, err := tb.Rows()
+	rows, err := tb.Row()
 	if err != nil {
 		return false, err
 	}
@@ -486,7 +396,7 @@ func (tb *DbTable)GetString() (sql.NullString, error) {
 }
 
 func (tb *DbTable)GetRow() (StringRow, error) {
-	rows, err := tb.Rows()
+	rows, err := tb.Row()
 	if err != nil {
 		return nil, err
 	}
@@ -504,7 +414,7 @@ func (tb *DbTable)GetRow() (StringRow, error) {
 }
 
 func (tb *DbTable)GetModel(ent_ptr interface{}) (bool, error) {
-	rows, err := tb.Rows()
+	rows, err := tb.Row()
 	if err != nil {
 		return false, err
 	}
@@ -645,7 +555,7 @@ func (tb *DbTable)Count(field ...string) (int64, error) {
 
 	sql_str := tb.gen_count_sql(count_field)
 	if len(tb.group_by) > 0 {
-		sub_sql := tb.gen_select()
+		sub_sql := tb.db_ptr.engine.db_dialect.GenTableFindSql(tb)
 		sql_str = fmt.Sprintf("select %s from (%s) tmp", count_field, sub_sql)
 	}
 
@@ -668,7 +578,7 @@ func (tb *DbTable)DistinctCount(field string) (int64, error) {
 	count_field := fmt.Sprintf("count(distinct %s)", field)
 	sql_str := tb.gen_count_sql(count_field)
 	if len(tb.group_by) > 0 {
-		sub_sql := tb.gen_select()
+		sub_sql := tb.db_ptr.engine.db_dialect.GenTableFindSql(tb)
 		sql_str = fmt.Sprintf("select %s from (%s) tmp", count_field, sub_sql)
 	}
 

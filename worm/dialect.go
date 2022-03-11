@@ -1,13 +1,16 @@
 package worm
 
 import (
+	"bytes"
 	"database/sql"
 	"errors"
+	"fmt"
 )
 
 /*
 不同的数据库中，SQL语句使用的占位符语法不尽相同。
 MySQL	?
+sqlserver	?
 PostgreSQL	$1, $2等
 SQLite	? 和$1
 Oracle	:name
@@ -27,23 +30,454 @@ type ColumnInfo struct {
 
 type Dialect interface {
 	GetName() string
-	Quote(key string) string
-	LimitSql(offset int64, limit int64) string
-	ParsePlaceholder(sql_tpl string) string
 	DbType2GoType(colType string) string
 	GetColumns(db_raw *sql.DB, tableName string) ([]ColumnInfo, error)
+	LimitSql(offset int64, limit int64) string
+	ParsePlaceholder(sql_tpl string) string
+
+	GenModelInsert(md *DbModel) string
+	GenModelUpdate(md *DbModel) string
+	GenModelDelete(md *DbModel) string
+	GenModelGet(md *DbModel) string
+	GenModelFind(md *DbModel) string
+
+	GenJointGetSql(lk *DbJoint) string
+	GenJointFindSql(lk *DbJoint) string
+
+	GenTableInsertSql(tb *DbTable) (string, []interface{})
+	GenTableUpdateSql(tb *DbTable) (string, []interface{})
+	GenTableDeleteSql(tb *DbTable) string
+	GenTableGetSql(tb *DbTable) string
+	GenTableFindSql(tb *DbTable) string
 }
 
 var g_dialect_map = map[string]Dialect{}
-
 func RegDialect(name string, dialect Dialect) {
 	g_dialect_map[name] = dialect
 }
-
 func GetDialect(name string) (Dialect, error) {
 	dialect, ok := g_dialect_map[name]
 	if ok == false {
 		return nil, errors.New("incorrect driver name")
 	}
 	return dialect, nil
+}
+
+type dialectBase struct {
+}
+
+func (db *dialectBase) ParsePlaceholder(sql_tpl string) string {
+	tpl_str := sql_tpl
+	return tpl_str
+}
+
+func (db *dialectBase)GenModelInsert(md *DbModel) string {
+	var buffer bytes.Buffer
+	index := 0;
+	buffer.WriteString(fmt.Sprintf("insert into %s (", md.table_name))
+	for i, item := range md.flds_addr {
+		if md.GetFieldFlag4Insert(i) == false {
+			continue
+		}
+		if index > 0{
+			buffer.WriteString(",")
+		}
+		buffer.WriteString(item.FName)
+		index += 1
+	}
+	buffer.WriteString(")")
+
+	index = 0;
+	buffer.WriteString(" values (")
+	for i, _ := range md.flds_addr {
+		if md.GetFieldFlag4Insert(i) == false {
+			continue
+		}
+		if index > 0 {
+			buffer.WriteString(",")
+		}
+		buffer.WriteString("?")
+		index += 1
+	}
+	buffer.WriteString(")")
+
+	return buffer.String()
+}
+
+func (db *dialectBase)GenModelUpdate(md *DbModel) string {
+	var buffer bytes.Buffer
+	buffer.WriteString("update ")
+	buffer.WriteString(md.table_name)
+	buffer.WriteString(" set ")
+	index := 0;
+	for i, item := range md.flds_addr {
+		if md.GetFieldFlag4Update(i) == false {
+			continue
+		}
+		if index > 0{
+			buffer.WriteString(",")
+		}
+		buffer.WriteString(item.FName)
+		buffer.WriteString("=?")
+		index += 1
+	}
+
+	if len(md.db_where.Tpl_sql)>0 {
+		buffer.WriteString(" where ")
+		buffer.WriteString(md.db_where.Tpl_sql)
+	}
+
+	return buffer.String()
+}
+
+func (db *dialectBase)GenModelDelete(md *DbModel) string {
+	var buffer bytes.Buffer
+	buffer.WriteString("delete from ")
+	buffer.WriteString(md.table_name)
+	if len(md.db_where.Tpl_sql)>0 {
+		buffer.WriteString(" where ")
+		buffer.WriteString(md.db_where.Tpl_sql)
+	}
+	return buffer.String()
+}
+
+func (db *dialectBase)GenModelGet(md *DbModel) string {
+	var buffer bytes.Buffer
+
+	buffer.WriteString("select ")
+	buffer.WriteString(md.gen_select_fields())
+	buffer.WriteString(" from ")
+	buffer.WriteString(md.table_name)
+	if len(md.table_alias) > 0 {
+		buffer.WriteString(" ")
+		buffer.WriteString(md.table_alias)
+	}
+
+	if len(md.db_where.Tpl_sql)>0 {
+		buffer.WriteString(" where ")
+		buffer.WriteString(md.db_where.Tpl_sql)
+	}
+
+	if len(md.group_by) > 0 {
+		buffer.WriteString(" group by ")
+		buffer.WriteString(md.group_by)
+	}
+
+	if len(md.order_by) > 0 {
+		buffer.WriteString(" order by ")
+		buffer.WriteString(md.order_by)
+	}
+
+	buffer.WriteString(" limit 1")
+	return buffer.String()
+}
+
+func (db *dialectBase)GenModelFind(md *DbModel) string {
+	var buffer bytes.Buffer
+
+	buffer.WriteString("select ")
+	buffer.WriteString(md.gen_select_fields())
+	buffer.WriteString(" from ")
+	buffer.WriteString(md.table_name)
+	if len(md.table_alias) > 0 {
+		buffer.WriteString(" ")
+		buffer.WriteString(md.table_alias)
+	}
+
+	if len(md.db_where.Tpl_sql)>0 {
+		buffer.WriteString(" where ")
+		buffer.WriteString(md.db_where.Tpl_sql)
+	}
+
+	if len(md.group_by) > 0 {
+		buffer.WriteString(" group by ")
+		buffer.WriteString(md.group_by)
+	}
+
+	if len(md.order_by) > 0 {
+		buffer.WriteString(" order by ")
+		buffer.WriteString(md.order_by)
+	}
+
+	if md.db_limit > 0 {
+		buffer.WriteString(fmt.Sprintf(" limit %d, %d ", md.db_offset, md.db_limit))
+	}
+
+	return buffer.String()
+}
+
+func (db *dialectBase)GenJointGetSql(lk *DbJoint) string {
+	var buffer bytes.Buffer
+
+	buffer.WriteString("select ")
+	buffer.WriteString(lk.md_ptr.gen_select_fields())
+	for _, table := range  lk.md_arr {
+		str := table.gen_select_fields()
+		if len(str) < 1 {
+			continue
+		}
+		buffer.WriteString(",")
+		buffer.WriteString(table.gen_select_fields())
+	}
+
+	buffer.WriteString(" from ")
+	buffer.WriteString(lk.md_ptr.table_name)
+	if len(lk.md_ptr.table_alias) > 0 {
+		buffer.WriteString(" ")
+		buffer.WriteString(lk.md_ptr.table_alias)
+	}
+
+	for _, table := range lk.md_arr {
+		buffer.WriteString(" ")
+		buffer.WriteString(get_join_type_str(table.join_type))
+		buffer.WriteString(" ")
+		buffer.WriteString(table.table_name)
+		if len(table.table_alias) > 0 {
+			buffer.WriteString(" ")
+			buffer.WriteString(table.table_alias)
+		}
+		if len(table.join_on) > 0 {
+			buffer.WriteString(" on ")
+			buffer.WriteString(table.join_on)
+		}
+	}
+
+	if len(lk.db_where.Tpl_sql)>0 {
+		buffer.WriteString(" where ")
+		buffer.WriteString(lk.db_where.Tpl_sql)
+	}
+
+	if len(lk.order_by) > 0 {
+		buffer.WriteString(" order by ")
+		buffer.WriteString(lk.order_by)
+	}
+
+	buffer.WriteString(" limit 1")
+	return buffer.String()
+}
+
+func (db *dialectBase)GenJointFindSql(lk *DbJoint) string {
+	var buffer bytes.Buffer
+
+	buffer.WriteString("select ")
+	buffer.WriteString(lk.md_ptr.gen_select_fields())
+	for _, table := range  lk.md_arr {
+		str := table.gen_select_fields()
+		if len(str) < 1 {
+			continue
+		}
+		buffer.WriteString(",")
+		buffer.WriteString(table.gen_select_fields())
+	}
+
+	buffer.WriteString(" from ")
+	buffer.WriteString(lk.md_ptr.table_name)
+	if len(lk.md_ptr.table_alias) > 0 {
+		buffer.WriteString(" ")
+		buffer.WriteString(lk.md_ptr.table_alias)
+	}
+
+	for _, table := range lk.md_arr {
+		buffer.WriteString(" ")
+		buffer.WriteString(get_join_type_str(table.join_type))
+		buffer.WriteString(" ")
+		buffer.WriteString(table.table_name)
+		if len(table.table_alias) > 0 {
+			buffer.WriteString(" ")
+			buffer.WriteString(table.table_alias)
+		}
+		if len(table.join_on) > 0 {
+			buffer.WriteString(" on ")
+			buffer.WriteString(table.join_on)
+		}
+	}
+
+	if len(lk.db_where.Tpl_sql)>0 {
+		buffer.WriteString(" where ")
+		buffer.WriteString(lk.db_where.Tpl_sql)
+	}
+
+	if len(lk.order_by) > 0 {
+		buffer.WriteString(" order by ")
+		buffer.WriteString(lk.order_by)
+	}
+
+	if lk.db_limit > 0 {
+		//buffer.WriteString(" limit ")
+		//buffer.WriteString(fmt.Sprintf("%d,%d", lk.db_offset, lk.db_limit))
+		dialect := lk.db_ptr.engine.db_dialect
+		str_val := dialect.LimitSql(lk.db_offset, lk.db_limit)
+		buffer.WriteString(str_val)
+	}
+
+	return buffer.String()
+}
+
+//生成insert sql语句
+//sql语句与values数组必须在一个循环中生成，因为map多次遍历时次序可能不同
+func (db *dialectBase)GenTableInsertSql(tb *DbTable) (string, []interface{}) {
+	index := 0;
+	vals:= []interface{}{}
+
+	var buffer1 bytes.Buffer
+	buffer1.WriteString(fmt.Sprintf("insert into %s (", tb.table_name))
+	var buffer2 bytes.Buffer
+	buffer2.WriteString(" values (")
+	for name, val := range tb.fld_values {
+		if index > 0 {
+			buffer1.WriteString(",")
+			buffer2.WriteString(",")
+		}
+
+		buffer1.WriteString(name)
+		if val == nil {
+			buffer2.WriteString("null")
+		} else if exp, ok := val.(SqlExp); ok {
+			buffer2.WriteString(exp.Tpl_sql)
+			if exp.Values != nil {
+				vals = append(vals, exp.Values...)
+			}
+		} else {
+			buffer2.WriteString("?")
+			vals = append(vals, val)
+		}
+
+		index += 1
+	}
+	buffer1.WriteString(")")
+	buffer2.WriteString(")")
+
+	buffer1.Write(buffer2.Bytes())
+	return buffer1.String(), vals
+}
+
+//生成 update sql语句
+//sql语句与values数组必须在一个循环中生成，因为map多次遍历时次序可能不同
+func (db *dialectBase)GenTableUpdateSql(tb *DbTable) (string, []interface{}) {
+	var buffer bytes.Buffer
+	buffer.WriteString("update ")
+	buffer.WriteString(tb.table_name)
+	buffer.WriteString(" set ")
+
+	index := 0;
+	vals:= []interface{}{}
+	for name, val := range tb.fld_values {
+		if index > 0{
+			buffer.WriteString(",")
+		}
+		buffer.WriteString(name)
+		if val == nil {
+			buffer.WriteString("=null")
+		} else if exp, ok := val.(SqlExp); ok {
+			buffer.WriteString("=")
+			buffer.WriteString(exp.Tpl_sql)
+			if exp.Values != nil {
+				vals = append(vals, exp.Values...)
+			}
+		} else {
+			buffer.WriteString("=?")
+			vals = append(vals, val)
+		}
+		index += 1
+	}
+
+	if len(tb.db_where.Tpl_sql)>0 {
+		buffer.WriteString(" where ")
+		buffer.WriteString(tb.db_where.Tpl_sql)
+	}
+
+	return buffer.String(), vals
+}
+
+func (db *dialectBase)GenTableDeleteSql(tb *DbTable) string {
+	sql_str := fmt.Sprintf("delete from %s", tb.table_name)
+	if len(tb.db_where.Tpl_sql)>0 {
+		sql_str += " where " + tb.db_where.Tpl_sql
+	}
+	return sql_str
+}
+
+func (db *dialectBase)GenTableGetSql(tb *DbTable) string {
+	var buffer bytes.Buffer
+
+	buffer.WriteString("select ")
+	buffer.WriteString(tb.select_str)
+	buffer.WriteString(" from ")
+	buffer.WriteString(tb.table_name)
+	if len(tb.table_alias) > 0 {
+		buffer.WriteString(" ")
+		buffer.WriteString(tb.table_alias)
+	}
+
+	if len(tb.join_str)>0 {
+		buffer.WriteString(tb.join_str)
+	}
+
+	if len(tb.db_where.Tpl_sql)>0 {
+		buffer.WriteString(" where ")
+		buffer.WriteString(tb.db_where.Tpl_sql)
+	}
+
+	if len(tb.group_by) > 0 {
+		buffer.WriteString(" group by ")
+		buffer.WriteString(tb.group_by)
+	}
+
+	if len(tb.db_having.Tpl_sql)>0 {
+		buffer.WriteString(" having ")
+		buffer.WriteString(tb.db_having.Tpl_sql)
+	}
+
+	if len(tb.order_by) > 0 {
+		buffer.WriteString(" order by ")
+		buffer.WriteString(tb.order_by)
+	}
+
+	buffer.WriteString(" limit 1")
+	return buffer.String()
+}
+
+func (db *dialectBase)GenTableFindSql(tb *DbTable) string {
+	var buffer bytes.Buffer
+
+	buffer.WriteString("select ")
+	buffer.WriteString(tb.select_str)
+	buffer.WriteString(" from ")
+	buffer.WriteString(tb.table_name)
+	if len(tb.table_alias) > 0 {
+		buffer.WriteString(" ")
+		buffer.WriteString(tb.table_alias)
+	}
+
+	if len(tb.join_str)>0 {
+		buffer.WriteString(tb.join_str)
+	}
+
+	if len(tb.db_where.Tpl_sql)>0 {
+		buffer.WriteString(" where ")
+		buffer.WriteString(tb.db_where.Tpl_sql)
+	}
+
+	if len(tb.group_by) > 0 {
+		buffer.WriteString(" group by ")
+		buffer.WriteString(tb.group_by)
+	}
+
+	if len(tb.db_having.Tpl_sql)>0 {
+		buffer.WriteString(" having ")
+		buffer.WriteString(tb.db_having.Tpl_sql)
+	}
+
+	if len(tb.order_by) > 0 {
+		buffer.WriteString(" order by ")
+		buffer.WriteString(tb.order_by)
+	}
+
+	if tb.db_limit > 0 {
+		dialect := tb.db_ptr.engine.db_dialect
+		str_val := dialect.LimitSql(tb.db_offset, tb.db_limit)
+		buffer.WriteString(str_val)
+	}
+
+	return buffer.String()
 }

@@ -9,6 +9,7 @@ import (
 )
 
 type dialectMysql struct {
+	dialectBase
 }
 
 func init() {
@@ -17,15 +18,6 @@ func init() {
 
 func (db *dialectMysql) GetName() string {
 	return "mysql"
-}
-
-func (db *dialectMysql) Quote(key string) string {
-	return fmt.Sprintf("`%s`", key)
-}
-
-func (db *dialectMysql) ParsePlaceholder(sql_tpl string) string {
-	tpl_str := sql_tpl
-	return tpl_str
 }
 
 func (db *dialectMysql) LimitSql(offset int64, limit int64) string  {
@@ -54,77 +46,6 @@ func (db *dialectMysql) DbType2GoType(colType string) string {
 		return ""
 	}
 }
-/*
-func (p *dialectMysql) DbType2GoTypeX(colType string) (interface{}, error) {
-	switch colType {
-	case "CHAR", "VARCHAR", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT", "ENUM", "SET":
-		var val string
-		return val, nil
-	case "BIGINT":
-		var val int64
-		return val, nil
-	case "TINYINT", "SMALLINT", "MEDIUMINT", "INT":
-		var val int32
-		return val, nil
-	case "FLOAT", "REAL", "DOUBLE PRECISION", "DOUBLE":
-		var val float64
-		return val, nil
-	case "DECIMAL", "NUMERIC":
-		var val float64
-		return val, nil
-	case "DATETIME", "TIMESTAMP":
-		var val time.Time
-		return val, nil
-	case "BIT":
-		var val []byte
-		return val, nil
-	case "BINARY", "VARBINARY", "TINYBLOB", "BLOB", "MEDIUMBLOB", "LONGBLOB":
-		var val []byte
-		return val, nil
-	default:
-		var val []byte
-		return val, nil
-	}
-}
-func (db *dialectMysql) GetColumns2(db_raw *sql.DB, tableName string) ([]ColumnInfo, error) {
-	sql_str := "desc " + tableName
-	rows, err := db_raw.Query(sql_str)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	cols := make([]ColumnInfo, 0)
-	for rows.Next() {
-		var col_name, col_type, null_str, col_key, default_str, extra sql.NullString
-		err = rows.Scan(&col_name, &col_type, &null_str, &col_key, &default_str, &extra)
-		if err != nil {
-			return nil, err
-		}
-
-		var col ColumnInfo
-		col.Name = col_name.String
-
-		fields := strings.Fields(col_type.String)
-		colType := fields[0]
-		cts := strings.Split(colType, "(")
-		colType = cts[0]
-		colType = strings.ToUpper(colType)
-		col.SQLType = colType
-
-		if col_key.String == "PRI" {
-			col.IsPrimaryKey = true
-		}
-		if extra.String == "auto_increment" {
-			col.IsAutoIncrement = true
-		}
-
-		cols = append(cols, col)
-	}
-
-	return  cols, nil
-}
-*/
 
 func (db *dialectMysql) GetColumns(db_raw *sql.DB, tableName string) ([]ColumnInfo, error) {
 	strs :=strings.Split(tableName, ".")
@@ -191,3 +112,4 @@ func (db *dialectMysql) GetColumns(db_raw *sql.DB, tableName string) ([]ColumnIn
 
 	return  cols, nil
 }
+
