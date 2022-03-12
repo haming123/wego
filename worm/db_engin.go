@@ -34,18 +34,12 @@ type DbEngine struct {
 	show_pretty_log bool
 }
 
-//driverName：数据库驱动名称
+//dialect：数据库驱动
 //db数据库链接
-func NewEngine(driverName string, db *sql.DB) (*DbEngine, error) {
-	//根据数据库驱动名称获取数据库的方言对象
-	dialect, err := GetDialect(driverName)
-	if err != nil {
-		return nil, err
-	}
-
+func NewEngine(dialect Dialect, db *sql.DB) (*DbEngine, error) {
 	engine := new (DbEngine)
 	engine.db_raw = db
-	engine.db_driver = driverName
+	engine.db_driver = dialect.GetName()
 	engine.db_dialect = dialect
 
 	engine.use_prepare = false
@@ -64,19 +58,19 @@ func NewEngine(driverName string, db *sql.DB) (*DbEngine, error) {
 }
 
 func NewMysql(db *sql.DB) (*DbEngine, error) {
-	return NewEngine("mysql", db)
+	return NewEngine(&dialectMysql{}, db)
 }
 
 func NewPostgres(db *sql.DB) (*DbEngine, error) {
-	return NewEngine("postgres", db)
+	return NewEngine(&postgresDialect{}, db)
 }
 
 func NewSqlite3(db *sql.DB) (*DbEngine, error) {
-	return NewEngine("sqlite", db)
+	return NewEngine(&dialectSqlite{}, db)
 }
 
 func NewSqlServer(db *sql.DB) (*DbEngine, error) {
-	return NewEngine("mssql", db)
+	return NewEngine(&dialectMssql{}, db)
 }
 
 //获取数据库连接池

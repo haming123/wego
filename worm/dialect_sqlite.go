@@ -6,11 +6,7 @@ import (
 )
 
 type dialectSqlite struct {
-	dialectBase
-}
-
-func init() {
-	RegDialect("sqlite", &dialectSqlite{})
+	DialectBase
 }
 
 func (db *dialectSqlite) GetName() string {

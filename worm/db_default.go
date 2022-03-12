@@ -7,9 +7,9 @@ import (
 
 var db_default *DbEngine
 
-func InitEngine(driverName string, db *sql.DB) error {
+func InitEngine(dialect Dialect, db *sql.DB) error {
 	var err error
-	db_default, err = NewEngine(driverName, db)
+	db_default, err = NewEngine(dialect, db)
 	return err
 }
 

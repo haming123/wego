@@ -45,7 +45,7 @@ func (md *DbModel)BatchInsert(arr_ptr interface{}) (sql.Result, error) {
 	}
 
 	dbs := md.db_ptr
-	sql_str := md.db_ptr.engine.db_dialect.GenModelInsert(md)
+	sql_str := md.db_ptr.engine.db_dialect.GenModelInsertSql(md)
 	vals:= []interface{}{}
 	for i, item := range md.flds_addr {
 		if md.GetFieldFlag4Insert(i) == false  {

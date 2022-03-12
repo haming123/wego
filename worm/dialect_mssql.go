@@ -8,11 +8,7 @@ import (
 )
 
 type dialectMssql struct {
-	dialectBase
-}
-
-func init() {
-	RegDialect("mssql", &dialectMssql{})
+	DialectBase
 }
 
 func (db *dialectMssql) GetName() string {
@@ -22,27 +18,6 @@ func (db *dialectMssql) GetName() string {
 func (db *dialectMssql) LimitSql(offset int64, limit int64) string  {
 	return ""
 }
-
-/*
-func (db *dialectMssql) ParsePlaceholder(sql_tpl string) string {
-	tpl_str := sql_tpl
-	var buffer bytes.Buffer
-	for i:=0; i < len(sql_tpl); i++ {
-		index := strings.Index(tpl_str, "?")
-		if index < 0 {
-			break;
-		}
-		txt_str := tpl_str[0:index]
-		tpl_str = tpl_str[index+1:]
-		bindvar := fmt.Sprintf("@p%d", i+1)
-		buffer.WriteString(txt_str)
-		buffer.WriteString(bindvar)
-	}
-	if len(tpl_str) > 0 {
-		buffer.WriteString(tpl_str)
-	}
-	return buffer.String()
-}*/
 
 func (p *dialectMssql) DbType2GoType(colType string) string {
 	switch colType {
@@ -96,7 +71,7 @@ func (db *dialectMssql)ModelInsertHasOutput(md *DbModel) bool {
 	return true
 }
 
-func (db *dialectMssql)GenModelInsert(md *DbModel) string {
+func (db *dialectMssql)GenModelInsertSql(md *DbModel) string {
 	var buffer bytes.Buffer
 	index := 0;
 	buffer.WriteString(fmt.Sprintf("insert into %s (", md.table_name))
@@ -139,7 +114,7 @@ func (db *dialectMssql)GenModelInsert(md *DbModel) string {
 	return buffer.String()
 }
 
-func (db *dialectMssql)GenModelGet(md *DbModel) string {
+func (db *dialectMssql)GenModelGetSql(md *DbModel) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("select top 1 ")
@@ -173,7 +148,7 @@ func (db *dialectMssql)GenModelGet(md *DbModel) string {
 //where id not in (
 //select top @offset id from tablename
 //)
-func (db *dialectMssql)GenModelFind(md *DbModel) string {
+func (db *dialectMssql)GenModelFindSql(md *DbModel) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("select ")
@@ -201,107 +176,6 @@ func (db *dialectMssql)GenModelFind(md *DbModel) string {
 	if len(md.order_by) > 0 {
 		buffer.WriteString(" order by ")
 		buffer.WriteString(md.order_by)
-	}
-
-	return buffer.String()
-}
-
-func (db *dialectMssql)GenJointGetSql(lk *DbJoint) string {
-	var buffer bytes.Buffer
-
-	buffer.WriteString("select top 1 ")
-	buffer.WriteString(lk.md_ptr.gen_select_fields())
-	for _, table := range  lk.md_arr {
-		str := table.gen_select_fields()
-		if len(str) < 1 {
-			continue
-		}
-		buffer.WriteString(",")
-		buffer.WriteString(table.gen_select_fields())
-	}
-
-	buffer.WriteString(" from ")
-	buffer.WriteString(lk.md_ptr.table_name)
-	if len(lk.md_ptr.table_alias) > 0 {
-		buffer.WriteString(" ")
-		buffer.WriteString(lk.md_ptr.table_alias)
-	}
-
-	for _, table := range lk.md_arr {
-		buffer.WriteString(" ")
-		buffer.WriteString(get_join_type_str(table.join_type))
-		buffer.WriteString(" ")
-		buffer.WriteString(table.table_name)
-		if len(table.table_alias) > 0 {
-			buffer.WriteString(" ")
-			buffer.WriteString(table.table_alias)
-		}
-		if len(table.join_on) > 0 {
-			buffer.WriteString(" on ")
-			buffer.WriteString(table.join_on)
-		}
-	}
-
-	if len(lk.db_where.Tpl_sql)>0 {
-		buffer.WriteString(" where ")
-		buffer.WriteString(lk.db_where.Tpl_sql)
-	}
-
-	if len(lk.order_by) > 0 {
-		buffer.WriteString(" order by ")
-		buffer.WriteString(lk.order_by)
-	}
-
-	return buffer.String()
-}
-
-func (db *dialectMssql)GenJointFindSql(lk *DbJoint) string {
-	var buffer bytes.Buffer
-
-	buffer.WriteString("select ")
-	if lk.db_limit > 0 {
-		buffer.WriteString(fmt.Sprintf("top %d ", lk.db_limit))
-	}
-	buffer.WriteString(lk.md_ptr.gen_select_fields())
-	for _, table := range  lk.md_arr {
-		str := table.gen_select_fields()
-		if len(str) < 1 {
-			continue
-		}
-		buffer.WriteString(",")
-		buffer.WriteString(table.gen_select_fields())
-	}
-
-	buffer.WriteString(" from ")
-	buffer.WriteString(lk.md_ptr.table_name)
-	if len(lk.md_ptr.table_alias) > 0 {
-		buffer.WriteString(" ")
-		buffer.WriteString(lk.md_ptr.table_alias)
-	}
-
-	for _, table := range lk.md_arr {
-		buffer.WriteString(" ")
-		buffer.WriteString(get_join_type_str(table.join_type))
-		buffer.WriteString(" ")
-		buffer.WriteString(table.table_name)
-		if len(table.table_alias) > 0 {
-			buffer.WriteString(" ")
-			buffer.WriteString(table.table_alias)
-		}
-		if len(table.join_on) > 0 {
-			buffer.WriteString(" on ")
-			buffer.WriteString(table.join_on)
-		}
-	}
-
-	if len(lk.db_where.Tpl_sql)>0 {
-		buffer.WriteString(" where ")
-		buffer.WriteString(lk.db_where.Tpl_sql)
-	}
-
-	if len(lk.order_by) > 0 {
-		buffer.WriteString(" order by ")
-		buffer.WriteString(lk.order_by)
 	}
 
 	return buffer.String()
@@ -438,3 +312,4 @@ func (db *dialectMssql)GenTableFindSql(tb *DbTable) string {
 
 	return buffer.String()
 }
+

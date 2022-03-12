@@ -11,7 +11,7 @@ func TestWeightSlave(t *testing.T)  {
 		return
 	}
 
-	eng, err := NewEngine("mysql", db)
+	eng, err := NewEngine(&dialectMysql{}, db)
 	if err != nil {
 		t.Error(err)
 		return

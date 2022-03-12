@@ -48,7 +48,7 @@ func (md *DbModel)insertWithOutput() (int64, error) {
 		hook.BeforeInsert(md.ctx)
 	}
 
-	sql_str := md.db_ptr.engine.db_dialect.GenModelInsert(md)
+	sql_str := md.db_ptr.engine.db_dialect.GenModelInsertSql(md)
 	values := md.get_fieldaddr_insert()
 	rows, err := md.db_ptr.ExecQuery(&md.SqlContex, sql_str, values...)
 	if err != nil {
@@ -87,7 +87,7 @@ func (md *DbModel)exec_insert() (int64, error) {
 		hook.BeforeInsert(md.ctx)
 	}
 
-	sql_str := md.db_ptr.engine.db_dialect.GenModelInsert(md)
+	sql_str := md.db_ptr.engine.db_dialect.GenModelInsertSql(md)
 	values := md.get_fieldaddr_insert()
 	res, err := md.db_ptr.ExecSQL(&md.SqlContex, sql_str, values...)
 	if err != nil {
@@ -196,7 +196,7 @@ func (md *DbModel)exec_update() (int64, error) {
 		hook.BeforeUpdate(md.ctx)
 	}
 
-	sql_str := md.db_ptr.engine.db_dialect.GenModelUpdate(md)
+	sql_str := md.db_ptr.engine.db_dialect.GenModelUpdateSql(md)
 	values := md.get_fieldaddr_update()
 	values = append(values, md.db_where.Values...)
 	res, err := md.db_ptr.ExecSQL(&md.SqlContex, sql_str, values...)
@@ -276,7 +276,7 @@ func (md *DbModel)Delete() (int64, error) {
 		hook.BeforeDelete(md.ctx)
 	}
 
-	sql_str := md.db_ptr.engine.db_dialect.GenModelDelete(md)
+	sql_str := md.db_ptr.engine.db_dialect.GenModelDeleteSql(md)
 	res, err := md.db_ptr.ExecSQL(&md.SqlContex, sql_str, md.db_where.Values...)
 	if err != nil {
 		return 0, err

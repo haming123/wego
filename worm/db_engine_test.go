@@ -10,7 +10,7 @@ func NewEngine4Test() (*DbEngine, error) {
 		return nil, err
 	}
 
-	eng, err := NewEngine("mysql", DbConn)
+	eng, err := NewEngine(&dialectMysql{}, DbConn)
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +23,7 @@ func InitEngine4Test() error {
 		return err
 	}
 
-	err = InitEngine("mysql", DbConn)
+	err = InitEngine(&dialectMysql{}, DbConn)
 	if err != nil {
 		return err
 	}

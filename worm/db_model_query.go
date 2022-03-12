@@ -90,7 +90,7 @@ func (md *DbModel)Scan() (bool, error) {
 		hook.BeforeQuery(md.ctx)
 	}
 
-	sql_str := md.db_ptr.engine.db_dialect.GenModelGet(md)
+	sql_str := md.db_ptr.engine.db_dialect.GenModelGetSql(md)
 	rows, err := md.db_ptr.ExecQuery(&md.SqlContex, sql_str, md.db_where.Values...)
 	if err != nil {
 		return false, err
@@ -198,7 +198,7 @@ func (md *DbModel)Exist() (bool, error) {
 		hook.BeforeQuery(md.ctx)
 	}
 
-	sql_str := md.db_ptr.engine.db_dialect.GenModelGet(md)
+	sql_str := md.db_ptr.engine.db_dialect.GenModelGetSql(md)
 	rows, err := md.db_ptr.ExecQuery(&md.SqlContex, sql_str, md.db_where.Values...)
 	if err != nil {
 		return false, err
@@ -236,7 +236,7 @@ func (md *DbModel)Count(field ...string) (int64, error) {
 
 	sql_str := md.gen_count_sql(count_field)
 	if len(md.group_by) > 0 {
-		sub_sql := md.db_ptr.engine.db_dialect.GenModelFind(md)
+		sub_sql := md.db_ptr.engine.db_dialect.GenModelFindSql(md)
 		sql_str = fmt.Sprintf("select %s from (%s) tmp", count_field, sub_sql)
 	}
 
@@ -273,7 +273,7 @@ func (md *DbModel)DistinctCount(field string) (int64, error) {
 	count_field := fmt.Sprintf("count(distinct %s)", field)
 	sql_str := md.gen_count_sql(count_field)
 	if len(md.group_by) > 0 {
-		sub_sql := md.db_ptr.engine.db_dialect.GenModelFind(md)
+		sub_sql := md.db_ptr.engine.db_dialect.GenModelFindSql(md)
 		sql_str = fmt.Sprintf("select %s from (%s) tmp", count_field, sub_sql)
 	}
 
@@ -303,7 +303,7 @@ func (md *DbModel)Rows() (*ModelRows, error) {
 		hook.BeforeQuery(md.ctx)
 	}
 
-	sql_str := md.db_ptr.engine.db_dialect.GenModelFind(md)
+	sql_str := md.db_ptr.engine.db_dialect.GenModelFindSql(md)
 	rows, err := md.db_ptr.ExecQuery(&md.SqlContex, sql_str, md.db_where.Values...)
 	if err != nil {
 		return nil, err
@@ -368,7 +368,7 @@ func (md *DbModel)Find(arr_ptr interface{}) error {
 		hook.BeforeQuery(md.ctx)
 	}
 
-	sql_str := md.db_ptr.engine.db_dialect.GenModelFind(md)
+	sql_str := md.db_ptr.engine.db_dialect.GenModelFindSql(md)
 	rows, err := md.db_ptr.ExecQuery(&md.SqlContex, sql_str, md.db_where.Values...)
 	if err != nil {
 		return err

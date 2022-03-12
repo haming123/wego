@@ -3,7 +3,6 @@ package worm
 import (
 	"bytes"
 	"database/sql"
-	"errors"
 	"fmt"
 )
 
@@ -36,14 +35,11 @@ type Dialect interface {
 	ParsePlaceholder(sql_tpl string) string
 
 	ModelInsertHasOutput(md *DbModel) bool
-	GenModelInsert(md *DbModel) string
-	GenModelUpdate(md *DbModel) string
-	GenModelDelete(md *DbModel) string
-	GenModelGet(md *DbModel) string
-	GenModelFind(md *DbModel) string
-
-	GenJointGetSql(lk *DbJoint) string
-	GenJointFindSql(lk *DbJoint) string
+	GenModelInsertSql(md *DbModel) string
+	GenModelUpdateSql(md *DbModel) string
+	GenModelDeleteSql(md *DbModel) string
+	GenModelGetSql(md *DbModel) string
+	GenModelFindSql(md *DbModel) string
 
 	TableInsertHasOutput(tb *DbTable) bool
 	GenTableInsertSql(tb *DbTable) (string, []interface{})
@@ -51,37 +47,45 @@ type Dialect interface {
 	GenTableDeleteSql(tb *DbTable) string
 	GenTableGetSql(tb *DbTable) string
 	GenTableFindSql(tb *DbTable) string
+
+	GenJointGetSql(lk *DbJoint) string
+	GenJointFindSql(lk *DbJoint) string
 }
 
-var g_dialect_map = map[string]Dialect{}
-func RegDialect(name string, dialect Dialect) {
-	g_dialect_map[name] = dialect
-}
-func GetDialect(name string) (Dialect, error) {
-	dialect, ok := g_dialect_map[name]
-	if ok == false {
-		return nil, errors.New("incorrect driver name")
-	}
-	return dialect, nil
+type DialectBase struct {
 }
 
-type dialectBase struct {
+func (db *DialectBase)GetName() string {
+	return ""
 }
 
-func (db *dialectBase)ModelInsertHasOutput(md *DbModel) bool {
-	return false
+func (db *DialectBase)DbType2GoType(colType string) string {
+	return colType
 }
 
-func (db *dialectBase)TableInsertHasOutput(tb *DbTable) bool {
-	return false
+func (db *DialectBase)GetColumns(db_raw *sql.DB, tableName string) ([]ColumnInfo, error) {
+	return nil, nil
 }
 
-func (db *dialectBase) ParsePlaceholder(sql_tpl string) string {
+func (db *DialectBase)LimitSql(offset int64, limit int64) string {
+	return ""
+}
+
+func (db *DialectBase) ParsePlaceholder(sql_tpl string) string {
 	tpl_str := sql_tpl
 	return tpl_str
 }
 
-func (db *dialectBase)GenModelInsert(md *DbModel) string {
+func (db *DialectBase)ModelInsertHasOutput(md *DbModel) bool {
+	return false
+}
+
+func (db *DialectBase)TableInsertHasOutput(tb *DbTable) bool {
+	return false
+}
+
+
+func (db *DialectBase)GenModelInsertSql(md *DbModel) string {
 	var buffer bytes.Buffer
 	index := 0;
 	buffer.WriteString(fmt.Sprintf("insert into %s (", md.table_name))
@@ -114,7 +118,7 @@ func (db *dialectBase)GenModelInsert(md *DbModel) string {
 	return buffer.String()
 }
 
-func (db *dialectBase)GenModelUpdate(md *DbModel) string {
+func (db *DialectBase)GenModelUpdateSql(md *DbModel) string {
 	var buffer bytes.Buffer
 	buffer.WriteString("update ")
 	buffer.WriteString(md.table_name)
@@ -140,7 +144,7 @@ func (db *dialectBase)GenModelUpdate(md *DbModel) string {
 	return buffer.String()
 }
 
-func (db *dialectBase)GenModelDelete(md *DbModel) string {
+func (db *DialectBase)GenModelDeleteSql(md *DbModel) string {
 	var buffer bytes.Buffer
 	buffer.WriteString("delete from ")
 	buffer.WriteString(md.table_name)
@@ -151,7 +155,7 @@ func (db *dialectBase)GenModelDelete(md *DbModel) string {
 	return buffer.String()
 }
 
-func (db *dialectBase)GenModelGet(md *DbModel) string {
+func (db *DialectBase)GenModelGetSql(md *DbModel) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("select ")
@@ -182,7 +186,7 @@ func (db *dialectBase)GenModelGet(md *DbModel) string {
 	return buffer.String()
 }
 
-func (db *dialectBase)GenModelFind(md *DbModel) string {
+func (db *DialectBase)GenModelFindSql(md *DbModel) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("select ")
@@ -218,7 +222,7 @@ func (db *dialectBase)GenModelFind(md *DbModel) string {
 	return buffer.String()
 }
 
-func (db *dialectBase)GenJointGetSql(lk *DbJoint) string {
+func (db *DialectBase)GenJointGetSql(lk *DbJoint) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("select ")
@@ -268,7 +272,7 @@ func (db *dialectBase)GenJointGetSql(lk *DbJoint) string {
 	return buffer.String()
 }
 
-func (db *dialectBase)GenJointFindSql(lk *DbJoint) string {
+func (db *DialectBase)GenJointFindSql(lk *DbJoint) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("select ")
@@ -325,7 +329,7 @@ func (db *dialectBase)GenJointFindSql(lk *DbJoint) string {
 
 //生成insert sql语句
 //sql语句与values数组必须在一个循环中生成，因为map多次遍历时次序可能不同
-func (db *dialectBase)GenTableInsertSql(tb *DbTable) (string, []interface{}) {
+func (db *DialectBase)GenTableInsertSql(tb *DbTable) (string, []interface{}) {
 	index := 0;
 	vals:= []interface{}{}
 
@@ -363,7 +367,7 @@ func (db *dialectBase)GenTableInsertSql(tb *DbTable) (string, []interface{}) {
 
 //生成 update sql语句
 //sql语句与values数组必须在一个循环中生成，因为map多次遍历时次序可能不同
-func (db *dialectBase)GenTableUpdateSql(tb *DbTable) (string, []interface{}) {
+func (db *DialectBase)GenTableUpdateSql(tb *DbTable) (string, []interface{}) {
 	var buffer bytes.Buffer
 	buffer.WriteString("update ")
 	buffer.WriteString(tb.table_name)
@@ -399,7 +403,7 @@ func (db *dialectBase)GenTableUpdateSql(tb *DbTable) (string, []interface{}) {
 	return buffer.String(), vals
 }
 
-func (db *dialectBase)GenTableDeleteSql(tb *DbTable) string {
+func (db *DialectBase)GenTableDeleteSql(tb *DbTable) string {
 	sql_str := fmt.Sprintf("delete from %s", tb.table_name)
 	if len(tb.db_where.Tpl_sql)>0 {
 		sql_str += " where " + tb.db_where.Tpl_sql
@@ -407,7 +411,7 @@ func (db *dialectBase)GenTableDeleteSql(tb *DbTable) string {
 	return sql_str
 }
 
-func (db *dialectBase)GenTableGetSql(tb *DbTable) string {
+func (db *DialectBase)GenTableGetSql(tb *DbTable) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("select ")
@@ -447,7 +451,7 @@ func (db *dialectBase)GenTableGetSql(tb *DbTable) string {
 	return buffer.String()
 }
 
-func (db *dialectBase)GenTableFindSql(tb *DbTable) string {
+func (db *DialectBase)GenTableFindSql(tb *DbTable) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("select ")

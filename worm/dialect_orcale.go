@@ -7,7 +7,7 @@ import (
 )
 
 type dialectOrcale struct {
-	dialectBase
+	DialectBase
 }
 
 func (db *dialectOrcale) GetName() string {

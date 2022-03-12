@@ -9,11 +9,7 @@ import (
 )
 
 type dialectMysql struct {
-	dialectBase
-}
-
-func init() {
-	RegDialect("mysql", &dialectMysql{})
+	DialectBase
 }
 
 func (db *dialectMysql) GetName() string {

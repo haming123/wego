@@ -8,11 +8,7 @@ import (
 )
 
 type postgresDialect struct {
-	dialectBase
-}
-
-func init() {
-	RegDialect("postgres", &postgresDialect{})
+	DialectBase
 }
 
 func (db *postgresDialect) GetName() string {
@@ -47,11 +43,11 @@ func (p *postgresDialect) DbType2GoType(colType string) string {
 	switch colType {
 	case "VARCHAR", "TEXT":
 		return "string"
-	case "BIGINT", "BIGSERIAL":
+	case "BIGINT", "BIGSERIAL", "INT8":
 		return "int64"
-	case "SMALLINT", "INT", "INT8", "INT4", "INTEGER", "SERIAL":
+	case "SMALLINT", "INT", "INT4", "INTEGER", "SERIAL":
 		return "int32"
-	case "FLOAT", "FLOAT4", "REAL", "DOUBLE PRECISION":
+	case "FLOAT", "FLOAT4", "REAL", "DOUBLE PRECISION", "NUMERIC":
 		return "float64"
 	case "DATETIME", "TIMESTAMP":
 		return "time.Time"
@@ -62,15 +58,77 @@ func (p *postgresDialect) DbType2GoType(colType string) string {
 	}
 }
 
-func (db *postgresDialect) GetColumns(db_raw *sql.DB,tableName string) ([]ColumnInfo, error) {
-	return  nil, nil
+/*
+select
+col.table_schema,
+col.table_name,
+col.ordinal_position,
+col.column_name,
+col.data_type,
+col.character_maximum_length,
+col.numeric_precision,
+col.numeric_scale,
+col.is_nullable,
+col.column_default,
+des.description
+from
+information_schema.columns col left join pg_description des on
+col.table_name::regclass = des.objoid
+and col.ordinal_position = des.objsubid
+where
+table_schema = 'public'
+and table_name = '%s'
+order by
+ordinal_position;
+ */
+func (db *postgresDialect) GetColumns(db_raw *sql.DB, tableName string) ([]ColumnInfo, error) {
+	str := `SELECT 
+			A.attname AS col_name,
+			(select typname from pg_type where oid = A.atttypid) AS col_type,
+			A.atttypmod AS data_len, 
+			(SELECT description FROM pg_catalog.pg_description WHERE objoid = A.attrelid AND objsubid = A.attnum ) AS comment
+		FROM
+			pg_catalog.pg_attribute A
+		WHERE
+			A.attrelid = ( SELECT oid FROM pg_class WHERE relname = '%s' ) 
+			AND A.attnum > 0 
+			AND NOT A.attisdropped 
+		ORDER BY
+			A.attnum`
+
+	sql_str := fmt.Sprintf(str, tableName)
+	rows, err := db_raw.Query(sql_str)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	cols := make([]ColumnInfo, 0)
+	for rows.Next() {
+		var col_name, col_type, comment sql.NullString
+		var dlen sql.NullInt32
+		err = rows.Scan(&col_name, &col_type, &dlen, &comment)
+		if err != nil {
+			return nil, err
+		}
+
+		var col ColumnInfo
+		col.Name = col_name.String
+		col.Comment = comment.String
+		col.SQLType = strings.ToUpper(col_type.String)
+		col.DbType = col.SQLType
+
+		cols = append(cols, col)
+	}
+
+	return  cols, nil
 }
 
 func (db *postgresDialect)ModelInsertHasOutput(md *DbModel) bool {
 	return true
 }
 
-func (db *postgresDialect)GenModelInsert(md *DbModel) string {
+func (db *postgresDialect)GenModelInsertSql(md *DbModel) string {
 	var buffer bytes.Buffer
 	index := 0;
 	buffer.WriteString(fmt.Sprintf("insert into %s (", md.table_name))
