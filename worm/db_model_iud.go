@@ -39,7 +39,7 @@ func (md *DbModel) get_fieldaddr_insert() []interface{} {
 	return vals
 }
 
-func (md *DbModel)exec_insert_output() (int64, error) {
+func (md *DbModel)insertWithOutput() (int64, error) {
 	if md.Err != nil {
 		return 0, md.Err
 	}
@@ -70,12 +70,13 @@ func (md *DbModel)exec_insert_output() (int64, error) {
 		rows.Close()
 		return 0, err
 	}
+	rows.Close()
 	return id, nil
 }
 
 func (md *DbModel)exec_insert() (int64, error) {
-	if md.db_ptr.engine.db_driver == "mssql" {
-		return md.exec_insert_output()
+	if md.db_ptr.engine.db_dialect.ModelInsertHasOutput(md){
+		return md.insertWithOutput()
 	}
 
 	if md.Err != nil {

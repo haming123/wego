@@ -30,6 +30,7 @@ type DbTable struct {
 	table_alias string
 	select_str string
 	output_str string
+	return_str string
 	join_str string
 	db_where DbWhere
 	group_by string
@@ -82,6 +83,11 @@ func (tb *DbTable)Select(fields ...string) *DbTable {
 
 func (tb *DbTable)Output(output string) *DbTable {
 	tb.output_str = output
+	return tb
+}
+
+func (tb *DbTable)ReturnIng(returning string) *DbTable {
+	tb.return_str = returning
 	return tb
 }
 
@@ -233,7 +239,7 @@ func (tb *DbTable)OrderBy(val string) *DbTable {
 	return tb
 }
 
-func (tb *DbTable)InsertWithOutput() (int64, error) {
+func (tb *DbTable)insertWithOutput() (int64, error) {
 	sql_str, vals := tb.db_ptr.engine.db_dialect.GenTableInsertSql(tb)
 	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, sql_str, vals...)
 	if err != nil {
@@ -251,12 +257,13 @@ func (tb *DbTable)InsertWithOutput() (int64, error) {
 		rows.Close()
 		return 0, err
 	}
+	rows.Close()
 	return id, nil
 }
 
 func (tb *DbTable)Insert() (int64, error) {
-	if tb.output_str != "" {
-		return tb.InsertWithOutput()
+	if tb.db_ptr.engine.db_dialect.TableInsertHasOutput(tb) {
+		return tb.insertWithOutput()
 	}
 
 	sql_str, vals := tb.db_ptr.engine.db_dialect.GenTableInsertSql(tb)

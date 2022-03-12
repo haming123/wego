@@ -92,6 +92,10 @@ func (db *dialectMssql) GetColumns(db_raw *sql.DB, table_name string) ([]ColumnI
 	return  cols, nil
 }
 
+func (db *dialectMssql)ModelInsertHasOutput(md *DbModel) bool {
+	return true
+}
+
 func (db *dialectMssql)GenModelInsert(md *DbModel) string {
 	var buffer bytes.Buffer
 	index := 0;
@@ -301,6 +305,10 @@ func (db *dialectMssql)GenJointFindSql(lk *DbJoint) string {
 	}
 
 	return buffer.String()
+}
+
+func (db *dialectMssql)TableInsertHasOutput(tb *DbTable) bool {
+	return len(tb.output_str) > 0
 }
 
 func (db *dialectMssql)GenTableInsertSql(tb *DbTable) (string, []interface{}) {

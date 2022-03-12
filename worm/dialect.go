@@ -10,7 +10,7 @@ import (
 /*
 不同的数据库中，SQL语句使用的占位符语法不尽相同。
 MySQL	?
-sqlserver	?
+SQLServer	?
 PostgreSQL	$1, $2等
 SQLite	? 和$1
 Oracle	:name
@@ -35,6 +35,7 @@ type Dialect interface {
 	LimitSql(offset int64, limit int64) string
 	ParsePlaceholder(sql_tpl string) string
 
+	ModelInsertHasOutput(md *DbModel) bool
 	GenModelInsert(md *DbModel) string
 	GenModelUpdate(md *DbModel) string
 	GenModelDelete(md *DbModel) string
@@ -44,6 +45,7 @@ type Dialect interface {
 	GenJointGetSql(lk *DbJoint) string
 	GenJointFindSql(lk *DbJoint) string
 
+	TableInsertHasOutput(tb *DbTable) bool
 	GenTableInsertSql(tb *DbTable) (string, []interface{})
 	GenTableUpdateSql(tb *DbTable) (string, []interface{})
 	GenTableDeleteSql(tb *DbTable) string
@@ -64,6 +66,14 @@ func GetDialect(name string) (Dialect, error) {
 }
 
 type dialectBase struct {
+}
+
+func (db *dialectBase)ModelInsertHasOutput(md *DbModel) bool {
+	return false
+}
+
+func (db *dialectBase)TableInsertHasOutput(tb *DbTable) bool {
+	return false
 }
 
 func (db *dialectBase) ParsePlaceholder(sql_tpl string) string {
@@ -200,7 +210,9 @@ func (db *dialectBase)GenModelFind(md *DbModel) string {
 	}
 
 	if md.db_limit > 0 {
-		buffer.WriteString(fmt.Sprintf(" limit %d, %d ", md.db_offset, md.db_limit))
+		dialect := md.db_ptr.engine.db_dialect
+		str_val := dialect.LimitSql(md.db_offset, md.db_limit)
+		buffer.WriteString(str_val)
 	}
 
 	return buffer.String()
@@ -303,8 +315,6 @@ func (db *dialectBase)GenJointFindSql(lk *DbJoint) string {
 	}
 
 	if lk.db_limit > 0 {
-		//buffer.WriteString(" limit ")
-		//buffer.WriteString(fmt.Sprintf("%d,%d", lk.db_offset, lk.db_limit))
 		dialect := lk.db_ptr.engine.db_dialect
 		str_val := dialect.LimitSql(lk.db_offset, lk.db_limit)
 		buffer.WriteString(str_val)
