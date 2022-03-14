@@ -9,7 +9,6 @@
 *.out
 *.conf
 test.html
-benchmark_test.go
 doc
 .idea
 main
