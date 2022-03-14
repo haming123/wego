@@ -16,6 +16,9 @@ worm是一款方便易用的Go语言ORM库，worm具有使用简单，运行性�
 ## 安装
 go get github.com/haming123/wego/worm
 
+## 文档
+请点击：[详细文档](http://39.108.252.54:8080/docs/worm/worm)
+
 ## 快速开始
 ### 创建实体类
 ```
@@ -208,23 +211,14 @@ res, err = worm.SQL("delete from user where id=?", id).Exec()
 //查询单条记录
 var name string; var age int64
 has, err = worm.SQL("select name,age from user where id=?", 6).Get(&name, &age)
+
 //查询单条记录到model对象
 var ent User
 has, err := worm.SQL("select * from user where id=?", 6).GetModel(&ent)
-//一些单条记录的单个字段的查询函数：
-strval, err := worm.SQL("select name from user where id=?", 6).GetString()
-intval, err := worm.SQL("select age  from user where id=?", 6).GetInt()
-fltval, err := worm.SQL("select high from user where id=?", 1).GetFloat()
 
-//查询多条记录
-rows, err := worm.SQL("select * from user where id>?", 0).Rows()
 //查询多条记录到model数组
 var users []User
 err := worm.SQL( "select * from user where id>?", 5).FindModel(&users)
-//一些多条记录的单个字段的查询函数：
-arrstr, err := worm.SQL( "select name from user where id>?", 5).FindString()
-arrint, err := worm.SQL( "select age  from user where id>?", 5).FindInt()
-arrflt, err := worm.SQL( "select high from user where id>?", 5).FindFloat()
 ```
 
 ### 使用Sql Builder
@@ -239,46 +233,38 @@ affected, err = worm.Table("user").Where("id=?", id).Delete()
 //查询单条记录
 var name string; var age int64
 has, err = worm.Table("user").Select("name", "age").Where("id=?", 6).Get(&name, &age)
+
 //查询单条记录到model对象
 var ent User
 has, err := worm.Table("user").Select("*").Where("id=?", 6).GetModel(&ent)
-//一些单条记录的单个字段的查询函数：
-strval, err := worm.Table("user").Select("name").Where("id=?", 6).GetString()
-intval, err := worm.Table("user").Select("age" ).Where("id=?", 6).GetInt()
-fltval, err := worm.Table("user").Select("high").Where("id=?", 6).GetFloat()
 
 //查询多条记录
 var users []User
 err :=  worm.Table("user").Select("*").Where("id>?", 0).FindModel(&users)
-//一些多条记录的单个字段的查询函数：
-arrstr, err := worm.Table("user").Select("name").Where("id>?", 0).FindString()
-arrint, err := worm.Table("user").Select("age" ).Where("id>?", 0).FindInt()
-arrflt, err := worm.Table("user").Select("high").Where("id>?", 0).FindFloat()
 ```
 
 ### 关联查询
 定义一个book表以及相应的实体类：
-```Go
-/*
+```
 CREATE TABLE `book` (
-  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'id',
-  `author` bigint(20) NOT NULL DEFAULT '0' COMMENT '作者',
-  `name` varchar(16) NOT NULL DEFAULT '' COMMENT '名称',
-  `price` decimal(11,2) DEFAULT 0.0 NULL COMMENT '价格',
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `author` bigint(20) NOT NULL DEFAULT '0',
+  `name` varchar(16) NOT NULL DEFAULT '',
+  `price` decimal(11,2) NOT NULL DEFAULT 0.0,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB 
-*/
+);
+```
+```Go
 type Book struct {
-	DB_id      	int64
-	DB_name    	string
-	DB_author  	int64
-	DB_price    float32
+	Id          int64   	`db:"id;autoincr"`
+	Name        string  	`db:"name"`
+	Author  	int64       `db:"author"`
+	Price       float32     `db:"price"`
 }
 func (ent *Book) TableName() string {
 	return "book"
 }
 ```
-在worm中不用Tag标签也可以简单的进行与数据库表的映射， 所有的字段若以"DB_"开头，则认为是一个数据库字段，字段的名称为"DB_"后面的部分， 例如DB_name对应name字段。
 在book表中，通过author字段与user表的id字段相关联。若要查询一个用户购买的书，在worm中可以通过Join来查询：
 ```Go
 type UserBook struct {
