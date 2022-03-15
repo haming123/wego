@@ -3,20 +3,20 @@ wego是一个Go语言编写的高性能的Web框架，可以用来快速开发RE
 wego框架是一个完整的MVC框架，包括路由模块、数据库ORM模块、view模板处理以及Session模块。
 wego具有性能高、方便易用，兼容性好，扩展性强等特点，具体特征如下：
 1. 基于Radix树开发的路由模块，路由查询性能高。
-2. 支持路由组。
-3. 为路由参数、Query参数、Form参数的访问提供率方便易于使用的API，并可以将参数映射到Struct。
-4. 为JSON、XML和HTML渲染提供了易于使用的API。
-5. 支持过滤器中间件，方便您对Web框架进行扩展。
-6. 支持BeforeRoute、BeforeExec、AfterExec拦截器，方便您进行身份验证、日志输出。
-7. 内置Crash处理机制，wego可以recover一个HTTP请求中的panic，这样可确保您的服务器始终可用。
-8. 内置Config模块，方便对应用的参数进行管理。
+2. 支持混合路由，固定路由、参数路由、前缀路由可以混合，不冲突。
+3. 支持路由组，可以为不同层次的路由设置过滤器中间件。
+4. 为路由参数、Query参数、Form参数的访问提供率方便易于使用的API，并可以将参数映射到Struct。
+5. 为JSON、XML和HTML渲染提供了易于使用的API。
+6. 支持过滤器中间件，方便您对Web框架进行扩展。
+7. 支持BeforeRoute、BeforeExec、AfterExec拦截器，方便您进行身份验证、日志输出。
+8. 内置Crash处理机制，wego可以recover一个HTTP请求中的panic，这样可确保您的服务器始终可用。
 9. 内置Session模块，您可以选择cookie、redis、memcache、memory缓存引擎存储Session数据。
-10. 支持混合路由，固定路由、参数路由、通配符路由可以混合，不冲突。
+10. 内置[ORM模块](http://39.108.252.54:8080/docs/worm/worm)，使用方便，功能强大。
+11. 内置配置模块，方便对应用的参数进行管理。
 11. 内置LOG模块，用于生成应用日志。
-12. 内置[ORM模块](http://39.108.252.54:8080/docs/worm/worm)，使用方便，功能强大。
 13. 采用缓存来管理HTML的Template，既方便输出Html页面，又可以使用缓存提升系统性能。
 14. 良好的兼容性，wego支持go原生的func(http.ResponseWriter, *http.Request)路由处理函数，这样您的代码少量修改就可以使用wego了。
-15. wego兼容两种编码习惯，可以使用普通函数作为路由处理函数，也可以使用strcut的成员函数作为路由处理函数。
+15. wego兼容两种编码习惯，可以使用普通函数作为路由处理器，也可以使用strcut的方法作为路由处理器。
 
 ### 安装
 go get github.com/haming123/wego
