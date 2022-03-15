@@ -13,7 +13,7 @@ wego具有性能高、方便易用，兼容性好，扩展性强等特点，具�
 9. 内置Session模块，您可以选择cookie、redis、memcache、memory缓存引擎存储Session数据。
 10. 支持混合路由，固定路由、参数路由、通配符路由可以混合，不冲突。
 11. 内置LOG模块，用于生成应用日志。
-12. 内置ORM模块，使用方便，功能强大。
+12. 内置[ORM模块](http://39.108.252.54:8080/docs/worm/worm)，使用方便，功能强大。
 13. 采用缓存来管理HTML的Template，既方便输出Html页面，又可以使用缓存提升系统性能。
 14. 良好的兼容性，wego支持go原生的func(http.ResponseWriter, *http.Request)路由处理函数，这样您的代码少量修改就可以使用wego了。
 15. wego兼容两种编码习惯，可以使用普通函数作为路由处理函数，也可以使用strcut的成员函数作为路由处理函数。
