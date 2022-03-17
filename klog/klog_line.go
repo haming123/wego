@@ -141,9 +141,9 @@ func (line *LogLine)WriteLogFieldSpliter(pbuf *LogBuffer) {
 func (line *LogLine)WriteLogLineSpliter(pbuf *LogBuffer) {
 	pbuf.WriteString(" `")
 	if line.encode {
-		pbuf.WriteByte('T')
+		pbuf.WriteByte('.')
 	} else {
-		pbuf.WriteByte('F')
+		pbuf.WriteByte(' ')
 	}
 	pbuf.WriteString(" \n")
 }
@@ -189,7 +189,7 @@ func (line *LogLine)Encode(pbuf *LogBuffer) {
 func GetLineEncodeFlag(data []byte) bool {
 	nn := len(data)
 	if nn > 3 {
-		if data[nn-1] == 'T' && data[nn-2] == '`' && data[nn-3] == ' ' {
+		if data[nn-1] == '.' && data[nn-2] == '`' && data[nn-3] == ' ' {
 			return true
 		}
 	}
