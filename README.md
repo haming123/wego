@@ -29,8 +29,8 @@ go get github.com/haming123/wego
 ```go
 package main
 import (
-	"wego"
-	log "wego/dlog"
+	"github.com/haming123/wego"
+	log "github.com/haming123/wego/dlog"
 )
 func main() {
 	web, err := wego.NewWeb()
