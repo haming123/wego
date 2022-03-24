@@ -1,34 +1,25 @@
 package klog
 
-import "errors"
-
-var log_default *Klog
-func InitKlog(lpath string, rtype RotateType) *Klog {
+var defaultEngine *LogEngine = nil
+func InitEngine(lpath string, rtype RotateType) *LogEngine {
 	Close()
-	log_default = NewKlog(lpath, rtype)
-	return log_default
+	defaultEngine = NewEngine(lpath, rtype)
+	return defaultEngine
 }
 
-func GetKlog() *Klog {
-	return log_default
+func GetEngine() *LogEngine {
+	return defaultEngine
 }
 
 func Close() {
-	if log_default != nil {
-		log_default.Close()
+	if defaultEngine != nil {
+		defaultEngine.Close()
 	}
 }
 
-func SetLogSender(sender LogSender) error {
-	if log_default == nil {
-		return errors.New("klog is nil")
-	}
-	return log_default.SetLogSender(sender)
-}
-
-func NewL(class_name string) *LogLine {
-	line := getLineEnt()
-	line.out = log_default
-	line.ClassName(class_name)
-	return line
+func NewLog(class_name string) *LogRow {
+	row := getLineEnt()
+	row.out = defaultEngine
+	row.TableName(class_name)
+	return row
 }

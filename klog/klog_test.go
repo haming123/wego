@@ -5,13 +5,13 @@ import (
 )
 
 func BenchmarkWriteLog(b *testing.B) {
-	InitKlog("./main/logs", ROTATE_HOUR);
+	InitEngine("./main/logs", ROTATE_HOUR);
 	defer Close()
 	b.StopTimer()
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		NewL("login").UserId("user_1").Add("login_type", "phone number").Add("sex", "男").Add("age", 12).Add("area", "guangdong").Add("float", 12.34).Add("bool", true).Add("int", 999).Output()
+		NewLog("login").UserId("user_1").Add("login_type", "phone number").Add("sex", "男").Add("age", 12).Add("area", "guangdong").Add("float", 12.34).Add("bool", true).Add("int", 999).Output()
 	}
 	b.StopTimer()
 }

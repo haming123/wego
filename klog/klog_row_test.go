@@ -10,10 +10,10 @@ func TestLineEncode (t *testing.T) {
 	var buff LogBuffer
 	str_val := "account`weixin"
 	str_val_encode := "account\\`weixin"
-	NewL("login").UserId("user_1").Add("login_type", str_val).Encode(&buff)
+	NewLog("login").UserId("user_1").Add("login_type", str_val).Encode(&buff)
 
 	str_data := string(buff.GetBytes())
-	if strings.HasSuffix(str_data, " `T \n") == false {
+	if strings.HasSuffix(str_data, " `. \n") == false {
 		t.Error("encode error: incorrector line end")
 	}
 	if strings.Index(str_data, str_val_encode)< 0 {
@@ -24,7 +24,7 @@ func TestLineEncode (t *testing.T) {
 func TestLineDecode (t *testing.T) {
 	var buff LogBuffer
 	str_val := "account`weixin"
-	NewL("login").UserId("user_1").Add("login_type", str_val).Encode(&buff)
+	NewLog("login").UserId("user_1").Add("login_type", str_val).Encode(&buff)
 
 	data := buff.GetBytes()
 	nn := len(data)
