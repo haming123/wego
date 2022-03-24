@@ -198,7 +198,7 @@ func(this *WebConfig)InitKlog() error {
 		return errors.New("log path is empty")
 	}
 
-	klog.InitKlog(cfg.Path, klog.RotateType(cfg.Rotate))
+	klog.InitEngine(cfg.Path, klog.RotateType(cfg.Rotate))
 	klog.SetDebugLogLevel(klog.Level(this.ShowDebugLog))
 
 	str_log := "init klog rotate=day"
