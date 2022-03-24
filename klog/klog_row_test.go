@@ -13,7 +13,7 @@ func TestLineEncode (t *testing.T) {
 	NewLog("login").UserId("user_1").Add("login_type", str_val).Encode(&buff)
 
 	str_data := string(buff.GetBytes())
-	if strings.HasSuffix(str_data, " `. \n") == false {
+	if strings.HasSuffix(str_data, " `.\n") == false {
 		t.Error("encode error: incorrector line end")
 	}
 	if strings.Index(str_data, str_val_encode)< 0 {
