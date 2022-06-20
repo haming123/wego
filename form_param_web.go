@@ -8,7 +8,7 @@ import (
 )
 
 type WebParam struct {
-	ctx 	*WebContext
+	ctx *WebContext
 }
 
 func (this *WebParam) GetValues(key string) ([]string, bool) {
@@ -37,7 +37,7 @@ func (this *WebParam) GetValues(key string) ([]string, bool) {
 			arr = append(arr, vals...)
 		}
 	}
-	return arr, len(arr)>0
+	return arr, len(arr) > 0
 }
 
 func (this *WebParam) GetValue(key string) (string, bool) {
@@ -75,7 +75,11 @@ func (this *WebParam) GetBool(key string, defaultValue ...bool) ValidBool {
 
 	val, err := strconv.ParseBool(val_str)
 	if err != nil {
-		return ValidBool{defaultValue[0], err}
+		val = false
+		if len(defaultValue) > 0 {
+			val = defaultValue[0]
+		}
+		return ValidBool{val, err}
 	} else {
 		return ValidBool{val, nil}
 	}
@@ -95,7 +99,11 @@ func (this *WebParam) GetInt(key string, defaultValue ...int) ValidInt {
 
 	val, err := strconv.Atoi(val_str)
 	if err != nil {
-		return ValidInt{defaultValue[0], err}
+		val = 0
+		if len(defaultValue) > 0 {
+			val = defaultValue[0]
+		}
+		return ValidInt{val, err}
 	} else {
 		return ValidInt{val, nil}
 	}
@@ -115,7 +123,11 @@ func (this *WebParam) GetInt32(key string, defaultValue ...int32) ValidInt32 {
 
 	val, err := strconv.ParseInt(val_str, 10, 32)
 	if err != nil {
-		return ValidInt32{defaultValue[0], err}
+		val = 0
+		if len(defaultValue) > 0 {
+			val = int64(defaultValue[0])
+		}
+		return ValidInt32{int32(val), err}
 	} else {
 		return ValidInt32{int32(val), nil}
 	}
@@ -135,7 +147,11 @@ func (this *WebParam) GetInt64(key string, defaultValue ...int64) ValidInt64 {
 
 	val, err := strconv.ParseInt(val_str, 10, 64)
 	if err != nil {
-		return ValidInt64{defaultValue[0], err}
+		val = 0
+		if len(defaultValue) > 0 {
+			val = int64(defaultValue[0])
+		}
+		return ValidInt64{val, err}
 	} else {
 		return ValidInt64{val, nil}
 	}
@@ -155,7 +171,11 @@ func (this *WebParam) GetFloat(key string, defaultValue ...float64) ValidFloat {
 
 	val, err := strconv.ParseFloat(val_str, 64)
 	if err != nil {
-		return ValidFloat{defaultValue[0], err}
+		val = 0
+		if len(defaultValue) > 0 {
+			val = defaultValue[0]
+		}
+		return ValidFloat{val, err}
 	} else {
 		return ValidFloat{val, nil}
 	}
@@ -175,7 +195,11 @@ func (this *WebParam) GetTime(key string, format string, defaultValue ...time.Ti
 
 	val, err := time.Parse(format, val_str)
 	if err != nil {
-		return ValidTime{defaultValue[0], err}
+		val = time.Time{}
+		if len(defaultValue) > 0 {
+			val = defaultValue[0]
+		}
+		return ValidTime{val, err}
 	} else {
 		return ValidTime{val, nil}
 	}
