@@ -66,15 +66,23 @@ func create_log_file(tm time.Time, file_path string, rotate RotateType) *BufferW
 	return logFile
 }
 
+func GetDayBegin(d time.Time) time.Time {
+	return time.Date(d.Year(), d.Month(), d.Day(), 0, 0, 0, 0, d.Location())
+}
+
+func GetHourBegin(d time.Time) time.Time {
+	return time.Date(d.Year(), d.Month(), d.Day(), d.Hour(), 0, 0, 0, d.Location())
+}
+
 func (fw *FileWriter) get_cur_log_file(tm time.Time) *BufferWriter {
 	dd := tm.Unix() - fw.tm_file
 	if fw.file == nil || fw.rotate == ROTATE_DAY && dd > dayToSecs || fw.rotate == ROTATE_HOUR && dd > hourToSecs {
 		fw.close_log_file()
 		fw.file = create_log_file(tm, fw.file_path, fw.rotate)
 		if fw.rotate == ROTATE_HOUR {
-			fw.tm_file = tm.Unix() / hourToSecs * hourToSecs
+			fw.tm_file = GetHourBegin(tm).Unix()
 		} else {
-			fw.tm_file = tm.Unix() / dayToSecs * dayToSecs
+			fw.tm_file = GetDayBegin(tm).Unix()
 		}
 		return fw.file
 	}
