@@ -9,9 +9,10 @@ import (
 )
 
 var errNotFind = errors.New("not find")
+
 type ConfigSection map[string]string
 
-func (this ConfigSection) GetString (key string, defaultValue ...string) ValidString {
+func (this ConfigSection) GetString(key string, defaultValue ...string) ValidString {
 	val, has := this[key]
 	if has == false && len(defaultValue) > 0 {
 		return ValidString{defaultValue[0], errNotFind}
@@ -21,7 +22,7 @@ func (this ConfigSection) GetString (key string, defaultValue ...string) ValidSt
 	return ValidString{val, nil}
 }
 
-func (this ConfigSection) MustString (key string, defaultValue ...string) string {
+func (this ConfigSection) MustString(key string, defaultValue ...string) string {
 	return this.GetString(key, defaultValue...).Value
 }
 
@@ -35,7 +36,11 @@ func (this ConfigSection) GetBool(key string, defaultValue ...bool) ValidBool {
 
 	val, err := strconv.ParseBool(val_str)
 	if err != nil {
-		return ValidBool{defaultValue[0], err}
+		val = false
+		if len(defaultValue) > 0 {
+			val = defaultValue[0]
+		}
+		return ValidBool{val, err}
 	} else {
 		return ValidBool{val, nil}
 	}
@@ -55,7 +60,11 @@ func (this ConfigSection) GetInt(key string, defaultValue ...int) ValidInt {
 
 	val, err := strconv.Atoi(val_str)
 	if err != nil {
-		return ValidInt{defaultValue[0], err}
+		val = 0
+		if len(defaultValue) > 0 {
+			val = defaultValue[0]
+		}
+		return ValidInt{val, err}
 	} else {
 		return ValidInt{val, nil}
 	}
@@ -75,7 +84,11 @@ func (this ConfigSection) GetInt32(key string, defaultValue ...int32) ValidInt32
 
 	val, err := strconv.ParseInt(val_str, 10, 32)
 	if err != nil {
-		return ValidInt32{defaultValue[0], err}
+		val = 0
+		if len(defaultValue) > 0 {
+			val = int64(defaultValue[0])
+		}
+		return ValidInt32{int32(val), err}
 	} else {
 		return ValidInt32{int32(val), nil}
 	}
@@ -95,7 +108,11 @@ func (this ConfigSection) GetInt64(key string, defaultValue ...int64) ValidInt64
 
 	val, err := strconv.ParseInt(val_str, 10, 64)
 	if err != nil {
-		return ValidInt64{defaultValue[0], err}
+		val = 0
+		if len(defaultValue) > 0 {
+			val = int64(defaultValue[0])
+		}
+		return ValidInt64{val, err}
 	} else {
 		return ValidInt64{val, nil}
 	}
@@ -115,7 +132,11 @@ func (this ConfigSection) GetFloat(key string, defaultValue ...float64) ValidFlo
 
 	val, err := strconv.ParseFloat(val_str, 64)
 	if err != nil {
-		return ValidFloat{defaultValue[0], err}
+		val = 0
+		if len(defaultValue) > 0 {
+			val = defaultValue[0]
+		}
+		return ValidFloat{val, err}
 	} else {
 		return ValidFloat{val, nil}
 	}
@@ -135,7 +156,11 @@ func (this ConfigSection) GetTime(key string, format string, defaultValue ...tim
 
 	val, err := time.Parse(format, val_str)
 	if err != nil {
-		return ValidTime{defaultValue[0], err}
+		val = time.Time{}
+		if len(defaultValue) > 0 {
+			val = defaultValue[0]
+		}
+		return ValidTime{val, err}
 	} else {
 		return ValidTime{val, nil}
 	}
@@ -145,7 +170,7 @@ func (this ConfigSection) MustTime(key string, format string, defaultValue ...ti
 	return this.GetTime(key, format, defaultValue...).Value
 }
 
-func (this ConfigSection) GetStrings (key string, delim string) ([]string, error) {
+func (this ConfigSection) GetStrings(key string, delim string) ([]string, error) {
 	str_data, has := this[key]
 	if has == false {
 		return []string{}, errNotFind
@@ -157,7 +182,7 @@ func (this ConfigSection) GetStrings (key string, delim string) ([]string, error
 	return strs, nil
 }
 
-func (this ConfigSection) GetBools (key string, delim string) ([]bool, error) {
+func (this ConfigSection) GetBools(key string, delim string) ([]bool, error) {
 	strs, err := this.GetStrings(key, delim)
 	if err != nil {
 		return []bool{}, err
@@ -174,7 +199,7 @@ func (this ConfigSection) GetBools (key string, delim string) ([]bool, error) {
 	return vals, nil
 }
 
-func (this ConfigSection) GetInts (key string, delim string) ([]int, error) {
+func (this ConfigSection) GetInts(key string, delim string) ([]int, error) {
 	strs, err := this.GetStrings(key, delim)
 	if err != nil {
 		return []int{}, err
@@ -191,7 +216,7 @@ func (this ConfigSection) GetInts (key string, delim string) ([]int, error) {
 	return vals, nil
 }
 
-func (this ConfigSection) GetInt64s (key string, delim string) ([]int64, error) {
+func (this ConfigSection) GetInt64s(key string, delim string) ([]int64, error) {
 	strs, err := this.GetStrings(key, delim)
 	if err != nil {
 		return []int64{}, err
@@ -208,7 +233,7 @@ func (this ConfigSection) GetInt64s (key string, delim string) ([]int64, error) 
 	return vals, nil
 }
 
-func (this ConfigSection) GetFloats (key string, delim string) ([]float64, error) {
+func (this ConfigSection) GetFloats(key string, delim string) ([]float64, error) {
 	strs, err := this.GetStrings(key, delim)
 	if err != nil {
 		return []float64{}, err
@@ -216,7 +241,7 @@ func (this ConfigSection) GetFloats (key string, delim string) ([]float64, error
 	vals := make([]float64, len(strs))
 	for i, str := range strs {
 		str = strings.Trim(str, " ")
-		val, err := strconv.ParseFloat(str,  64)
+		val, err := strconv.ParseFloat(str, 64)
 		if err != nil {
 			return []float64{}, err
 		}
@@ -225,7 +250,7 @@ func (this ConfigSection) GetFloats (key string, delim string) ([]float64, error
 	return vals, nil
 }
 
-func (this ConfigSection)getStringByTag (tag TagInfo) (string, error) {
+func (this ConfigSection) getStringByTag(tag TagInfo) (string, error) {
 	str_data, has := this[tag.FieldName]
 	if has == false && tag.HasValue {
 		str_data = tag.DefValue
@@ -235,36 +260,36 @@ func (this ConfigSection)getStringByTag (tag TagInfo) (string, error) {
 	return str_data, nil
 }
 
-func (this ConfigSection)getBoolByTag (tag TagInfo) (bool, error) {
+func (this ConfigSection) getBoolByTag(tag TagInfo) (bool, error) {
 	str_data, err := this.getStringByTag(tag)
-	if err != nil  {
+	if err != nil {
 		return false, err
 	}
 	return strconv.ParseBool(str_data)
 }
 
-func (this ConfigSection)getIntByTag (tag TagInfo) (int, error) {
+func (this ConfigSection) getIntByTag(tag TagInfo) (int, error) {
 	str_data, err := this.getStringByTag(tag)
-	if err != nil  {
+	if err != nil {
 		return 0, err
 	}
 	return strconv.Atoi(str_data)
 }
 
-func (this ConfigSection)getInt64ByTag (tag TagInfo) (int64, error) {
+func (this ConfigSection) getInt64ByTag(tag TagInfo) (int64, error) {
 	str_data, err := this.getStringByTag(tag)
-	if err != nil  {
+	if err != nil {
 		return 0, err
 	}
 	return strconv.ParseInt(str_data, 10, 64)
 }
 
-func (this ConfigSection)getFloatByTag (tag TagInfo) (float64, error) {
+func (this ConfigSection) getFloatByTag(tag TagInfo) (float64, error) {
 	str_data, err := this.getStringByTag(tag)
-	if err != nil  {
+	if err != nil {
 		return 0, err
 	}
-	return strconv.ParseFloat(str_data,  64)
+	return strconv.ParseFloat(str_data, 64)
 }
 
 func (this ConfigSection) GetStruct(ptr interface{}) error {
@@ -285,7 +310,7 @@ func (this ConfigSection) GetStruct(ptr interface{}) error {
 
 	t_ent := v_ent.Type()
 	f_num := t_ent.NumField()
-	for i:=0; i < f_num; i++{
+	for i := 0; i < f_num; i++ {
 		ff := t_ent.Field(i)
 		tag_info := GetTagInfo(ff, "ini")
 		if tag_info.FieldName == "" {

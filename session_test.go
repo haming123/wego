@@ -19,8 +19,8 @@ func TestSessionInfo(t *testing.T) {
 
 type User struct {
 	Name string
-	ID int64
-	Age int
+	ID   int64
+	Age  int
 }
 
 func TestSessionInfoStruct(t *testing.T) {
@@ -42,3 +42,8 @@ func TestSessionInfoStruct(t *testing.T) {
 	t.Log(user2)
 }
 
+func TestSessionID(t *testing.T) {
+	t.Log(seq_no)
+	t.Log(CreateSidTmp())
+	t.Log(CreateSid())
+}

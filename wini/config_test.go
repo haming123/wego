@@ -56,21 +56,21 @@ func TestIniGetXXX(t *testing.T) {
 	}
 	t.Log(val.Value)
 
-	val_bool := cfg.GetString("bool_value")
+	val_bool := cfg.GetBool("bool_value")
 	if val.Error != nil {
 		t.Error(val_bool.Error)
 		return
 	}
 	t.Log(val_bool.Value)
 
-	val_int := cfg.GetString("int_value")
+	val_int := cfg.GetInt("int_value")
 	if val.Error != nil {
 		t.Error(val_int.Error)
 		return
 	}
 	t.Log(val_int.Value)
 
-	val_float := cfg.GetString("float_value")
+	val_float := cfg.GetFloat("float_value")
 	if val.Error != nil {
 		t.Error(val_float.Error)
 		return
@@ -88,7 +88,7 @@ func TestIniMustXXX(t *testing.T) {
 
 	t.Log(cfg.MustString("str_value"))
 	t.Log(cfg.MustBool("bool_value"))
-	t.Log(cfg.MustInt("int_value"))
+	t.Log(cfg.MustInt("int_value", 222))
 	t.Log(cfg.MustFloat("float_value"))
 }
 
@@ -108,16 +108,16 @@ func TestGetArray(t *testing.T) {
 	t.Log(arr)
 }
 
-func GetIndentJson(ent interface{}) string{
+func GetIndentJson(ent interface{}) string {
 	data, _ := json.MarshalIndent(ent, "", "    ")
 	return string(data)
 }
 
 type DbConfig struct {
-	MysqlHost 	string 		`ini:"db_host"`
-	MysqlUser 	string 		`ini:"db_user"`
-	MysqlPwd  	string 		`ini:"db_pwd"`
-	MysqlDb   	string 		`ini:"db_name"`
+	MysqlHost string `ini:"db_host"`
+	MysqlUser string `ini:"db_user"`
+	MysqlPwd  string `ini:"db_pwd"`
+	MysqlDb   string `ini:"db_name"`
 }
 
 type AppConfig struct {
@@ -160,7 +160,6 @@ func TestIniGetSectionStruct(t *testing.T) {
 	}
 	t.Log(data)
 }
-
 
 func TestSaveConfig(t *testing.T) {
 	cur_path, err := os.Getwd()
