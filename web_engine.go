@@ -19,21 +19,21 @@ type ShutdownFunc func()
 type WebEngine struct {
 	RouteGroup
 	//路由树对象
-	Route 		RouteTree
+	Route RouteTree
 	//html tepmplates缓存
-	Templates 	WebTemplates
+	Templates WebTemplates
 	//session引擎
-	Session 	SessionEngine
+	Session SessionEngine
 	//配置参数
-	Config 		WebConfig
+	Config WebConfig
 	//查找路由前的hook
 	beforeRoute HandlerFunc
 	//WebContext对象池
-	ctxPool    	sync.Pool
+	ctxPool sync.Pool
 	//服务关闭
-	onShutdown 	ShutdownFunc
+	onShutdown ShutdownFunc
 	//获取Ip的header
-	IPHeaders	[]string
+	IPHeaders []string
 	//hanlder for 401
 	hanlder_401 HandlerFunc
 	//hanlder for 404
@@ -41,7 +41,7 @@ type WebEngine struct {
 	//hanlder for 500
 	hanlder_500 HandlerFunc
 	//route info for 404
-	route_info_404	*RouteInfo
+	route_info_404 *RouteInfo
 }
 
 func (web *WebEngine) BeforRouter(handler HandlerFunc) {
@@ -52,15 +52,15 @@ func (web *WebEngine) SetShutdown(hook ShutdownFunc) {
 	web.onShutdown = hook
 }
 
-func (web *WebEngine)SetHandler401(handler HandlerFunc) {
+func (web *WebEngine) SetHandler401(handler HandlerFunc) {
 	web.hanlder_401 = handler
 }
 
-func (web *WebEngine)SetHandler404(handler HandlerFunc) {
+func (web *WebEngine) SetHandler404(handler HandlerFunc) {
 	web.hanlder_404 = handler
 }
 
-func (web *WebEngine)SetHandler500(handler HandlerFunc) {
+func (web *WebEngine) SetHandler500(handler HandlerFunc) {
 	web.hanlder_500 = handler
 }
 
@@ -70,10 +70,10 @@ func HandlerNull(c *WebContext) {
 
 //缺省404handler
 func default_not_fund(c *WebContext) {
-	c.WriteText(http.StatusNotFound, "404 NOT FOUND: " + c.Input.Request.URL.Path)
+	c.WriteText(http.StatusNotFound, "404 NOT FOUND: "+c.Input.Request.URL.Path)
 }
 
-func (web *WebEngine)InitRoute404() {
+func (web *WebEngine) InitRoute404() {
 	rinfo := &RouteInfo{}
 	rinfo.handler_type = FT_CTX_HANDLER
 	rinfo.handler_ctx = default_not_fund
@@ -104,7 +104,7 @@ func NewWeb() (*WebEngine, error) {
 
 	//设置Config的缺省值
 	err := web.Config.GetStruct(&web.Config)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
@@ -114,7 +114,7 @@ func NewWeb() (*WebEngine, error) {
 
 	//初始化dlog
 	err = web.Config.InitDlog()
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
@@ -124,7 +124,7 @@ func NewWeb() (*WebEngine, error) {
 func InitWeb(file_name ...string) (*WebEngine, error) {
 	web := newEngine()
 	err := web.Config.LoadConfig(file_name...)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
@@ -142,7 +142,7 @@ func InitWeb(file_name ...string) (*WebEngine, error) {
 
 	//初始化dlog
 	err = web.Config.InitDlog()
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
@@ -152,19 +152,19 @@ func InitWeb(file_name ...string) (*WebEngine, error) {
 func (web *WebEngine) initModule() error {
 	//klog初始化
 	err := web.Config.InitKlog()
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
 	//初始化缓存store
 	err = web.Config.InitCache()
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
 	//session初始化
 	err = web.Config.InitSession(&web.Session)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -212,8 +212,8 @@ func gracefullShutdown(server *http.Server, quit chan<- bool) {
 	close(quit)
 }
 
-func (web *WebEngine)nweHttpSever(addr string) *http.Server {
-	server := &http.Server{ Addr: addr, Handler:web}
+func (web *WebEngine) nweHttpSever(addr string) *http.Server {
+	server := &http.Server{Addr: addr, Handler: web}
 	if web.Config.ServerParam.ReadTimeout > 0 {
 		server.ReadTimeout = time.Duration(web.Config.ServerParam.ReadTimeout) * time.Second
 	}
@@ -307,7 +307,7 @@ func (web *WebEngine) cleanAndRedirect(c *WebContext) bool {
 	return false
 }
 
-func (web *WebEngine)shouldCompress(req *http.Request) bool {
+func (web *WebEngine) shouldCompress(req *http.Request) bool {
 	if !strings.Contains(req.Header.Get("Accept-Encoding"), "gzip") {
 		return false
 	}
@@ -380,10 +380,10 @@ func (web *WebEngine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if c.Route.hook_flag != 1 && c.Route.hook_flag != 3 {
 		if c.Route.before_func != nil {
 			c.Route.before_func(c)
-			debug_log.Debug("call BeforeExec function")
+			debug_log.Debug("call BeforeExec function for " + c.Route.func_name)
 		} else if c.Route.before_mthd != nil {
 			c.Route.before_mthd.BeforeExec(c)
-			debug_log.Debug("call BeforeExec method")
+			debug_log.Debug("call BeforeExec method for " + c.Route.func_name)
 		}
 	}
 
@@ -403,10 +403,10 @@ func (web *WebEngine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if c.Route.hook_flag != 2 && c.Route.hook_flag != 3 {
 		if c.Route.after_func != nil {
 			c.Route.after_func(c)
-			debug_log.Debug("call AfterExec function")
+			debug_log.Debug("call AfterExec function for " + c.Route.func_name)
 		} else if c.Route.after_mthd != nil {
 			c.Route.after_mthd.AfterExec(c)
-			debug_log.Debug("call AfterExec method")
+			debug_log.Debug("call AfterExec method for " + c.Route.func_name)
 		}
 	}
 
