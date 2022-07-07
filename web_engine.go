@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	log "github.com/haming123/wego/dlog"
+	"github.com/haming123/wego/klog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,8 +13,6 @@ import (
 	"sync"
 	"syscall"
 	"time"
-	log "github.com/haming123/wego/dlog"
-	"github.com/haming123/wego/klog"
 )
 
 type ShutdownFunc func()
@@ -377,12 +377,14 @@ func (web *WebEngine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	//执行BeforeExec钩子
 	//优先执行函数钩子，再者是struct钩子，再者是group钩子
-	if c.Route.before_func != nil {
-		c.Route.before_func(c)
-		debug_log.Debug("call BeforeExec function")
-	} else if c.Route.before_mthd != nil {
-		c.Route.before_mthd.BeforeExec(c)
-		debug_log.Debug("call BeforeExec method")
+	if c.Route.hook_flag != 1 && c.Route.hook_flag != 3 {
+		if c.Route.before_func != nil {
+			c.Route.before_func(c)
+			debug_log.Debug("call BeforeExec function")
+		} else if c.Route.before_mthd != nil {
+			c.Route.before_mthd.BeforeExec(c)
+			debug_log.Debug("call BeforeExec method")
+		}
 	}
 
 	//执行过滤器
@@ -398,12 +400,14 @@ func (web *WebEngine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	//执行AfterExe钩子
 	//优先执行函数钩子，再者是struct钩子，再者是group钩子
-	if c.Route.after_func != nil {
-		c.Route.after_func(c)
-		debug_log.Debug("call AfterExec function")
-	} else if c.Route.after_mthd != nil {
-		c.Route.after_mthd.AfterExec(c)
-		debug_log.Debug("call AfterExec method")
+	if c.Route.hook_flag != 2 && c.Route.hook_flag != 3 {
+		if c.Route.after_func != nil {
+			c.Route.after_func(c)
+			debug_log.Debug("call AfterExec function")
+		} else if c.Route.after_mthd != nil {
+			c.Route.after_mthd.AfterExec(c)
+			debug_log.Debug("call AfterExec method")
+		}
 	}
 
 	err := c.Output.Flush()

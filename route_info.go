@@ -15,11 +15,11 @@ type AfterExecer interface {
 
 type RouteInfo struct {
 	group        *RouteGroup
-	route_type 	 nodeType
+	route_type   nodeType
 	pattern      string
 	filters      []FilterInfo
 	before_func  HandlerFunc
-	before_mthd	 BeforeExecer
+	before_mthd  BeforeExecer
 	after_func   HandlerFunc
 	after_mthd   AfterExecer
 	handler_type HandlerType
@@ -28,6 +28,7 @@ type RouteInfo struct {
 	handler_ctl  reflect.Value
 	handler_name string
 	func_name    string
+	hook_flag    int
 }
 
 func (r *RouteInfo) BeforExec(handler HandlerFunc) *RouteInfo {
@@ -42,4 +43,16 @@ func (r *RouteInfo) AfterExec(handler HandlerFunc) *RouteInfo {
 
 func (r *RouteInfo) GetHandlerName() string {
 	return r.handler_name
+}
+
+func (r *RouteInfo) SkipBeforHook() {
+	r.hook_flag = 1
+}
+
+func (r *RouteInfo) SkipAfterHook() {
+	r.hook_flag = 2
+}
+
+func (r *RouteInfo) SkipHook() {
+	r.hook_flag = 3
 }
