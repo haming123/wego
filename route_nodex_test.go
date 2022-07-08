@@ -226,8 +226,8 @@ func TestGetRouteNotMatch2(t *testing.T) {
 
 func TestGetRoute5(t *testing.T) {
 	var r TreeNodeX
-	r.AddRoute("GET", "/docs/:name", &RouteInfo{handler_ctx: web_hello})
-	r.AddRoute("GET", "/docs/demo/:name", &RouteInfo{handler_ctx: web_hello_dir})
+	r.AddRoute("GET", "/docs/:name", &RouteInfo{handler_ctx: web_hello, func_name: "/docs/:name"})
+	r.AddRoute("GET", "/docs/demo/:name", &RouteInfo{handler_ctx: web_hello, func_name: "/docs/demo/:name"})
 	ctx := new(WebContext)
 
 	path := "/docs/dlog"
