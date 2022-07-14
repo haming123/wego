@@ -15,127 +15,139 @@ import (
 
 type ServerConfig struct {
 	//是否启用 HTTPS，默认是false
-	UseHttps 		bool			`ini:"use_https"`
+	UseHttps bool `ini:"use_https"`
 	//Http监听地址，默认为空
-	HttpAddr 		string			`ini:"http_addr"`
+	HttpAddr string `ini:"http_addr"`
 	//Http监听端口，默认为 8080
-	HttpPort     	uint          	`ini:"http_port;default=8080"`
+	HttpPort uint `ini:"http_port;default=8080"`
 	//Https监听地址，默认为空
-	HttpsAddr 		string			`ini:"https_addr"`
+	HttpsAddr string `ini:"https_addr"`
 	//Https监听端口，默认为 10443
-	HttpsPort     	uint          	`ini:"https_port;default=10443"`
+	HttpsPort uint `ini:"https_port;default=10443"`
 	//HTTPS证书路径
-	HttpsCertFile 	string			`ini:"cert_file"`
+	HttpsCertFile string `ini:"cert_file"`
 	//HTTPS证书 keyfile 的路径
-	HttpsKeyFile 	string			`ini:"key_file"`
+	HttpsKeyFile string `ini:"key_file"`
 	//设置 HTTP 的超时时间
-	ReadTimeout 	time.Duration	`ini:"read_timeout"`
+	ReadTimeout time.Duration `ini:"read_timeout"`
 	//设置 HTTP 的超时时间
-	WriteTimeout 	time.Duration	`ini:"write_timeout"`
+	WriteTimeout time.Duration `ini:"write_timeout"`
 	//POST请求的默认内存缓存大小，单位：M
-	MaxBody 		int64			`ini:"max_body"`
+	MaxBody int64 `ini:"max_body"`
 	//是否开启 gzip，输出的内容会进行 gzip，根据Accept-Encoding来判断
-	EnableGzip 		bool			`ini:"gzip_on"`
+	EnableGzip bool `ini:"gzip_on"`
 	//压缩长度阈值，只有超过gzip_size的会被压缩返回
-	GzipSize 		int64			`ini:"gzip_size"`
+	GzipSize int64 `ini:"gzip_size"`
 }
 
 type SessionConfig struct {
 	//缓是否开启session, 默认为 false
-	SessionOn 		bool			`ini:"session_on"`
+	SessionOn bool `ini:"session_on"`
 	//session类型：cookie、cache
-	SessionStore 	string			`ini:"session_store;default=cookie"`
+	SessionStore string `ini:"session_store;default=cookie"`
 	//客户端的cookie的名称前缀
-	CookieName		string			`ini:"cookie_name;default=wego"`
+	CookieName string `ini:"cookie_name;default=wego"`
 	//保存session数据的cookie域名, 默认空
-	Domain 			string			`ini:"domain"`
+	Domain string `ini:"domain"`
 	//session 过期时间，单位：秒，默认值是3600
-	LifeTime    	uint			`ini:"life_time;default=3600"`
+	LifeTime uint `ini:"life_time;default=3600"`
 	//设置cookie的SameSite属性
-	SameSite 		http.SameSite	`ini:"samesite"`
+	SameSite http.SameSite `ini:"samesite"`
 	//session数据的hash字符串,若session的存储类型为cookie,则必须提供
-	HashKey 		string			`ini:"hash_key"`
+	HashKey string `ini:"hash_key"`
 }
 
 type MemoryDbConfig struct {
 	//用于缓存的内存大小，单位：M, 缺省：0（不限制）
-	MaxSize			uint64			`ini:"max_size"`
+	MaxSize uint64 `ini:"max_size"`
 }
 
 type RedisConfig struct {
 	//Redis地址
-	Address			string			`ini:"address"`
+	Address string `ini:"address"`
 	//Redis登录密码
-	DbPwd 			string			`ini:"db_pwd"`
+	DbPwd string `ini:"db_pwd"`
 	//Redis数据库号码
-	DbNum 			int				`ini:"db_num"`
+	DbNum int `ini:"db_num"`
 }
 
 type MemcacheConfig struct {
 	//逗号分隔的 memcached 主机列表
-	Address			string			`ini:"address"`
+	Address string `ini:"address"`
 }
 
 type DlogConfig struct {
 	//日志输出类型配置，0 终端 1 文件
-	Output			int				`ini:"output"`
+	Output int `ini:"output"`
 	//日志输出级别: 0 OFF 1 FATAL 2 ERROR 3 WARN 4 INFO 5 DEBUG
-	Level 			int				`ini:"level;default=5"`
+	Level int `ini:"level;default=5"`
 	//日志文件存储路径，缺省：logs
-	Path 			string			`ini:"path;default=logs"`
+	Path string `ini:"path;default=logs"`
 	//是否在日志里面显示源码文件名和行号，默认 true
-	ShowCaller 		bool			`ini:"show_caller;default=true"`
+	ShowCaller bool `ini:"show_caller;default=true"`
 	//是否将json、xml展开显示
-	ShowIndent 		bool			`ini:"show_indent;default=true"`
+	ShowIndent bool `ini:"show_indent;default=true"`
 }
 
 type KlogConfig struct {
 	//是否开启Klog, 默认为 false
-	KlognOn 		bool			`ini:"klog_on"`
+	KlognOn bool `ini:"klog_on"`
 	//日志文件存储路径，缺省：logs
-	Path 			string			`ini:"path;default=logs"`
+	Path string `ini:"path;default=logs"`
 	//文件轮换类型：0 天 1 小时
-	Rotate 			int				`ini:"rotate"`
+	Rotate int `ini:"rotate"`
 }
 
 type WebConfig struct {
 	wini.ConfigData
 	//应用名称
-	AppName      	string        	`ini:"app_name"`
+	AppName string `ini:"app_name"`
 	//服务器名称
-	ServerName 		string			`ini:"server_name"`
+	ServerName string `ini:"server_name"`
 	//缓是否开启缓存
-	CacheOn 		bool			`ini:"cache_on"`
+	CacheOn bool `ini:"cache_on"`
 	//cache类型：redis、memcache、memory
-	CacheStore 		string			`ini:"cache_store;default=memory"`
+	CacheStore string `ini:"cache_store;default=memory"`
 	//是否显示请求日志，默认为 true
-	ShowUrlLog		bool			`ini:"show_url_log;default=true"`
+	ShowUrlLog bool `ini:"show_url_log;default=true"`
 	//是否显示请求日志，默认为 true
-	ShowSqlLog		bool			`ini:"show_sql_log;default=true"`
+	ShowSqlLog bool `ini:"show_sql_log;default=true"`
 	//设置调试日志级别：0 OFF 1 FATAL 2 ERROR 3 WARN 4 INFO 5 DEBUG
-	ShowDebugLog	int				`ini:"show_debug_log"`
+	ShowDebugLog int `ini:"show_debug_log"`
 	//防JSON劫持的前缀字符串
-	JsonPrefix		string			`ini:"json_prefix"`
+	JsonPrefix string `ini:"json_prefix"`
 	//获取client ip的header
-	IPHeader		string			`ini:"ip_header"`
+	IPHeader string `ini:"ip_header"`
 	//Web服务配置
-	ServerParam 	ServerConfig 	`ini:"server"`
+	ServerParam ServerConfig `ini:"server"`
 	//Session配置
-	SessionParam 	SessionConfig 	`ini:"session"`
+	SessionParam SessionConfig `ini:"session"`
 	//内存缓存配置
-	MemoryDbParam 	MemoryDbConfig 	`ini:"memory"`
+	MemoryDbParam MemoryDbConfig `ini:"memory"`
 	//Redis缓存配置
-	RedisParam 		RedisConfig 	`ini:"redis"`
+	RedisParam RedisConfig `ini:"redis"`
 	//Memcache缓存配置
-	MemcacheParam 	MemcacheConfig 	`ini:"memcache"`
+	MemcacheParam MemcacheConfig `ini:"memcache"`
 	//日志模块配置
-	DlogParam    	DlogConfig    	`ini:"dlog"`
+	DlogParam DlogConfig `ini:"dlog"`
 	//统计日志配置
-	KlogParam    	KlogConfig    	`ini:"klog"`
+	KlogParam KlogConfig `ini:"klog"`
 }
 
 //加载配置文件
-func (this *WebConfig)LoadConfig(file_name ...string) error {
+func getDefaultConfigFile() string {
+	cur_path, _ := os.Getwd()
+	fileName := "app.conf"
+	file_path := filepath.Join(cur_path, fileName)
+	if _, err := os.Stat(file_path); err == nil {
+		return fileName
+	} else {
+		return ""
+	}
+}
+
+//加载配置文件
+func (this *WebConfig) LoadConfig(file_name ...string) error {
 	fileName := "app.conf"
 	if len(file_name) > 0 {
 		fileName = file_name[0]
@@ -162,7 +174,7 @@ func (this *WebConfig)LoadConfig(file_name ...string) error {
 }
 
 //通过配置参数初始化Dlog
-func(this *WebConfig)InitDlog() error {
+func (this *WebConfig) InitDlog() error {
 	cfg := this.DlogParam
 	if cfg.Output == 1 && len(cfg.Path) < 1 {
 		return errors.New("log path is empty")
@@ -181,14 +193,14 @@ func(this *WebConfig)InitDlog() error {
 	}
 	str_log += " level=" + log.Level(cfg.Level).String()
 	if len(cfg.Path) > 0 {
-		str_log +=" path=" + cfg.Path
+		str_log += " path=" + cfg.Path
 	}
 	debug_log.Info(str_log)
 	return nil
 }
 
 //通过配置参数初始化Dlog
-func(this *WebConfig)InitKlog() error {
+func (this *WebConfig) InitKlog() error {
 	cfg := this.KlogParam
 	if cfg.KlognOn == false {
 		return nil
@@ -206,14 +218,14 @@ func(this *WebConfig)InitKlog() error {
 		str_log = "init klog output=hour"
 	}
 	if len(cfg.Path) > 0 {
-		str_log +=" path=" + cfg.Path
+		str_log += " path=" + cfg.Path
 	}
 	debug_log.Info(str_log)
 	return nil
 }
 
 //通过配置参数初创建CookieStore
-func (this *WebConfig)NewCookieStore() (cache.CacheStore, error) {
+func (this *WebConfig) NewCookieStore() (cache.CacheStore, error) {
 	cfg_store := this.SessionParam
 	if len(cfg_store.HashKey) < 1 {
 		return nil, errors.New("hash_key is empty")
@@ -229,7 +241,7 @@ func (this *WebConfig)NewCookieStore() (cache.CacheStore, error) {
 }
 
 //通过配置参数初创建RedisStore
-func (this *WebConfig)NewRedisStore() (cache.CacheStore, error) {
+func (this *WebConfig) NewRedisStore() (cache.CacheStore, error) {
 	cfg_store := this.RedisParam
 	if len(cfg_store.Address) < 1 {
 		return nil, errors.New("redis address is empty")
@@ -239,7 +251,7 @@ func (this *WebConfig)NewRedisStore() (cache.CacheStore, error) {
 }
 
 //通过配置参数初创建MemcacheStore
-func (this *WebConfig)NewMemcacheStore() (cache.CacheStore, error) {
+func (this *WebConfig) NewMemcacheStore() (cache.CacheStore, error) {
 	cfg_store := this.MemcacheParam
 	if len(cfg_store.Address) < 1 {
 		return nil, errors.New("memcached address is empty")
@@ -250,7 +262,7 @@ func (this *WebConfig)NewMemcacheStore() (cache.CacheStore, error) {
 }
 
 //通过配置参数初创建MemoryStore
-func (this *WebConfig)NewMemoryStore() (cache.CacheStore, error) {
+func (this *WebConfig) NewMemoryStore() (cache.CacheStore, error) {
 	cfg_store := this.MemoryDbParam
 	max_size := cfg_store.MaxSize * 1024 * 1024
 	store := cache.NewMemoryStore(max_size)
@@ -258,7 +270,7 @@ func (this *WebConfig)NewMemoryStore() (cache.CacheStore, error) {
 }
 
 //通过配置参数初始化Cache
-func (this *WebConfig)InitCache() error {
+func (this *WebConfig) InitCache() error {
 	if this.CacheOn == false {
 		return nil
 	}
@@ -287,7 +299,7 @@ func (this *WebConfig)InitCache() error {
 }
 
 //通过配置参数初始化Session
-func (this *WebConfig)InitSession(sess *SessionEngine) error {
+func (this *WebConfig) InitSession(sess *SessionEngine) error {
 	cfg_sess := this.SessionParam
 	if cfg_sess.SessionOn == false {
 		return nil
@@ -301,7 +313,7 @@ func (this *WebConfig)InitSession(sess *SessionEngine) error {
 		sess.Init(store)
 	} else {
 		store := cache.GetCacheStore()
-		if store== nil {
+		if store == nil {
 			return errors.New("cache store is nil")
 		}
 		sess.Init(store)

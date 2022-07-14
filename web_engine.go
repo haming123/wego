@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
@@ -109,10 +108,9 @@ func NewWeb() (*WebEngine, error) {
 		return nil, err
 	}
 
+	web.Config.JsonPrefix = "while(1);"
 	//设置模块的调试日志的显示
 	SetDebugLogLevel(Level(web.Config.ShowDebugLog))
-	klog.SetDebugLogLevel(klog.Level(web.Config.ShowDebugLog))
-
 	//初始化dlog
 	err = web.Config.InitDlog()
 	if err != nil {
@@ -122,32 +120,11 @@ func NewWeb() (*WebEngine, error) {
 	return web, nil
 }
 
-func InitWeb(file_name ...string) (*WebEngine, error) {
+func InitWebWithFile(file_name string) (*WebEngine, error) {
 	web := newEngine()
-
-	//读取配置文件
-	if len(file_name) > 0 {
-		fileName := file_name[0]
-		err := web.Config.LoadConfig(fileName)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		cur_path, _ := os.Getwd()
-		file_path := filepath.Join(cur_path, "app.conf")
-		if _, err := os.Stat(file_path); err == nil {
-			//若存在缺省文件，加载缺省配置文件
-			err := web.Config.LoadConfig("app.conf")
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			//若不存在缺省文件，则初始化为缺省配置
-			err := web.Config.ConfigData.GetStruct(&web.Config)
-			if err != nil {
-				return nil, err
-			}
-		}
+	err := web.Config.LoadConfig(file_name)
+	if err != nil {
+		return nil, err
 	}
 
 	//参数处理
@@ -158,15 +135,30 @@ func InitWeb(file_name ...string) (*WebEngine, error) {
 		web.IPHeaders = strings.Split(web.Config.IPHeader, ",")
 	}
 
-	//设置web调试日志的显示
+	//设置模块的调试日志的显示
 	SetDebugLogLevel(Level(web.Config.ShowDebugLog))
 	//初始化dlog
-	err := web.Config.InitDlog()
+	err = web.Config.InitDlog()
 	if err != nil {
 		return nil, err
 	}
 
 	return web, nil
+}
+
+func InitWeb(file_name ...string) (*WebEngine, error) {
+	fname := ""
+	if len(file_name) > 0 {
+		fname = file_name[0]
+	}
+	if fname == "" {
+		fname = getDefaultConfigFile()
+	}
+	if fname == "" {
+		return NewWeb()
+	} else {
+		return InitWebWithFile(fname)
+	}
 }
 
 func (web *WebEngine) initModule() error {
