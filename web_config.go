@@ -164,7 +164,7 @@ func (this *WebConfig)LoadConfig(file_name ...string) error {
 //通过配置参数初始化Dlog
 func(this *WebConfig)InitDlog() error {
 	cfg := this.DlogParam
-	if len(cfg.Path) < 1 {
+	if cfg.Output == 1 && len(cfg.Path) < 1 {
 		return errors.New("log path is empty")
 	}
 	if cfg.Output == 1 {
