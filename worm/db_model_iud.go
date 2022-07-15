@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-func (md *DbModel)GetFieldFlag4Insert(i int) bool {
+func (md *DbModel) GetFieldFlag4Insert(i int) bool {
 	if md.flds_addr[i].Flag == false {
 		return false
 	}
@@ -24,11 +24,11 @@ func (md *DbModel) get_fieldaddr_insert() []interface{} {
 		if md.GetFieldFlag4Insert(i) == false {
 			continue
 		}
-		cc+=1
+		cc += 1
 	}
 
 	index := 0
-	vals:= make([]interface{}, cc)
+	vals := make([]interface{}, cc)
 	for i, _ := range md.flds_addr {
 		if md.GetFieldFlag4Insert(i) == false {
 			continue
@@ -39,7 +39,7 @@ func (md *DbModel) get_fieldaddr_insert() []interface{} {
 	return vals
 }
 
-func (md *DbModel)insertWithOutput() (int64, error) {
+func (md *DbModel) insertWithOutput() (int64, error) {
 	if md.Err != nil {
 		return 0, md.Err
 	}
@@ -74,8 +74,8 @@ func (md *DbModel)insertWithOutput() (int64, error) {
 	return id, nil
 }
 
-func (md *DbModel)exec_insert() (int64, error) {
-	if md.db_ptr.engine.db_dialect.ModelInsertHasOutput(md){
+func (md *DbModel) exec_insert() (int64, error) {
+	if md.db_ptr.engine.db_dialect.ModelInsertHasOutput(md) {
 		return md.insertWithOutput()
 	}
 
@@ -105,7 +105,7 @@ func (md *DbModel)exec_insert() (int64, error) {
 	return id, nil
 }
 
-func (md *DbModel)Insert(args ...interface{}) (int64, error) {
+func (md *DbModel) Insert(args ...interface{}) (int64, error) {
 	if md.auto_put && md.md_pool != nil {
 		pool := md.split_pool()
 		defer md.put_pool(pool)
@@ -149,7 +149,7 @@ func (md *DbModel)Insert(args ...interface{}) (int64, error) {
 	return md.exec_insert()
 }
 
-func (md *DbModel)GetFieldFlag4Update(i int) bool {
+func (md *DbModel) GetFieldFlag4Update(i int) bool {
 	if md.flds_addr[i].Flag == false {
 		return false
 	}
@@ -162,17 +162,17 @@ func (md *DbModel)GetFieldFlag4Update(i int) bool {
 	return true
 }
 
-func (md *DbModel)get_fieldaddr_update() []interface{} {
+func (md *DbModel) get_fieldaddr_update() []interface{} {
 	cc := 0
 	for i, _ := range md.flds_addr {
 		if md.GetFieldFlag4Update(i) == false {
 			continue
 		}
-		cc+=1
+		cc += 1
 	}
 
 	index := 0
-	vals:= make([]interface{}, cc)
+	vals := make([]interface{}, cc)
 	for i, _ := range md.flds_addr {
 		if md.GetFieldFlag4Update(i) == false {
 			continue
@@ -183,13 +183,13 @@ func (md *DbModel)get_fieldaddr_update() []interface{} {
 	return vals
 }
 
-func (md *DbModel)exec_update() (int64, error) {
+func (md *DbModel) exec_update() (int64, error) {
 	if md.Err != nil {
 		return 0, md.Err
 	}
 
 	if len(md.db_where.Tpl_sql) < 1 {
-		return  0, errors.New("no where clause")
+		return 0, errors.New("no where clause")
 	}
 
 	if hook, ok := md.ent_ptr.(BeforeUpdateInterface); ok {
@@ -209,13 +209,13 @@ func (md *DbModel)exec_update() (int64, error) {
 	}
 
 	num, err := res.RowsAffected()
-	if err != nil{
+	if err != nil {
 		return 0, err
 	}
 	return num, nil
 }
 
-func (md *DbModel)Update(args ...interface{}) (int64, error) {
+func (md *DbModel) Update(args ...interface{}) (int64, error) {
 	if md.auto_put && md.md_pool != nil {
 		pool := md.split_pool()
 		defer md.put_pool(pool)
@@ -259,7 +259,7 @@ func (md *DbModel)Update(args ...interface{}) (int64, error) {
 	return md.exec_update()
 }
 
-func (md *DbModel)Delete() (int64, error) {
+func (md *DbModel) Delete() (int64, error) {
 	if md.auto_put && md.md_pool != nil {
 		pool := md.split_pool()
 		defer md.put_pool(pool)
@@ -269,7 +269,7 @@ func (md *DbModel)Delete() (int64, error) {
 	}
 
 	if len(md.db_where.Tpl_sql) < 1 {
-		return  0, errors.New("no where clause")
+		return 0, errors.New("no where clause")
 	}
 
 	if hook, ok := md.ent_ptr.(BeforeDeleteInterface); ok {
@@ -287,33 +287,33 @@ func (md *DbModel)Delete() (int64, error) {
 	}
 
 	num, err := res.RowsAffected()
-	if err != nil{
+	if err != nil {
 		return 0, err
 	}
 	return num, nil
 }
 
 //id>0调用Update, 否则调用Insert
-func (md *DbModel)UpdateOrInsert(id int64, args ...interface{}) (affected int64, insertId int64, err error) {
+func (md *DbModel) UpdateOrInsert(id int64, args ...interface{}) (affected int64, entId int64, err error) {
 	if md.auto_put && md.md_pool != nil {
 		pool := md.split_pool()
 		defer md.put_pool(pool)
 	}
 	if md.Err != nil {
-		return 0, 0, md.Err
+		return 0, id, md.Err
 	}
 
 	if id > 0 {
 		num, err := md.ID(id).Update(args...)
-		return num, 0, err
+		return num, id, err
 	} else {
 		id, err := md.Insert(args...)
-		return 0, id, err
+		return 1, id, err
 	}
 }
 
 //若存在记录，则调用Update，否则调用Insert
-func (md *DbModel)Save(args ...interface{}) (affected int64, insertId int64, err error) {
+func (md *DbModel) Save(args ...interface{}) (affected int64, insertId int64, err error) {
 	if md.auto_put && md.md_pool != nil {
 		pool := md.split_pool()
 		defer md.put_pool(pool)
@@ -337,7 +337,7 @@ func (md *DbModel)Save(args ...interface{}) (affected int64, insertId int64, err
 }
 
 //若不存在记录，则调用Insert
-func (md *DbModel)InsertIfNotExist(args ...interface{}) (affected int64, insertId int64, err error) {
+func (md *DbModel) InsertIfNotExist(args ...interface{}) (affected int64, insertId int64, err error) {
 	if md.auto_put && md.md_pool != nil {
 		pool := md.split_pool()
 		defer md.put_pool(pool)
@@ -358,4 +358,3 @@ func (md *DbModel)InsertIfNotExist(args ...interface{}) (affected int64, insertI
 	id, err := md.Insert(args...)
 	return 0, id, err
 }
-
