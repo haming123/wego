@@ -222,6 +222,24 @@ func (md *DbModel)OmitALL() *DbModel {
 	return md
 }
 
+func (md *DbModel)Select(fields ...string) *DbModel {
+	if md.flag_omit == false {
+		md.OmitALL()
+		md.flag_omit = true
+	}
+
+	for _, field := range fields {
+		//field = strings.Trim(field, " ")
+		ind := md.get_field_index(field)
+		if ind >= 0 {
+			md.flds_addr[ind].Flag = true
+		} else {
+			md.Err = errors.New("field not find")
+		}
+	}
+	return md
+}
+
 func (md *DbModel)SelectX(fields ...interface{}) *DbModel {
 	if md.flag_omit == false {
 		md.OmitALL()
@@ -237,35 +255,6 @@ func (md *DbModel)SelectX(fields ...interface{}) *DbModel {
 		if ret == false {
 			md.Err = errors.New("field not find")
 			return md
-		}
-	}
-	return md
-}
-
-//设置字段的值，并选中该字段
-func (md *DbModel)SetValue(fld_ptr interface{}, val interface{}) error {
-	err := set_value(fld_ptr, val)
-	if err != nil {
-		md.Err = err
-		return err
-	}
-	md.SelectX(fld_ptr)
-	return nil
-}
-
-func (md *DbModel)Select(fields ...string) *DbModel {
-	if md.flag_omit == false {
-		md.OmitALL()
-		md.flag_omit = true
-	}
-
-	for _, field := range fields {
-		//field = strings.Trim(field, " ")
-		ind := md.get_field_index(field)
-		if ind >= 0 {
-			md.flds_addr[ind].Flag = true
-		} else {
-			md.Err = errors.New("field not find")
 		}
 	}
 	return md
@@ -303,6 +292,17 @@ func (md *DbModel)OmitX(fields ...interface{}) *DbModel {
 		}
 	}
 	return md
+}
+
+//设置字段的值，并选中该字段
+func (md *DbModel)SetValue(fld_ptr interface{}, val interface{}) error {
+	err := set_value(fld_ptr, val)
+	if err != nil {
+		md.Err = err
+		return err
+	}
+	md.SelectX(fld_ptr)
+	return nil
 }
 
 func (md *DbModel)AndX(field_ptr interface{}, oper string, vals ...interface{}) *DbModel {
