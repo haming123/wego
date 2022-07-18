@@ -10,36 +10,37 @@ import (
 )
 
 const (
-	SQL_TYPE_INS    	int = 1
-	SQL_TYPE_UPD    	int = 2
-	SQL_TYPE_DEL    	int = 3
-	SQL_TYPE_SEL    	int = 4
+	SQL_TYPE_INS int = 1
+	SQL_TYPE_UPD int = 2
+	SQL_TYPE_DEL int = 3
+	SQL_TYPE_SEL int = 4
 )
+
 type ValueMap map[string]interface{}
 type SqlExp struct {
-	Tpl_sql	string
-	Values	[]interface{}
+	Tpl_sql string
+	Values  []interface{}
 }
 
 type DbTable struct {
 	SqlContex
-	sql_type int
-	db_ptr *DbSession
-	fld_values ValueMap
-	table_name string
+	sql_type    int
+	db_ptr      *DbSession
+	fld_values  ValueMap
+	table_name  string
 	table_alias string
-	select_str string
-	output_str string
-	return_str string
-	join_str string
-	db_where DbWhere
-	group_by string
-	db_having DbWhere
-	order_by string
-	db_limit int64
-	db_offset int64
-	ctx context.Context
-	sql_err error
+	select_str  string
+	output_str  string
+	return_str  string
+	join_str    string
+	db_where    DbWhere
+	group_by    string
+	db_having   DbWhere
+	order_by    string
+	db_limit    int64
+	db_offset   int64
+	ctx         context.Context
+	sql_err     error
 }
 
 func NewDbTable(dbs *DbSession, table_name string) *DbTable {
@@ -49,134 +50,134 @@ func NewDbTable(dbs *DbSession, table_name string) *DbTable {
 	return tb
 }
 
-func (tb *DbTable)GetContext() context.Context {
+func (tb *DbTable) GetContext() context.Context {
 	return tb.ctx
 }
 
-func (tb *DbTable)Context(ctx context.Context) *DbTable {
+func (tb *DbTable) Context(ctx context.Context) *DbTable {
 	tb.ctx = ctx
 	return tb
 }
 
-func (tb *DbTable)UsePrepare(val bool) *DbTable {
+func (tb *DbTable) UsePrepare(val bool) *DbTable {
 	tb.use_prepare.Valid = true
 	tb.use_prepare.Bool = val
 	return tb
 }
 
-func (tb *DbTable)ShowLog(val bool) *DbTable {
+func (tb *DbTable) ShowLog(val bool) *DbTable {
 	tb.show_log.Valid = true
 	tb.show_log.Bool = val
 	return tb
 }
 
-func (tb *DbTable)UseMaster(val bool) *DbTable {
+func (tb *DbTable) UseMaster(val bool) *DbTable {
 	tb.use_master.Valid = true
 	tb.use_master.Bool = val
 	return tb
 }
 
-func (tb *DbTable)Select(fields ...string) *DbTable {
+func (tb *DbTable) Select(fields ...string) *DbTable {
 	tb.select_str = strings.Join(fields, ",")
 	return tb
 }
 
-func (tb *DbTable)Output(output string) *DbTable {
+func (tb *DbTable) Output(output string) *DbTable {
 	tb.output_str = output
 	return tb
 }
 
-func (tb *DbTable)ReturnIng(returning string) *DbTable {
+func (tb *DbTable) ReturnIng(returning string) *DbTable {
 	tb.return_str = returning
 	return tb
 }
 
-func (tb *DbTable)Alias(alias string) *DbTable {
+func (tb *DbTable) Alias(alias string) *DbTable {
 	tb.table_alias = alias
 	return tb
 }
 
-func (tb *DbTable)Value(col_name string, val interface{}) *DbTable {
-	if tb.fld_values == nil{
+func (tb *DbTable) Value(col_name string, val interface{}) *DbTable {
+	if tb.fld_values == nil {
 		tb.fld_values = make(ValueMap)
 	}
 	tb.fld_values[col_name] = val
 	return tb
 }
-func (tb *DbTable)Values(map_data ValueMap) *DbTable {
+func (tb *DbTable) Values(map_data ValueMap) *DbTable {
 	tb.fld_values = map_data
 	return tb
 }
-func (tb *DbTable)SetWhere(sqlw *DbWhere) *DbTable {
+func (tb *DbTable) SetWhere(sqlw *DbWhere) *DbTable {
 	tb.db_where.Init(sqlw.Tpl_sql, sqlw.Values...)
 	return tb
 }
-func (tb *DbTable)Where(sql string, vals ...interface{}) *DbTable {
+func (tb *DbTable) Where(sql string, vals ...interface{}) *DbTable {
 	tb.db_where.Init(sql, vals...)
 	return tb
 }
-func (tb *DbTable)WhereIn(sql string, vals ...interface{}) *DbTable {
+func (tb *DbTable) WhereIn(sql string, vals ...interface{}) *DbTable {
 	tb.db_where.Reset()
 	tb.db_where.AndIn(sql, vals...)
 	return tb
 }
-func (tb *DbTable)WhereNotIn(sql string, vals ...interface{}) *DbTable {
+func (tb *DbTable) WhereNotIn(sql string, vals ...interface{}) *DbTable {
 	tb.db_where.Reset()
 	tb.db_where.AndNotIn(sql, vals...)
 	return tb
 }
-func (tb *DbTable)WhereIf(cond bool, sql string, vals ...interface{}) *DbTable {
+func (tb *DbTable) WhereIf(cond bool, sql string, vals ...interface{}) *DbTable {
 	if cond {
 		tb.db_where.Init(sql, vals...)
 	}
 	return tb
 }
-func (tb *DbTable)ID(val int64) *DbTable {
+func (tb *DbTable) ID(val int64) *DbTable {
 	tb.db_where.Init("id=?", val)
 	return tb
 }
-func (tb *DbTable)And(sql string, vals ...interface{}) *DbTable {
+func (tb *DbTable) And(sql string, vals ...interface{}) *DbTable {
 	tb.db_where.And(sql, vals...)
 	return tb
 }
-func (tb *DbTable)Or(sql string, vals ...interface{}) *DbTable {
+func (tb *DbTable) Or(sql string, vals ...interface{}) *DbTable {
 	tb.db_where.Or(sql, vals...)
 	return tb
 }
-func (tb *DbTable)AndIf(cond bool, sql string, vals ...interface{}) *DbTable {
+func (tb *DbTable) AndIf(cond bool, sql string, vals ...interface{}) *DbTable {
 	tb.db_where.AndIf(cond, sql, vals...)
 	return tb
 }
-func (tb *DbTable)OrIf(cond bool, sql string, vals ...interface{}) *DbTable {
+func (tb *DbTable) OrIf(cond bool, sql string, vals ...interface{}) *DbTable {
 	tb.db_where.OrIf(cond, sql, vals...)
 	return tb
 }
-func (tb *DbTable)AndExp(sqlw_sub *DbWhere) *DbTable {
+func (tb *DbTable) AndExp(sqlw_sub *DbWhere) *DbTable {
 	tb.db_where.AndExp(sqlw_sub)
 	return tb
 }
-func (tb *DbTable)OrExp(sqlw_sub *DbWhere) *DbTable {
+func (tb *DbTable) OrExp(sqlw_sub *DbWhere) *DbTable {
 	tb.db_where.OrExp(sqlw_sub)
 	return tb
 }
-func (tb *DbTable)AndIn(sql string, vals ...interface{}) *DbTable {
+func (tb *DbTable) AndIn(sql string, vals ...interface{}) *DbTable {
 	tb.db_where.AndIn(sql, vals...)
 	return tb
 }
-func (tb *DbTable)AndNotIn(sql string, vals ...interface{}) *DbTable {
+func (tb *DbTable) AndNotIn(sql string, vals ...interface{}) *DbTable {
 	tb.db_where.AndNotIn(sql, vals...)
 	return tb
 }
-func (tb *DbTable)OrIn(sql string, vals ...interface{}) *DbTable {
+func (tb *DbTable) OrIn(sql string, vals ...interface{}) *DbTable {
 	tb.db_where.AndIn(sql, vals...)
 	return tb
 }
-func (tb *DbTable)OrNotIn(sql string, vals ...interface{}) *DbTable {
+func (tb *DbTable) OrNotIn(sql string, vals ...interface{}) *DbTable {
 	tb.db_where.OrNotIn(sql, vals...)
 	return tb
 }
 
-func(tb *DbTable)Join(table string, alias string, join_on string) *DbTable {
+func (tb *DbTable) Join(table string, alias string, join_on string) *DbTable {
 	str := fmt.Sprintf("%s join %s %s on %s", tb.join_str, table, alias, join_on)
 	if len(alias) < 1 {
 		str = fmt.Sprintf("%s join %s on %s", tb.join_str, table, join_on)
@@ -185,7 +186,7 @@ func(tb *DbTable)Join(table string, alias string, join_on string) *DbTable {
 	return tb
 }
 
-func(tb *DbTable)LeftJoin(table string, alias string, join_on string) *DbTable {
+func (tb *DbTable) LeftJoin(table string, alias string, join_on string) *DbTable {
 	str := fmt.Sprintf("%s left join %s %s on %s", tb.join_str, table, alias, join_on)
 	if len(alias) < 1 {
 		str = fmt.Sprintf("%s left join %s on %s", tb.join_str, table, join_on)
@@ -194,7 +195,7 @@ func(tb *DbTable)LeftJoin(table string, alias string, join_on string) *DbTable {
 	return tb
 }
 
-func(tb *DbTable)RightJoin(table string, alias string, join_on string) *DbTable {
+func (tb *DbTable) RightJoin(table string, alias string, join_on string) *DbTable {
 	str := fmt.Sprintf("%s right join %s %s on %s", tb.join_str, table, alias, join_on)
 	if len(alias) < 1 {
 		str = fmt.Sprintf("%s right join %s on %s", tb.join_str, table, join_on)
@@ -203,43 +204,43 @@ func(tb *DbTable)RightJoin(table string, alias string, join_on string) *DbTable 
 	return tb
 }
 
-func (tb *DbTable)Top(rows int64) *DbTable {
+func (tb *DbTable) Top(rows int64) *DbTable {
 	tb.db_limit = rows
 	return tb
 }
 
-func (tb *DbTable)Limit(rows int64) *DbTable {
+func (tb *DbTable) Limit(rows int64) *DbTable {
 	tb.db_limit = rows
 	return tb
 }
 
-func (tb *DbTable)Offset(offset int64) *DbTable {
+func (tb *DbTable) Offset(offset int64) *DbTable {
 	tb.db_offset = offset
 	return tb
 }
 
-func (tb *DbTable)Page(rows int64, page_no int64) *DbTable {
-	tb.db_offset = page_no*rows
+func (tb *DbTable) Page(rows int64, page_no int64) *DbTable {
+	tb.db_offset = page_no * rows
 	tb.db_limit = rows
 	return tb
 }
 
-func (tb *DbTable)GroupBy(val string) *DbTable {
+func (tb *DbTable) GroupBy(val string) *DbTable {
 	tb.group_by = val
 	return tb
 }
 
-func (tb *DbTable)Having(sql string, vals ...interface{}) *DbTable {
+func (tb *DbTable) Having(sql string, vals ...interface{}) *DbTable {
 	tb.db_having.Init(sql, vals...)
 	return tb
 }
 
-func (tb *DbTable)OrderBy(val string) *DbTable {
+func (tb *DbTable) OrderBy(val string) *DbTable {
 	tb.order_by = val
 	return tb
 }
 
-func (tb *DbTable)insertWithOutput() (int64, error) {
+func (tb *DbTable) insertWithOutput() (int64, error) {
 	sql_str, vals := tb.db_ptr.engine.db_dialect.GenTableInsertSql(tb)
 	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, sql_str, vals...)
 	if err != nil {
@@ -261,14 +262,14 @@ func (tb *DbTable)insertWithOutput() (int64, error) {
 	return id, nil
 }
 
-func (tb *DbTable)Insert() (int64, error) {
+func (tb *DbTable) Insert() (int64, error) {
 	if tb.db_ptr.engine.db_dialect.TableInsertHasOutput(tb) {
 		return tb.insertWithOutput()
 	}
 
 	sql_str, vals := tb.db_ptr.engine.db_dialect.GenTableInsertSql(tb)
-	res, err :=  tb.db_ptr.ExecSQL(&tb.SqlContex, sql_str, vals...)
-	if err != nil{
+	res, err := tb.db_ptr.ExecSQL(&tb.SqlContex, sql_str, vals...)
+	if err != nil {
 		return 0, err
 	}
 
@@ -279,61 +280,67 @@ func (tb *DbTable)Insert() (int64, error) {
 	return id, nil
 }
 
-func (tb *DbTable)Update() (int64, error) {
+func (tb *DbTable) Update() (int64, error) {
 	if len(tb.db_where.Tpl_sql) < 1 {
-		return  0, errors.New("no where clause")
+		return 0, errors.New("no where clause")
 	}
 
 	sql_str, vals := tb.db_ptr.engine.db_dialect.GenTableUpdateSql(tb)
 	vals = append(vals, tb.db_where.Values...)
 	res, err := tb.db_ptr.ExecSQL(&tb.SqlContex, sql_str, vals...)
-	if err != nil{
+	if err != nil {
 		return 0, err
 	}
 
 	num, err := res.RowsAffected()
-	if err != nil{
+	if err != nil {
 		return 0, err
 	}
 	return num, nil
 }
 
-func (tb *DbTable)Delete() (int64, error) {
+func (tb *DbTable) Delete() (int64, error) {
 	if len(tb.db_where.Tpl_sql) < 1 {
-		return  0, errors.New("no where clause")
+		return 0, errors.New("no where clause")
 	}
 
 	sql_str := tb.db_ptr.engine.db_dialect.GenTableDeleteSql(tb)
 	vals := append([]interface{}{}, tb.db_where.Values...)
 	res, err := tb.db_ptr.ExecSQL(&tb.SqlContex, sql_str, vals...)
-	if err != nil{
+	if err != nil {
 		return 0, err
 	}
 
 	num, err := res.RowsAffected()
-	if err != nil{
+	if err != nil {
 		return 0, err
 	}
 	return num, nil
 }
 
-func (tb *DbTable)Row() (*sql.Rows, error) {
+func (tb *DbTable) Row() (*sql.Rows, error) {
+	if tb.select_str == "" {
+		tb.select_str = "*"
+	}
 	sql_str := tb.db_ptr.engine.db_dialect.GenTableGetSql(tb)
-	vals:= []interface{}{}
+	vals := []interface{}{}
 	vals = append(vals, tb.db_where.Values...)
 	vals = append(vals, tb.db_having.Values...)
 	return tb.db_ptr.ExecQuery(&tb.SqlContex, sql_str, vals...)
 }
 
-func (tb *DbTable)Rows() (*sql.Rows, error) {
+func (tb *DbTable) Rows() (*sql.Rows, error) {
+	if tb.select_str == "" {
+		tb.select_str = "*"
+	}
 	sql_str := tb.db_ptr.engine.db_dialect.GenTableFindSql(tb)
-	vals:= []interface{}{}
+	vals := []interface{}{}
 	vals = append(vals, tb.db_where.Values...)
 	vals = append(vals, tb.db_having.Values...)
 	return tb.db_ptr.ExecQuery(&tb.SqlContex, sql_str, vals...)
 }
 
-func (tb *DbTable)Exist() (bool, error) {
+func (tb *DbTable) Exist() (bool, error) {
 	rows, err := tb.Row()
 	if err != nil {
 		return false, err
@@ -348,7 +355,7 @@ func (tb *DbTable)Exist() (bool, error) {
 	return true, nil
 }
 
-func (tb *DbTable)Get(arg ...interface{}) (bool, error) {
+func (tb *DbTable) Get(arg ...interface{}) (bool, error) {
 	rows, err := tb.Row()
 	if err != nil {
 		return false, err
@@ -369,7 +376,7 @@ func (tb *DbTable)Get(arg ...interface{}) (bool, error) {
 	return true, nil
 }
 
-func (tb *DbTable)GetInt() (sql.NullInt64, error) {
+func (tb *DbTable) GetInt() (sql.NullInt64, error) {
 	var val sql.NullInt64
 	fld := FieldValue{"", &val, false}
 	has, err := tb.Get(&fld)
@@ -380,7 +387,7 @@ func (tb *DbTable)GetInt() (sql.NullInt64, error) {
 	return val, nil
 }
 
-func (tb *DbTable)GetFlaot() (sql.NullFloat64, error) {
+func (tb *DbTable) GetFloat() (sql.NullFloat64, error) {
 	var val sql.NullFloat64
 	fld := FieldValue{"", &val, false}
 	has, err := tb.Get(&fld)
@@ -391,7 +398,7 @@ func (tb *DbTable)GetFlaot() (sql.NullFloat64, error) {
 	return val, nil
 }
 
-func (tb *DbTable)GetString() (sql.NullString, error) {
+func (tb *DbTable) GetString() (sql.NullString, error) {
 	var val sql.NullString
 	fld := FieldValue{"", &val, false}
 	has, err := tb.Get(&fld)
@@ -402,7 +409,7 @@ func (tb *DbTable)GetString() (sql.NullString, error) {
 	return val, nil
 }
 
-func (tb *DbTable)GetRow() (StringRow, error) {
+func (tb *DbTable) GetRow() (StringRow, error) {
 	rows, err := tb.Row()
 	if err != nil {
 		return nil, err
@@ -420,7 +427,7 @@ func (tb *DbTable)GetRow() (StringRow, error) {
 	return ret, nil
 }
 
-func (tb *DbTable)GetModel(ent_ptr interface{}) (bool, error) {
+func (tb *DbTable) GetModel(ent_ptr interface{}) (bool, error) {
 	rows, err := tb.Row()
 	if err != nil {
 		return false, err
@@ -438,7 +445,7 @@ func (tb *DbTable)GetModel(ent_ptr interface{}) (bool, error) {
 	return true, nil
 }
 
-func (tb *DbTable)FindInt() ([]int64, error) {
+func (tb *DbTable) FindInt() ([]int64, error) {
 	rows, err := tb.Rows()
 	if err != nil {
 		return nil, err
@@ -459,7 +466,7 @@ func (tb *DbTable)FindInt() ([]int64, error) {
 	return arr, nil
 }
 
-func (tb *DbTable)FindFloat() ([]float64, error) {
+func (tb *DbTable) FindFloat() ([]float64, error) {
 	rows, err := tb.Rows()
 	if err != nil {
 		return nil, err
@@ -480,7 +487,7 @@ func (tb *DbTable)FindFloat() ([]float64, error) {
 	return arr, nil
 }
 
-func (tb *DbTable)FindString() ([]string, error) {
+func (tb *DbTable) FindString() ([]string, error) {
 	rows, err := tb.Rows()
 	if err != nil {
 		return nil, err
@@ -501,7 +508,7 @@ func (tb *DbTable)FindString() ([]string, error) {
 	return arr, nil
 }
 
-func (tb *DbTable)FindRow() (*StringTable, error) {
+func (tb *DbTable) FindRow() (*StringTable, error) {
 	rows, err := tb.Rows()
 	if err != nil {
 		return nil, err
@@ -511,7 +518,7 @@ func (tb *DbTable)FindRow() (*StringTable, error) {
 	return ret, err
 }
 
-func (tb *DbTable)FindModel(arr_ptr interface{}) error {
+func (tb *DbTable) FindModel(arr_ptr interface{}) error {
 	rows, err := tb.Rows()
 	if err != nil {
 		return err
@@ -521,7 +528,7 @@ func (tb *DbTable)FindModel(arr_ptr interface{}) error {
 	return err
 }
 
-func (tb *DbTable)gen_count_sql(count_field string) string {
+func (tb *DbTable) gen_count_sql(count_field string) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("select ")
@@ -533,11 +540,11 @@ func (tb *DbTable)gen_count_sql(count_field string) string {
 		buffer.WriteString(tb.table_alias)
 	}
 
-	if len(tb.join_str)>0 {
+	if len(tb.join_str) > 0 {
 		buffer.WriteString(tb.join_str)
 	}
 
-	if len(tb.db_where.Tpl_sql)>0 {
+	if len(tb.db_where.Tpl_sql) > 0 {
 		buffer.WriteString(" where ")
 		buffer.WriteString(tb.db_where.Tpl_sql)
 	}
@@ -550,7 +557,7 @@ func (tb *DbTable)gen_count_sql(count_field string) string {
 	return buffer.String()
 }
 
-func (tb *DbTable)Count(field ...string) (int64, error) {
+func (tb *DbTable) Count(field ...string) (int64, error) {
 	if len(field) > 1 {
 		return 0, errors.New("field vumber > 0")
 	}
@@ -581,7 +588,7 @@ func (tb *DbTable)Count(field ...string) (int64, error) {
 	return total, nil
 }
 
-func (tb *DbTable)DistinctCount(field string) (int64, error) {
+func (tb *DbTable) DistinctCount(field string) (int64, error) {
 	count_field := fmt.Sprintf("count(distinct %s)", field)
 	sql_str := tb.gen_count_sql(count_field)
 	if len(tb.group_by) > 0 {
