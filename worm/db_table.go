@@ -319,9 +319,6 @@ func (tb *DbTable) Delete() (int64, error) {
 }
 
 func (tb *DbTable) Row() (*sql.Rows, error) {
-	if tb.select_str == "" {
-		tb.select_str = "*"
-	}
 	sql_str := tb.db_ptr.engine.db_dialect.GenTableGetSql(tb)
 	vals := []interface{}{}
 	vals = append(vals, tb.db_where.Values...)
@@ -330,9 +327,6 @@ func (tb *DbTable) Row() (*sql.Rows, error) {
 }
 
 func (tb *DbTable) Rows() (*sql.Rows, error) {
-	if tb.select_str == "" {
-		tb.select_str = "*"
-	}
 	sql_str := tb.db_ptr.engine.db_dialect.GenTableFindSql(tb)
 	vals := []interface{}{}
 	vals = append(vals, tb.db_where.Values...)
@@ -387,7 +381,7 @@ func (tb *DbTable) GetInt() (sql.NullInt64, error) {
 	return val, nil
 }
 
-func (tb *DbTable) GetFloat() (sql.NullFloat64, error) {
+func (tb *DbTable) GetFlaot() (sql.NullFloat64, error) {
 	var val sql.NullFloat64
 	fld := FieldValue{"", &val, false}
 	has, err := tb.Get(&fld)
@@ -400,6 +394,17 @@ func (tb *DbTable) GetFloat() (sql.NullFloat64, error) {
 
 func (tb *DbTable) GetString() (sql.NullString, error) {
 	var val sql.NullString
+	fld := FieldValue{"", &val, false}
+	has, err := tb.Get(&fld)
+	val.Valid = has
+	if err != nil {
+		return val, err
+	}
+	return val, nil
+}
+
+func (tb *DbTable) GetTime() (sql.NullTime, error) {
+	var val sql.NullTime
 	fld := FieldValue{"", &val, false}
 	has, err := tb.Get(&fld)
 	val.Valid = has

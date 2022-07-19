@@ -9,10 +9,10 @@ import (
 
 type DbSQL struct {
 	SqlContex
-	db_ptr *DbSession
+	db_ptr  *DbSession
 	sql_tpl string
-	values []interface{}
-	ctx context.Context
+	values  []interface{}
+	ctx     context.Context
 }
 
 func NewDbSQL(dbs *DbSession, sql_str string, args ...interface{}) *DbSQL {
@@ -23,42 +23,42 @@ func NewDbSQL(dbs *DbSession, sql_str string, args ...interface{}) *DbSQL {
 	return tb
 }
 
-func (tb *DbSQL)GetContext() context.Context {
+func (tb *DbSQL) GetContext() context.Context {
 	return tb.ctx
 }
 
-func (tb *DbSQL)Context(ctx context.Context) *DbSQL {
+func (tb *DbSQL) Context(ctx context.Context) *DbSQL {
 	tb.ctx = ctx
 	return tb
 }
 
-func (tb *DbSQL)UsePrepare(val bool) *DbSQL {
+func (tb *DbSQL) UsePrepare(val bool) *DbSQL {
 	tb.use_prepare.Valid = true
 	tb.use_prepare.Bool = val
 	return tb
 }
 
-func (tb *DbSQL)ShowLog(val bool) *DbSQL {
+func (tb *DbSQL) ShowLog(val bool) *DbSQL {
 	tb.show_log.Valid = true
 	tb.show_log.Bool = val
 	return tb
 }
 
-func (tb *DbSQL)UseMaster(val bool) *DbSQL {
+func (tb *DbSQL) UseMaster(val bool) *DbSQL {
 	tb.use_master.Valid = true
 	tb.use_master.Bool = val
 	return tb
 }
 
-func (tb *DbSQL)Exec() (sql.Result, error) {
+func (tb *DbSQL) Exec() (sql.Result, error) {
 	return tb.db_ptr.ExecSQL(&tb.SqlContex, tb.sql_tpl, tb.values...)
 }
 
-func (tb *DbSQL)Rows() (*sql.Rows, error) {
+func (tb *DbSQL) Rows() (*sql.Rows, error) {
 	return tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
 }
 
-func (tb *DbSQL)Get(arg ...interface{}) (bool, error) {
+func (tb *DbSQL) Get(arg ...interface{}) (bool, error) {
 	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
 	if err != nil {
 		return false, err
@@ -79,7 +79,7 @@ func (tb *DbSQL)Get(arg ...interface{}) (bool, error) {
 	return true, nil
 }
 
-func (tb *DbSQL)GetInt() (sql.NullInt64, error) {
+func (tb *DbSQL) GetInt() (sql.NullInt64, error) {
 	var val sql.NullInt64
 	fld := FieldValue{"", &val, false}
 	has, err := tb.Get(&fld)
@@ -90,7 +90,7 @@ func (tb *DbSQL)GetInt() (sql.NullInt64, error) {
 	return val, nil
 }
 
-func (tb *DbSQL)GetFloat() (sql.NullFloat64, error) {
+func (tb *DbSQL) GetFloat() (sql.NullFloat64, error) {
 	var val sql.NullFloat64
 	fld := FieldValue{"", &val, false}
 	has, err := tb.Get(&fld)
@@ -101,7 +101,7 @@ func (tb *DbSQL)GetFloat() (sql.NullFloat64, error) {
 	return val, nil
 }
 
-func (tb *DbSQL)GetString() (sql.NullString, error) {
+func (tb *DbSQL) GetString() (sql.NullString, error) {
 	var val sql.NullString
 	fld := FieldValue{"", &val, false}
 	has, err := tb.Get(&fld)
@@ -112,7 +112,18 @@ func (tb *DbSQL)GetString() (sql.NullString, error) {
 	return val, nil
 }
 
-func (tb *DbSQL)GetRow() (StringRow, error) {
+func (tb *DbSQL) GetTime() (sql.NullTime, error) {
+	var val sql.NullTime
+	fld := FieldValue{"", &val, false}
+	has, err := tb.Get(&fld)
+	val.Valid = has
+	if err != nil {
+		return val, err
+	}
+	return val, nil
+}
+
+func (tb *DbSQL) GetRow() (StringRow, error) {
 	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
 	if err != nil {
 		return nil, err
@@ -131,7 +142,7 @@ func (tb *DbSQL)GetRow() (StringRow, error) {
 	return ret, nil
 }
 
-func (tb *DbSQL)GetModel(ent_ptr interface{}) (bool, error) {
+func (tb *DbSQL) GetModel(ent_ptr interface{}) (bool, error) {
 	v_ent := reflect.ValueOf(ent_ptr)
 	if v_ent.Kind() != reflect.Ptr {
 		return false, errors.New("ent_ptr must be Pointer")
@@ -163,7 +174,7 @@ func (tb *DbSQL)GetModel(ent_ptr interface{}) (bool, error) {
 	return true, nil
 }
 
-func (tb *DbSQL)FindInt() ([]int64, error) {
+func (tb *DbSQL) FindInt() ([]int64, error) {
 	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
 	if err != nil {
 		return nil, err
@@ -184,7 +195,7 @@ func (tb *DbSQL)FindInt() ([]int64, error) {
 	return arr, nil
 }
 
-func (tb *DbSQL)FindFloat() ([]float64, error) {
+func (tb *DbSQL) FindFloat() ([]float64, error) {
 	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
 	if err != nil {
 		return nil, err
@@ -205,7 +216,7 @@ func (tb *DbSQL)FindFloat() ([]float64, error) {
 	return arr, nil
 }
 
-func (tb *DbSQL)FindString() ([]string, error) {
+func (tb *DbSQL) FindString() ([]string, error) {
 	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
 	if err != nil {
 		return nil, err
@@ -226,7 +237,7 @@ func (tb *DbSQL)FindString() ([]string, error) {
 	return arr, nil
 }
 
-func (tb *DbSQL)FindRow() (*StringTable, error) {
+func (tb *DbSQL) FindRow() (*StringTable, error) {
 	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
 	if err != nil {
 		return nil, err
@@ -237,14 +248,13 @@ func (tb *DbSQL)FindRow() (*StringTable, error) {
 	return ret, err
 }
 
-func (tb *DbSQL)FindModel(arr_ptr interface{}) error {
+func (tb *DbSQL) FindModel(arr_ptr interface{}) error {
 	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
 	if err != nil {
-		return  err
+		return err
 	}
 
 	err = ScanModelArray(rows, arr_ptr)
 	rows.Close()
 	return err
 }
-
