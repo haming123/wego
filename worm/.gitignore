@@ -6,6 +6,4 @@
 *.test
 *.out
 *.conf
-conf.go
-db_model_bench_test.go
 

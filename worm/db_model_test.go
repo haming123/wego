@@ -19,24 +19,26 @@ CREATE TABLE user (
 */
 
 type UserEo struct {
-	DB_id      	int64
-	DB_name    	string
-	Age     	int
+	DB_id   int64
+	DB_name string
+	Age     int
 }
 
 type User struct {
-	DB_id      	int64		`db:";autoincr"`
-	DB_name    	string
-	DB_Salt    	string		`db:"-"`
-	Passwd    	string
-	Age     	int			`db:"age"`
-	Created     time.Time	`db:"created;insert_only"`
+	DB_id   int64 `db:";autoincr"`
+	DB_name string
+	DB_Salt string `db:"-"`
+	Passwd  string
+	Age     int       `db:"age"`
+	Created time.Time `db:"created;insert_only"`
 }
-func (ent *User)TableName() string {
+
+func (ent *User) TableName() string {
 	return "user"
 }
 
 var pool_user = ModelPool{}
+
 func NewModel_user(dbs *DbSession, auto_put ...bool) *DbModel {
 	md := pool_user.Get()
 	if md == nil {
@@ -46,57 +48,58 @@ func NewModel_user(dbs *DbSession, auto_put ...bool) *DbModel {
 	}
 }
 
-func (ent *User)BeforeInsert(ctx context.Context) {
+func (ent *User) BeforeInsert(ctx context.Context) {
 	//fmt.Println("User.BeforeInsert")
 }
 
-func (ent *User)AfterInsert(ctx context.Context) {
+func (ent *User) AfterInsert(ctx context.Context) {
 	//fmt.Println("User.AfterInsert")
 }
 
-func (ent *User)BeforeUpdate(ctx context.Context) {
+func (ent *User) BeforeUpdate(ctx context.Context) {
 	//fmt.Println("User.BeforeUpdate")
 }
 
-func (ent *User)AfterUpdate(ctx context.Context) {
+func (ent *User) AfterUpdate(ctx context.Context) {
 	//fmt.Println("User.AfterUpdate")
 }
 
-func (ent *User)BeforeDelete(ctx context.Context) {
+func (ent *User) BeforeDelete(ctx context.Context) {
 	//fmt.Println("User.BeforeDelete")
 }
 
-func (ent *User)AfterDelete(ctx context.Context) {
+func (ent *User) AfterDelete(ctx context.Context) {
 	//fmt.Println("User.AfterDelete")
 }
 
-func (ent *User)BeforeQuery(ctx context.Context) {
+func (ent *User) BeforeQuery(ctx context.Context) {
 	//fmt.Println("User.BeforeQuery")
 	//if ctx != nil {
 	//	fmt.Println(ctx.Value("test_key"))
 	//}
 }
 
-func (ent *User)AfterQuery(ctx context.Context) {
+func (ent *User) AfterQuery(ctx context.Context) {
 	//fmt.Println("User.AfterQuery")
 }
 
 type DB_Book struct {
-	DB_id      	int64
-	DB_author  	int64
-	DB_name    	string
-	DB_remark   string
+	DB_id     int64
+	DB_author int64
+	DB_name   string
+	DB_remark string
 }
-func (ent *DB_Book)TableName() string {
+
+func (ent *DB_Book) TableName() string {
 	return "book"
 }
 
-func TestModelIUD (t *testing.T) {
+func TestModelIUD(t *testing.T) {
 	InitEngine4Test()
 
-	var user = User{DB_name:"model", Age: 13 }
+	var user = User{DB_name: "model", Age: 13}
 	id, err := Model(&user).Insert()
-	if err != nil{
+	if err != nil {
 		t.Error(err)
 		return
 	}
@@ -104,26 +107,26 @@ func TestModelIUD (t *testing.T) {
 
 	user = User{Age: 31, DB_name: "model2"}
 	num, err := Model(&user).Select("name", "age").ID(id).Update()
-	if err != nil{
+	if err != nil {
 		t.Error(err)
 		return
 	}
 	t.Logf("update num=%d", num)
 
 	num, err = Model(&User{}).Where("id=?", id).Delete()
-	if err != nil{
+	if err != nil {
 		t.Error(err)
 		return
 	}
 	t.Logf("delete num=%d", num)
 }
 
-func TestModelMoIUD (t *testing.T) {
+func TestModelMoIUD(t *testing.T) {
 	InitEngine4Test()
 
-	var user = User{DB_name:"model", Age: 13 }
+	var user = User{DB_name: "model", Age: 13}
 	id, err := Model(&User{}).Insert(&user)
-	if err != nil{
+	if err != nil {
 		t.Error(err)
 		return
 	}
@@ -131,21 +134,21 @@ func TestModelMoIUD (t *testing.T) {
 
 	user = User{Age: 31, DB_name: "model2"}
 	num, err := Model(&User{}).ID(id).Update(&user)
-	if err != nil{
+	if err != nil {
 		t.Error(err)
 		return
 	}
 	t.Logf("update num=%d", num)
 
 	num, err = Model(&User{}).Where("id=?", id).Delete()
-	if err != nil{
+	if err != nil {
 		t.Error(err)
 		return
 	}
 	t.Logf("delete num=%d", num)
 }
 
-func TestModelGet (t *testing.T) {
+func TestModelGet(t *testing.T) {
 	InitEngine4Test()
 
 	var ent User
@@ -157,7 +160,7 @@ func TestModelGet (t *testing.T) {
 	t.Log(ent)
 }
 
-func TestModelGetMo (t *testing.T) {
+func TestModelGetMo(t *testing.T) {
 	InitEngine4Test()
 
 	var ent User
@@ -169,7 +172,7 @@ func TestModelGetMo (t *testing.T) {
 	t.Log(ent)
 }
 
-func TestModelGetEo (t *testing.T) {
+func TestModelGetEo(t *testing.T) {
 	InitEngine4Test()
 
 	var ent UserEo
@@ -181,41 +184,41 @@ func TestModelGetEo (t *testing.T) {
 	t.Log(ent)
 }
 
-func TestModelExist (t *testing.T) {
+func TestModelExist(t *testing.T) {
 	InitEngine4Test()
 
 	has, err := Model(&User{}).Where("id=?", 199).Exist()
-	if err != nil{
+	if err != nil {
 		t.Error(err)
 		return
 	}
 	t.Logf("has=%v\n", has)
 }
 
-func TestModelCount (t *testing.T) {
+func TestModelCount(t *testing.T) {
 	InitEngine4Test()
 
 	num, err := Model(&User{}).Where("id>?", 0).Count("name")
-	if err != nil{
+	if err != nil {
 		t.Error(err)
 		return
 	}
 	t.Logf("count=%v\n", num)
 }
 
-func TestModelRows (t *testing.T) {
+func TestModelRows(t *testing.T) {
 	InitEngine4Test()
 
 	rows, err := Model(&User{}).Where("id>?", 0).Rows()
-	if err != nil{
+	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	for rows.Next(){
+	for rows.Next() {
 		var user User
 		err = rows.ScanModel(&user)
-		if err != nil{
+		if err != nil {
 			t.Error(err)
 		}
 		t.Log(user)
@@ -223,12 +226,12 @@ func TestModelRows (t *testing.T) {
 	rows.Close()
 }
 
-func TestModelFindMo (t *testing.T) {
+func TestModelFindMo(t *testing.T) {
 	InitEngine4Test()
 
 	var users []User
-	err := Model(&User{}).Select("id", "name").AndIn("id", 5,6).Find(&users)
-	if err != nil{
+	err := Model(&User{}).Select("id", "name").AndIn("id", 5, 6).Find(&users)
+	if err != nil {
 		t.Error(err)
 		return
 	}
@@ -237,12 +240,12 @@ func TestModelFindMo (t *testing.T) {
 	}
 }
 
-func TestModelFindVo (t *testing.T) {
+func TestModelFindVo(t *testing.T) {
 	InitEngine4Test()
 
 	var users []UserVo
-	err := Model(&User{}).AndIn("id", 5,6).Find(&users)
-	if err != nil{
+	err := Model(&User{}).AndIn("id", 5, 6).Find(&users)
+	if err != nil {
 		t.Error(err)
 		return
 	}
@@ -251,12 +254,12 @@ func TestModelFindVo (t *testing.T) {
 	}
 }
 
-func TestModelFindStruct (t *testing.T) {
+func TestModelFindStruct(t *testing.T) {
 	InitEngine4Test()
 
 	var users []UserEo
-	err := Model(&User{}).AndIn("id", 5,6).Find(&users)
-	if err != nil{
+	err := Model(&User{}).AndIn("id", 5, 6).Find(&users)
+	if err != nil {
 		t.Error(err)
 		return
 	}
