@@ -79,6 +79,10 @@ func (tb *DbSQL) Get(arg ...interface{}) (bool, error) {
 	return true, nil
 }
 
+func (tb *DbSQL) GetValues(arg ...interface{}) (bool, error) {
+	return tb.Get(arg...)
+}
+
 func (tb *DbSQL) GetInt() (sql.NullInt64, error) {
 	var val sql.NullInt64
 	fld := FieldValue{"", &val, false}
@@ -123,25 +127,6 @@ func (tb *DbSQL) GetTime() (sql.NullTime, error) {
 	return val, nil
 }
 
-func (tb *DbSQL) GetRow() (StringRow, error) {
-	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
-	if err != nil {
-		return nil, err
-	}
-	if !rows.Next() {
-		rows.Close()
-		return nil, nil
-	}
-
-	ret, err := ScanStringRow(rows)
-	if err != nil {
-		rows.Close()
-		return nil, err
-	}
-	rows.Close()
-	return ret, nil
-}
-
 func (tb *DbSQL) GetModel(ent_ptr interface{}) (bool, error) {
 	v_ent := reflect.ValueOf(ent_ptr)
 	if v_ent.Kind() != reflect.Ptr {
@@ -172,6 +157,39 @@ func (tb *DbSQL) GetModel(ent_ptr interface{}) (bool, error) {
 
 	rows.Close()
 	return true, nil
+}
+
+func (tb *DbSQL) GetRow() (StringRow, error) {
+	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
+	if err != nil {
+		return nil, err
+	}
+	if !rows.Next() {
+		rows.Close()
+		return nil, nil
+	}
+
+	ret, err := ScanStringRow(rows)
+	if err != nil {
+		rows.Close()
+		return nil, err
+	}
+	rows.Close()
+	return ret, nil
+}
+
+func (tb *DbSQL) FindValues(arr_ptr_arr ...interface{}) (int, error) {
+	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
+	if err != nil {
+		return 0, err
+	}
+
+	num, err := findValues(rows, arr_ptr_arr...)
+	if err != nil {
+		return 0, err
+	}
+	rows.Close()
+	return num, err
 }
 
 func (tb *DbSQL) FindInt() ([]int64, error) {
@@ -237,17 +255,6 @@ func (tb *DbSQL) FindString() ([]string, error) {
 	return arr, nil
 }
 
-func (tb *DbSQL) FindRow() (*StringTable, error) {
-	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
-	if err != nil {
-		return nil, err
-	}
-
-	ret, err := ScanStringTable(rows)
-	rows.Close()
-	return ret, err
-}
-
 func (tb *DbSQL) FindModel(arr_ptr interface{}) error {
 	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
 	if err != nil {
@@ -257,4 +264,15 @@ func (tb *DbSQL) FindModel(arr_ptr interface{}) error {
 	err = ScanModelArray(rows, arr_ptr)
 	rows.Close()
 	return err
+}
+
+func (tb *DbSQL) FindRow() (*StringTable, error) {
+	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
+	if err != nil {
+		return nil, err
+	}
+
+	ret, err := ScanStringTable(rows)
+	rows.Close()
+	return ret, err
 }

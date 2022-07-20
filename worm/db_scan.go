@@ -3,6 +3,7 @@ package worm
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"reflect"
 )
 
@@ -11,7 +12,7 @@ import (
 //在scan前将变量的指针包装为&FieldValue
 //FieldValue实现了scanner接口用于接收数据库数据
 //FieldValue能够处理字段为null的情况
-func Scan(rows*sql.Rows, dest ...interface{}) error {
+func Scan(rows *sql.Rows, dest ...interface{}) error {
 	values := make([]interface{}, len(dest))
 	for i := 0; i < len(dest); i++ {
 		fld := &FieldValue{"", dest[i], false}
@@ -21,13 +22,13 @@ func Scan(rows*sql.Rows, dest ...interface{}) error {
 }
 
 //将行数据保存到stuct对象中
-func ScanModel(rows*sql.Rows, ent_ptr interface{}) error {
+func ScanModel(rows *sql.Rows, ent_ptr interface{}) error {
 	v_ent := reflect.ValueOf(ent_ptr)
 	if v_ent.Kind() != reflect.Ptr {
-		return  errors.New("ent_ptr must be reflect.Ptr")
+		return errors.New("ent_ptr must be reflect.Ptr")
 	}
 	if v_ent.IsNil() {
-		return  errors.New("ent_ptr is nil")
+		return errors.New("ent_ptr is nil")
 	}
 	t_ent_base := GetDirectType(v_ent.Type())
 	if t_ent_base.Kind() != reflect.Struct {
@@ -55,14 +56,14 @@ func ScanModel(rows*sql.Rows, ent_ptr interface{}) error {
 
 //将数据库查询结构保存到struct数组中
 //arr_ptr是struct数组的地址
-func ScanModelArray(rows*sql.Rows, arr_ptr interface{}) error {
+func ScanModelArray(rows *sql.Rows, arr_ptr interface{}) error {
 	v_arr := reflect.ValueOf(arr_ptr)
 	if v_arr.Kind() != reflect.Ptr {
-		return  errors.New("arr_ptr must be *Slice")
+		return errors.New("arr_ptr must be *Slice")
 	}
 	t_arr := GetDirectType(v_arr.Type())
 	if t_arr.Kind() != reflect.Slice {
-		return  errors.New("arr_ptr must be *Slice")
+		return errors.New("arr_ptr must be *Slice")
 	}
 	t_item := GetDirectType(t_arr.Elem())
 	if t_item.Kind() != reflect.Struct {
@@ -95,14 +96,72 @@ func ScanModelArray(rows*sql.Rows, arr_ptr interface{}) error {
 		}
 
 		v_arr_base.Set(reflect.Append(v_arr_base, v_ent))
-		num ++
+		num++
 	}
 
 	return nil
 }
 
+type ScanArray struct {
+	Val reflect.Value
+	Arr reflect.Value
+}
+
+//将数据库查询结果保存到数组中
+//ptr_arrs是数组的地址
+func findValues(rows *sql.Rows, ptr_arrs ...interface{}) (int, error) {
+	if len(ptr_arrs) < 1 {
+		return 0, errors.New("has not *Slice")
+	}
+
+	arrent := make([]ScanArray, len(ptr_arrs))
+	values := make([]interface{}, len(ptr_arrs))
+	for i, arr_ptr := range ptr_arrs {
+		v_arr := reflect.ValueOf(arr_ptr)
+		if v_arr.Kind() != reflect.Ptr {
+			return 0, errors.New(fmt.Sprintf("ptr_arrs[%d] must be *Slice", i))
+		}
+		t_arr := GetDirectType(v_arr.Type())
+		if t_arr.Kind() != reflect.Slice {
+			return 0, errors.New(fmt.Sprintf("ptr_arrs[%d] must be *Slice", i))
+		}
+
+		t_item := GetDirectType(t_arr.Elem())
+		var ent ScanArray
+		ent.Val = reflect.Indirect(reflect.New(t_item))
+		ent.Arr = reflect.Indirect(v_arr)
+		arrent[i] = ent
+		fld := &FieldValue{"", ent.Val.Addr().Interface(), false}
+		values[i] = fld
+	}
+
+	//获取字段名称数组
+	columns, err := rows.Columns()
+	if err != nil {
+		return 0, err
+	}
+	if len(columns) != len(arrent) {
+		return 0, errors.New("columns number != ptr_arrs number")
+	}
+
+	num := 0
+	col_num := len(arrent)
+	for rows.Next() {
+		err = rows.Scan(values...)
+		if err != nil {
+			return 0, err
+		}
+		for i := 0; i < col_num; i++ {
+			arrent[i].Arr.Set(reflect.Append(arrent[i].Arr, arrent[i].Val))
+		}
+		num++
+	}
+
+	return num, nil
+}
+
 //将行数据保存到StringMap(map[string]string)中
-func ScanStringRow(rows*sql.Rows) (StringRow, error) {
+func ScanStringRow(rows *sql.Rows) (StringRow, error) {
 	row_data := make(StringRow)
 	col_names, err := rows.Columns()
 	if err != nil {
@@ -136,7 +195,7 @@ func ScanStringRow(rows*sql.Rows) (StringRow, error) {
 
 //将数据库查询结果保存到StringTable的表对象中
 //StringTable是一个一维字符串数组
-func ScanStringTable(rows*sql.Rows) (*StringTable, error) {
+func ScanStringTable(rows *sql.Rows) (*StringTable, error) {
 	rdata := &StringTable{}
 	col_names, err := rows.Columns()
 	if err != nil {

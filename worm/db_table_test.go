@@ -5,28 +5,14 @@ import (
 	"testing"
 )
 
-func TestSqlBuildExpr(t *testing.T) {
+func TestSqlBuildSelectSql(t *testing.T) {
 	InitEngine4Test()
 
-	tb := Table("user")
-	tb.Value("name", "test1")
-	tb.Value("age", Expr("id+?", 2))
-	tb.Value("created", nil)
-	id, err := tb.Insert()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	t.Logf("insert id=%d", id)
+	tb := Table("user").Select("*").Where("id>?", 0).OrderBy("name desc").Limit(5).Offset(2)
+	t.Log(tb.db_ptr.engine.db_dialect.GenTableFindSql(tb))
 
-	tb = Table("user")
-	tb.Value("age", Expr("age+?", 1)).Value("created", nil)
-	ret, err := tb.Where("id=?", 1).Update()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	t.Logf("update num=%d", ret)
+	tb = Table("user").Select("*").Where("id>?", 0).OrderBy("name desc").Having("age>?", 20)
+	t.Log(tb.db_ptr.engine.db_dialect.GenTableFindSql(tb))
 }
 
 func TestSqlBuildIUD(t *testing.T) {
@@ -54,72 +40,36 @@ func TestSqlBuildIUD(t *testing.T) {
 	t.Logf("delete num=%d", ret)
 }
 
-func TestSqlBuildSelectSql(t *testing.T) {
+func TestSqlBuildExpr(t *testing.T) {
 	InitEngine4Test()
 
-	tb := Table("user").Select("*").Where("id>?", 0).OrderBy("name desc").Limit(5).Offset(2)
-	t.Log(tb.db_ptr.engine.db_dialect.GenTableFindSql(tb))
-
-	tb = Table("user").Select("*").Where("id>?", 0).OrderBy("name desc").Having("age>?", 20)
-	t.Log(tb.db_ptr.engine.db_dialect.GenTableFindSql(tb))
-}
-
-func TestSQLBuilderRows(t *testing.T) {
-	InitEngine4Test()
-
-	rows, err := Table("user").Select("*").Where("id>?", 0).OrderBy("name desc").Limit(5).Offset(2).Rows()
+	tb := Table("user")
+	tb.Value("name", "test1")
+	tb.Value("age", Expr("id+?", 2))
+	tb.Value("created", nil)
+	id, err := tb.Insert()
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	defer rows.Close()
+	t.Logf("insert id=%d", id)
 
-	for rows.Next() {
-		var user User
-		err = ScanModel(rows, &user)
-		if err != nil {
-			t.Error(err)
-		}
-		t.Log(user)
-	}
-}
-
-func TestSQLBuilderExist(t *testing.T) {
-	InitEngine4Test()
-
-	has, err := Table("user").Select("*").Where("id=?", 199).Exist()
+	tb = Table("user")
+	tb.Value("age", Expr("age+?", 1)).Value("created", nil)
+	ret, err := tb.Where("id=?", 1).Update()
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	t.Logf("has=%v\n", has)
+	t.Logf("update num=%d", ret)
 }
 
-func TestSQLBuilderJoinRows(t *testing.T) {
-	InitEngine4Test()
-
-	rows, err := Table("user").Alias("u").Select("*").Where("u.id>?", 0).OrderBy("u.name desc").Join("book", "b", "b.author=u.id").Rows()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		data, err := ScanStringRow(rows)
-		if err != nil {
-			t.Error(err)
-		}
-		t.Log(data)
-	}
-}
-
-func TestSQLBuilderGetValue(t *testing.T) {
+func TestSQLBuilderGetValues(t *testing.T) {
 	InitEngine4Test()
 
 	name := ""
 	age := 0
-	_, err := Table("user").Select("name,age").Where("id=?", 1).Get(&name, &age)
+	_, err := Table("user").Select("name,age").Where("id=?", 1).GetValues(&name, &age)
 	if err != nil {
 		t.Error(err)
 		return
@@ -162,15 +112,41 @@ func TestSQLBuilderGetModel(t *testing.T) {
 	t.Log(ent)
 }
 
-func TestSQLBuilderGetRow(t *testing.T) {
+func TestSQLBuilderRows(t *testing.T) {
 	InitEngine4Test()
 
-	ent, err := Table("user").Select("*").Where("id=?", 1).GetRow()
+	rows, err := Table("user").Select("*").Where("id>?", 0).OrderBy("name desc").Limit(5).Offset(2).Rows()
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	t.Log(ent)
+	defer rows.Close()
+
+	for rows.Next() {
+		var user User
+		err = ScanModel(rows, &user)
+		if err != nil {
+			t.Error(err)
+		}
+		t.Log(user)
+	}
+}
+
+func TestSQLBuilderFindValues(t *testing.T) {
+	InitEngine4Test()
+
+	var ids []int64
+	var names []string
+	num, err := Table("user").Select("id", "name").Where("id>?", 0).FindValues(&ids, &names)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	for i := 0; i < num; i++ {
+		str := fmt.Sprintf("id=%d, name=%s", ids[i], names[i])
+		t.Log(str)
+	}
 }
 
 func TestSQLBuilderFindString(t *testing.T) {
@@ -198,19 +174,34 @@ func TestSQLBuilderFindModel(t *testing.T) {
 	}
 }
 
-func TestSQLBuilderFindRow(t *testing.T) {
+func TestSQLBuilderJoinRows(t *testing.T) {
 	InitEngine4Test()
 
-	ret, err := Table("user").Select("*").Where("id>?", 0).FindRow()
+	rows, err := Table("user").Alias("u").Select("*").Where("u.id>?", 0).OrderBy("u.name desc").Join("book", "b", "b.author=u.id").Rows()
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	rr := ret.GetRowCount()
-	t.Logf("row num = %d", rr)
-	for i := 0; i < rr; i++ {
-		fmt.Println(ret.GetRowData(i))
+	defer rows.Close()
+
+	for rows.Next() {
+		data, err := ScanStringRow(rows)
+		if err != nil {
+			t.Error(err)
+		}
+		t.Log(data)
 	}
+}
+
+func TestSQLBuilderExist(t *testing.T) {
+	InitEngine4Test()
+
+	has, err := Table("user").Select("*").Where("id=?", 199).Exist()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Logf("has=%v\n", has)
 }
 
 func TestSQLBuilderCount(t *testing.T) {

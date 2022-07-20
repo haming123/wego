@@ -370,6 +370,10 @@ func (tb *DbTable) Get(arg ...interface{}) (bool, error) {
 	return true, nil
 }
 
+func (tb *DbTable) GetValues(arg ...interface{}) (bool, error) {
+	return tb.Get(arg...)
+}
+
 func (tb *DbTable) GetInt() (sql.NullInt64, error) {
 	var val sql.NullInt64
 	fld := FieldValue{"", &val, false}
@@ -414,6 +418,24 @@ func (tb *DbTable) GetTime() (sql.NullTime, error) {
 	return val, nil
 }
 
+func (tb *DbTable) GetModel(ent_ptr interface{}) (bool, error) {
+	rows, err := tb.Row()
+	if err != nil {
+		return false, err
+	}
+	if !rows.Next() {
+		rows.Close()
+		return false, nil
+	}
+	err = ScanModel(rows, ent_ptr)
+	if err != nil {
+		rows.Close()
+		return false, err
+	}
+	rows.Close()
+	return true, nil
+}
+
 func (tb *DbTable) GetRow() (StringRow, error) {
 	rows, err := tb.Row()
 	if err != nil {
@@ -432,22 +454,17 @@ func (tb *DbTable) GetRow() (StringRow, error) {
 	return ret, nil
 }
 
-func (tb *DbTable) GetModel(ent_ptr interface{}) (bool, error) {
-	rows, err := tb.Row()
+func (tb *DbTable) FindValues(arr_ptr_arr ...interface{}) (int, error) {
+	rows, err := tb.Rows()
 	if err != nil {
-		return false, err
+		return 0, err
 	}
-	if !rows.Next() {
-		rows.Close()
-		return false, nil
-	}
-	err = ScanModel(rows, ent_ptr)
+	num, err := findValues(rows, arr_ptr_arr...)
 	if err != nil {
-		rows.Close()
-		return false, err
+		return 0, err
 	}
 	rows.Close()
-	return true, nil
+	return num, err
 }
 
 func (tb *DbTable) FindInt() ([]int64, error) {
@@ -513,16 +530,6 @@ func (tb *DbTable) FindString() ([]string, error) {
 	return arr, nil
 }
 
-func (tb *DbTable) FindRow() (*StringTable, error) {
-	rows, err := tb.Rows()
-	if err != nil {
-		return nil, err
-	}
-	ret, err := ScanStringTable(rows)
-	rows.Close()
-	return ret, err
-}
-
 func (tb *DbTable) FindModel(arr_ptr interface{}) error {
 	rows, err := tb.Rows()
 	if err != nil {
@@ -531,6 +538,16 @@ func (tb *DbTable) FindModel(arr_ptr interface{}) error {
 	err = ScanModelArray(rows, arr_ptr)
 	rows.Close()
 	return err
+}
+
+func (tb *DbTable) FindRow() (*StringTable, error) {
+	rows, err := tb.Rows()
+	if err != nil {
+		return nil, err
+	}
+	ret, err := ScanStringTable(rows)
+	rows.Close()
+	return ret, err
 }
 
 func (tb *DbTable) gen_count_sql(count_field string) string {

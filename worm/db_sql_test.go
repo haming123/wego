@@ -1,6 +1,7 @@
 package worm
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -13,6 +14,20 @@ func TestSqlRawUpdate(t *testing.T) {
 		return
 	}
 	t.Log(val.RowsAffected())
+}
+
+func TestSqlRawGetValues(t *testing.T) {
+	InitEngine4Test()
+
+	name := ""
+	age := 0
+	_, err := SQL("select name,age from user where id=?", 1).GetValues(&name, &age)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(name)
+	t.Log(age)
 }
 
 func TestSqlRawGetString(t *testing.T) {
@@ -49,17 +64,6 @@ func TestSqlRawGetModel(t *testing.T) {
 	t.Log(user)
 }
 
-func TestSqlRawGetRow(t *testing.T) {
-	InitEngine4Test()
-
-	val, err := SQL("select * from user where id=?", 1).GetRow()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	t.Log(val)
-}
-
 func TestSqlRawRows(t *testing.T) {
 	InitEngine4Test()
 
@@ -77,6 +81,23 @@ func TestSqlRawRows(t *testing.T) {
 			t.Error(err)
 		}
 		t.Log(user)
+	}
+}
+
+func TestSqlRawFindValues(t *testing.T) {
+	InitEngine4Test()
+
+	var ids []int64
+	var names []string
+	num, err := SQL("select id,name from user where id>?", 0).FindValues(&ids, &names)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	for i := 0; i < num; i++ {
+		str := fmt.Sprintf("id=%d, name=%s", ids[i], names[i])
+		t.Log(str)
 	}
 }
 
@@ -102,20 +123,5 @@ func TestSqlRawFindModel(t *testing.T) {
 	}
 	for _, user := range users {
 		t.Log(user)
-	}
-}
-
-func TestSqlRawFindRow(t *testing.T) {
-	InitEngine4Test()
-
-	ret, err := SQL("select u.*, b.* from user u left join book b on b.author=u.id where u.id>?", 0).FindRow()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	rr := ret.GetRowCount()
-	t.Logf("row num = %d", rr)
-	for i := 0; i < rr; i++ {
-		t.Log(ret.GetRowData(i))
 	}
 }
