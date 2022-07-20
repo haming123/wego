@@ -160,6 +160,17 @@ func TestSQLBuilderFindString(t *testing.T) {
 	t.Log(data)
 }
 
+func TestSQLBuilderFindTime(t *testing.T) {
+	InitEngine4Test()
+
+	data, err := Table("user").Select("created").Where("id>?", 0).FindTime()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(data)
+}
+
 func TestSQLBuilderFindModel(t *testing.T) {
 	InitEngine4Test()
 

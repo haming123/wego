@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 )
 
 const (
@@ -517,6 +518,27 @@ func (tb *DbTable) FindString() ([]string, error) {
 
 	var arr []string
 	var val string = ""
+	fld := FieldValue{"", &val, false}
+	for rows.Next() {
+		err = rows.Scan(&fld)
+		if err != nil {
+			return arr, err
+		}
+		arr = append(arr, val)
+	}
+
+	rows.Close()
+	return arr, nil
+}
+
+func (tb *DbTable) FindTime() ([]time.Time, error) {
+	rows, err := tb.Rows()
+	if err != nil {
+		return nil, err
+	}
+
+	var arr []time.Time
+	val := time.Time{}
 	fld := FieldValue{"", &val, false}
 	for rows.Next() {
 		err = rows.Scan(&fld)
