@@ -552,6 +552,72 @@ func (tb *DbTable) FindTime() ([]time.Time, error) {
 	return arr, nil
 }
 
+func (tb *DbTable) FindIntInt() ([]KeyVal4IntInt, error) {
+	rows, err := tb.Rows()
+	if err != nil {
+		return nil, err
+	}
+
+	var arr []KeyVal4IntInt
+	val := KeyVal4IntInt{0, 0}
+	fld1 := FieldValue{"", &val.Key, false}
+	fld2 := FieldValue{"", &val.Val, false}
+	for rows.Next() {
+		err = rows.Scan(&fld1, &fld2)
+		if err != nil {
+			return arr, err
+		}
+		arr = append(arr, val)
+	}
+
+	rows.Close()
+	return arr, nil
+}
+
+func (tb *DbTable) FindIntString() ([]KeyVal4IntString, error) {
+	rows, err := tb.Rows()
+	if err != nil {
+		return nil, err
+	}
+
+	var arr []KeyVal4IntString
+	val := KeyVal4IntString{0, ""}
+	fld1 := FieldValue{"", &val.Key, false}
+	fld2 := FieldValue{"", &val.Val, false}
+	for rows.Next() {
+		err = rows.Scan(&fld1, &fld2)
+		if err != nil {
+			return arr, err
+		}
+		arr = append(arr, val)
+	}
+
+	rows.Close()
+	return arr, nil
+}
+
+func (tb *DbTable) FindStringString() ([]KeyVal4StringString, error) {
+	rows, err := tb.Rows()
+	if err != nil {
+		return nil, err
+	}
+
+	var arr []KeyVal4StringString
+	val := KeyVal4StringString{"", ""}
+	fld1 := FieldValue{"", &val.Key, false}
+	fld2 := FieldValue{"", &val.Val, false}
+	for rows.Next() {
+		err = rows.Scan(&fld1, &fld2)
+		if err != nil {
+			return arr, err
+		}
+		arr = append(arr, val)
+	}
+
+	rows.Close()
+	return arr, nil
+}
+
 func (tb *DbTable) FindModel(arr_ptr interface{}) error {
 	rows, err := tb.Rows()
 	if err != nil {

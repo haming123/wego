@@ -171,6 +171,48 @@ func TestSQLBuilderFindTime(t *testing.T) {
 	t.Log(data)
 }
 
+func TestSQLBuilderFindIntInt(t *testing.T) {
+	InitEngine4Test()
+
+	arr, err := Table("user").Select("id", "age").Where("id>?", 0).FindIntInt()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	for i := 0; i < len(arr); i++ {
+		t.Log(arr[i])
+	}
+}
+
+func TestSQLBuilderFindIntString(t *testing.T) {
+	InitEngine4Test()
+
+	arr, err := Table("user").Select("id", "name").Where("id>?", 0).FindIntString()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	for i := 0; i < len(arr); i++ {
+		t.Log(arr[i])
+	}
+}
+
+func TestSQLBuilderFindStringString(t *testing.T) {
+	InitEngine4Test()
+
+	arr, err := Table("user").Select("id", "name").Where("id>?", 0).FindStringString()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	for i := 0; i < len(arr); i++ {
+		t.Log(arr[i])
+	}
+}
+
 func TestSQLBuilderFindModel(t *testing.T) {
 	InitEngine4Test()
 
