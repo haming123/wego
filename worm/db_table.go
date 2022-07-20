@@ -618,6 +618,28 @@ func (tb *DbTable) FindStringString() ([]KeyVal4StringString, error) {
 	return arr, nil
 }
 
+func (tb *DbTable) FindStringInt() ([]KeyVal4StringInt, error) {
+	rows, err := tb.Rows()
+	if err != nil {
+		return nil, err
+	}
+
+	var arr []KeyVal4StringInt
+	val := KeyVal4StringInt{"", 0}
+	fld1 := FieldValue{"", &val.Key, false}
+	fld2 := FieldValue{"", &val.Val, false}
+	for rows.Next() {
+		err = rows.Scan(&fld1, &fld2)
+		if err != nil {
+			return arr, err
+		}
+		arr = append(arr, val)
+	}
+
+	rows.Close()
+	return arr, nil
+}
+
 func (tb *DbTable) FindModel(arr_ptr interface{}) error {
 	rows, err := tb.Rows()
 	if err != nil {

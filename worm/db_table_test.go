@@ -213,6 +213,20 @@ func TestSQLBuilderFindStringString(t *testing.T) {
 	}
 }
 
+func TestSQLBuilderFindStringInt(t *testing.T) {
+	InitEngine4Test()
+
+	arr, err := Table("user").Select("name", "id").Where("id>?", 0).FindStringInt()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	for i := 0; i < len(arr); i++ {
+		t.Log(arr[i])
+	}
+}
+
 func TestSQLBuilderFindModel(t *testing.T) {
 	InitEngine4Test()
 
