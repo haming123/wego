@@ -5,6 +5,15 @@ import (
 	"reflect"
 )
 
+type SkipFlag int
+
+const (
+	SKIP_HOOK_NULL   SkipFlag = 0
+	SKIP_HOOK_BEFORE SkipFlag = 1
+	SKIP_HOOK_AFTER  SkipFlag = 2
+	SKIP_HOOK_ALL    SkipFlag = 3
+)
+
 type BeforeExecer interface {
 	BeforeExec(ctx *WebContext)
 }

@@ -49,7 +49,7 @@ func (group *RouteGroup) AddFilter(name string, handler HandlerFunc) bool {
 			return false
 		}
 	}
-	item := FilterInfo{name: name, filter:handler}
+	item := FilterInfo{name: name, filter: handler}
 	group.filters = append(group.filters, item)
 	return true
 }
@@ -69,7 +69,7 @@ func (group *RouteGroup) getFullFilter() []FilterInfo {
 	var arr_filter []FilterInfo
 	map_filter := make(map[string]bool)
 	for g := group; g != nil; g = g.parent {
-		for i := len(g.filters)-1; i >= 0; i-- {
+		for i := len(g.filters) - 1; i >= 0; i-- {
 			name := g.filters[i].name
 			_, has := map_filter[name]
 			if has {
@@ -112,7 +112,7 @@ func GetNameOfFunction(f interface{}) string {
 	return runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
 }
 
-func  (group *RouteGroup)createHandlerRoute4Raw(handler http.HandlerFunc) *RouteInfo {
+func (group *RouteGroup) createHandlerRoute4Raw(handler http.HandlerFunc) *RouteInfo {
 	rinfo := &RouteInfo{}
 	rinfo.group = group
 	rinfo.handler_type = FT_RAW_HANDLER
@@ -125,7 +125,7 @@ func  (group *RouteGroup)createHandlerRoute4Raw(handler http.HandlerFunc) *Route
 	return rinfo
 }
 
-func  (group *RouteGroup)createHandlerRoute4Ctx(handler HandlerFunc) *RouteInfo {
+func (group *RouteGroup) createHandlerRoute4Ctx(handler HandlerFunc) *RouteInfo {
 	rinfo := &RouteInfo{}
 	rinfo.group = group
 	rinfo.handler_type = FT_CTX_HANDLER
@@ -215,15 +215,15 @@ func (group *RouteGroup) createStaticHandler(relativePath string, fs http.FileSy
 	}
 }
 
-func (group *RouteGroup) StaticFile(relativePath, filepath string) {
+func (group *RouteGroup) StaticFile(relativePath, filepath string) *RouteInfo {
 	handler := func(c *WebContext) {
 		c.WriteFile(filepath)
 	}
-	group.GET(relativePath, handler)
+	return group.GET(relativePath, handler)
 }
 
-func (group *RouteGroup) StaticPath(relativePath string, root string) {
+func (group *RouteGroup) StaticPath(relativePath string, root string) *RouteInfo {
 	handler := group.createStaticHandler(relativePath, http.Dir(root))
 	urlPattern := path.Join(relativePath, "/*filepath")
-	group.GET(urlPattern, handler)
+	return group.GET(urlPattern, handler)
 }
