@@ -299,6 +299,28 @@ func (tb *DbSQL) FindIntInt() ([]KeyVal4IntInt, error) {
 	return arr, nil
 }
 
+func (tb *DbSQL) FindIntFloat() ([]KeyVal4IntFloat, error) {
+	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
+	if err != nil {
+		return nil, err
+	}
+
+	var arr []KeyVal4IntFloat
+	val := KeyVal4IntFloat{0, 0}
+	fld1 := FieldValue{"", &val.Key, false}
+	fld2 := FieldValue{"", &val.Val, false}
+	for rows.Next() {
+		err = rows.Scan(&fld1, &fld2)
+		if err != nil {
+			return arr, err
+		}
+		arr = append(arr, val)
+	}
+
+	rows.Close()
+	return arr, nil
+}
+
 func (tb *DbSQL) FindIntString() ([]KeyVal4IntString, error) {
 	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
 	if err != nil {
@@ -307,6 +329,72 @@ func (tb *DbSQL) FindIntString() ([]KeyVal4IntString, error) {
 
 	var arr []KeyVal4IntString
 	val := KeyVal4IntString{0, ""}
+	fld1 := FieldValue{"", &val.Key, false}
+	fld2 := FieldValue{"", &val.Val, false}
+	for rows.Next() {
+		err = rows.Scan(&fld1, &fld2)
+		if err != nil {
+			return arr, err
+		}
+		arr = append(arr, val)
+	}
+
+	rows.Close()
+	return arr, nil
+}
+
+func (tb *DbSQL) FindIntTime() ([]KeyVal4IntTime, error) {
+	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
+	if err != nil {
+		return nil, err
+	}
+
+	var arr []KeyVal4IntTime
+	val := KeyVal4IntTime{0, time.Time{}}
+	fld1 := FieldValue{"", &val.Key, false}
+	fld2 := FieldValue{"", &val.Val, false}
+	for rows.Next() {
+		err = rows.Scan(&fld1, &fld2)
+		if err != nil {
+			return arr, err
+		}
+		arr = append(arr, val)
+	}
+
+	rows.Close()
+	return arr, nil
+}
+
+func (tb *DbSQL) FindStringInt() ([]KeyVal4StringInt, error) {
+	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
+	if err != nil {
+		return nil, err
+	}
+
+	var arr []KeyVal4StringInt
+	val := KeyVal4StringInt{"", 0}
+	fld1 := FieldValue{"", &val.Key, false}
+	fld2 := FieldValue{"", &val.Val, false}
+	for rows.Next() {
+		err = rows.Scan(&fld1, &fld2)
+		if err != nil {
+			return arr, err
+		}
+		arr = append(arr, val)
+	}
+
+	rows.Close()
+	return arr, nil
+}
+
+func (tb *DbSQL) FindStringFloat() ([]KeyVal4StringFloat, error) {
+	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
+	if err != nil {
+		return nil, err
+	}
+
+	var arr []KeyVal4StringFloat
+	val := KeyVal4StringFloat{"", 0}
 	fld1 := FieldValue{"", &val.Key, false}
 	fld2 := FieldValue{"", &val.Val, false}
 	for rows.Next() {
@@ -343,14 +431,14 @@ func (tb *DbSQL) FindStringString() ([]KeyVal4StringString, error) {
 	return arr, nil
 }
 
-func (tb *DbSQL) FindStringInt() ([]KeyVal4StringInt, error) {
+func (tb *DbSQL) FindStringTime() ([]KeyVal4StringTime, error) {
 	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
 	if err != nil {
 		return nil, err
 	}
 
-	var arr []KeyVal4StringInt
-	val := KeyVal4StringInt{"", 0}
+	var arr []KeyVal4StringTime
+	val := KeyVal4StringTime{"", time.Time{}}
 	fld1 := FieldValue{"", &val.Key, false}
 	fld2 := FieldValue{"", &val.Val, false}
 	for rows.Next() {

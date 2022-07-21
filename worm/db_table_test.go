@@ -199,10 +199,24 @@ func TestSQLBuilderFindIntString(t *testing.T) {
 	}
 }
 
+func TestSQLBuilderFindIntTime(t *testing.T) {
+	InitEngine4Test()
+
+	arr, err := Table("user").Select("id", "created").Where("id>?", 0).FindIntTime()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	for i := 0; i < len(arr); i++ {
+		t.Log(arr[i])
+	}
+}
+
 func TestSQLBuilderFindStringString(t *testing.T) {
 	InitEngine4Test()
 
-	arr, err := Table("user").Select("id", "name").Where("id>?", 0).FindStringString()
+	arr, err := Table("user").Select("name", "age").Where("id>?", 0).FindStringString()
 	if err != nil {
 		t.Error(err)
 		return
@@ -216,7 +230,7 @@ func TestSQLBuilderFindStringString(t *testing.T) {
 func TestSQLBuilderFindStringInt(t *testing.T) {
 	InitEngine4Test()
 
-	arr, err := Table("user").Select("name", "id").Where("id>?", 0).FindStringInt()
+	arr, err := Table("user").Select("name", "age").Where("id>?", 0).FindStringInt()
 	if err != nil {
 		t.Error(err)
 		return
