@@ -7,7 +7,7 @@ import (
 	"reflect"
 )
 
-func (md *DbModel)GetFieldFlag4Select(i int) bool {
+func (md *DbModel) GetFieldFlag4Select(i int) bool {
 	if md.flds_addr[i].Flag == false {
 		return false
 	}
@@ -17,9 +17,9 @@ func (md *DbModel)GetFieldFlag4Select(i int) bool {
 	return true
 }
 
-func (md *DbModel)gen_select_fields() string {
+func (md *DbModel) gen_select_fields() string {
 	var buffer bytes.Buffer
-	index := 0;
+	index := 0
 	for i, item := range md.flds_addr {
 		if md.GetFieldFlag4Select(i) == false {
 			continue
@@ -43,7 +43,7 @@ func (md *DbModel)gen_select_fields() string {
 	return buffer.String()
 }
 
-func (md *DbModel)gen_count_sql(count_field string) string {
+func (md *DbModel) gen_count_sql(count_field string) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("select ")
@@ -55,7 +55,7 @@ func (md *DbModel)gen_count_sql(count_field string) string {
 		buffer.WriteString(md.table_alias)
 	}
 
-	if len(md.db_where.Tpl_sql)>0 {
+	if len(md.db_where.Tpl_sql) > 0 {
 		buffer.WriteString(" where ")
 		buffer.WriteString(md.db_where.Tpl_sql)
 	}
@@ -63,9 +63,9 @@ func (md *DbModel)gen_count_sql(count_field string) string {
 	return buffer.String()
 }
 
-func (md *DbModel)get_scan_valus() []interface{} {
+func (md *DbModel) get_scan_valus() []interface{} {
 	index := 0
-	vals:= make([]interface{}, len(md.flds_addr))
+	vals := make([]interface{}, len(md.flds_addr))
 	for i, _ := range md.flds_addr {
 		if md.GetFieldFlag4Select(i) == false {
 			continue
@@ -77,7 +77,7 @@ func (md *DbModel)get_scan_valus() []interface{} {
 	return vals[0:index]
 }
 
-func (md *DbModel)Scan() (bool, error) {
+func (md *DbModel) Scan() (bool, error) {
 	if md.auto_put && md.md_pool != nil {
 		pool := md.split_pool()
 		defer md.put_pool(pool)
@@ -105,7 +105,7 @@ func (md *DbModel)Scan() (bool, error) {
 		return false, nil
 	}
 
-	scan_vals:= md.get_scan_valus()
+	scan_vals := md.get_scan_valus()
 	err = rows.Scan(scan_vals...)
 	if err != nil {
 		rows.Close()
@@ -116,7 +116,16 @@ func (md *DbModel)Scan() (bool, error) {
 	return true, nil
 }
 
-func (md *DbModel)Get(args ...interface{}) (bool, error) {
+//若flag==true，则正常执行
+//若flag==false，则退出执行
+func (md *DbModel) GetIf(flag bool, args ...interface{}) (bool, error) {
+	if flag == false {
+		return false, nil
+	}
+	return md.Get(args...)
+}
+
+func (md *DbModel) Get(args ...interface{}) (bool, error) {
 	if md.auto_put && md.md_pool != nil {
 		pool := md.split_pool()
 		defer md.put_pool(pool)
@@ -185,7 +194,7 @@ func (md *DbModel)Get(args ...interface{}) (bool, error) {
 	return true, nil
 }
 
-func (md *DbModel)Exist() (bool, error) {
+func (md *DbModel) Exist() (bool, error) {
 	if md.auto_put && md.md_pool != nil {
 		pool := md.split_pool()
 		defer md.put_pool(pool)
@@ -213,7 +222,7 @@ func (md *DbModel)Exist() (bool, error) {
 	return true, nil
 }
 
-func (md *DbModel)Count(field ...string) (int64, error) {
+func (md *DbModel) Count(field ...string) (int64, error) {
 	if md.auto_put && md.md_pool != nil {
 		pool := md.split_pool()
 		defer md.put_pool(pool)
@@ -257,7 +266,7 @@ func (md *DbModel)Count(field ...string) (int64, error) {
 	return total, nil
 }
 
-func (md *DbModel)DistinctCount(field string) (int64, error) {
+func (md *DbModel) DistinctCount(field string) (int64, error) {
 	if md.auto_put && md.md_pool != nil {
 		pool := md.split_pool()
 		defer md.put_pool(pool)
@@ -294,7 +303,7 @@ func (md *DbModel)DistinctCount(field string) (int64, error) {
 	return total, nil
 }
 
-func (md *DbModel)Rows() (*ModelRows, error) {
+func (md *DbModel) Rows() (*ModelRows, error) {
 	if md.Err != nil {
 		return nil, md.Err
 	}
@@ -315,7 +324,7 @@ func (md *DbModel)Rows() (*ModelRows, error) {
 	return rs, nil
 }
 
-func (md *DbModel)Find(arr_ptr interface{}) error {
+func (md *DbModel) Find(arr_ptr interface{}) error {
 	if md.auto_put && md.md_pool != nil {
 		pool := md.split_pool()
 		defer md.put_pool(pool)
@@ -327,12 +336,12 @@ func (md *DbModel)Find(arr_ptr interface{}) error {
 	//获取变量arr_ptr的类型
 	v_arr := reflect.ValueOf(arr_ptr)
 	if v_arr.Kind() != reflect.Ptr {
-		return  errors.New("arr_ptr must be *Slice")
+		return errors.New("arr_ptr must be *Slice")
 	}
 	//获取变量arr_ptr指向的类型
 	t_arr := GetDirectType(v_arr.Type())
 	if t_arr.Kind() != reflect.Slice {
-		return  errors.New("arr_ptr must be *Slice")
+		return errors.New("arr_ptr must be *Slice")
 	}
 	//获取数组成员的类型
 	t_item := GetDirectType(t_arr.Elem())
@@ -374,7 +383,7 @@ func (md *DbModel)Find(arr_ptr interface{}) error {
 		return err
 	}
 
-	vals:= md.get_scan_valus()
+	vals := md.get_scan_valus()
 	v_arr_base := reflect.Indirect(v_arr)
 	hook, isAfter := md.ent_ptr.(AfterQueryInterface)
 	for rows.Next() {

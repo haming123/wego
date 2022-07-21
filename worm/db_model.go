@@ -10,24 +10,24 @@ import (
 
 type DbModel struct {
 	SqlContex
-	db_ptr *DbSession
-	ent_ptr interface{}
-	table_name string
+	db_ptr      *DbSession
+	ent_ptr     interface{}
+	table_name  string
 	table_alias string
-	field_id string
-	flds_info []FieldInfo
-	flds_addr []FieldValue
-	db_where DbWhere
-	group_by string
-	order_by string
-	db_limit int64
-	db_offset int64
-	join_type int
-	join_on string
-	md_pool *ModelPool
-	auto_put bool
-	flag_omit bool
-	Err error
+	field_id    string
+	flds_info   []FieldInfo
+	flds_addr   []FieldValue
+	db_where    DbWhere
+	group_by    string
+	order_by    string
+	db_limit    int64
+	db_offset   int64
+	join_type   int
+	join_on     string
+	md_pool     *ModelPool
+	auto_put    bool
+	flag_omit   bool
+	Err         error
 }
 
 func NewModel(dbs *DbSession, ent_ptr interface{}, flag bool) *DbModel {
@@ -56,7 +56,7 @@ func NewModel(dbs *DbSession, ent_ptr interface{}, flag bool) *DbModel {
 
 //重置model状态，保留以下字段的内容：
 //ent_ptr、table_name、field_id、flds_info、flds_addr
-func (md *DbModel)Reset() {
+func (md *DbModel) Reset() {
 	md.db_ptr = nil
 	md.table_alias = ""
 	md.group_by = ""
@@ -74,12 +74,12 @@ func (md *DbModel)Reset() {
 	md.SelectALL()
 }
 
-func (md *DbModel)SetDbSession(dbs *DbSession) *DbModel {
+func (md *DbModel) SetDbSession(dbs *DbSession) *DbModel {
 	md.db_ptr = dbs
 	return md
 }
 
-func (md *DbModel)WithModelPool(pool *ModelPool, auto_put ...bool) *DbModel {
+func (md *DbModel) WithModelPool(pool *ModelPool, auto_put ...bool) *DbModel {
 	md.md_pool = pool
 	if len(auto_put) > 0 {
 		md.auto_put = auto_put[0]
@@ -87,62 +87,62 @@ func (md *DbModel)WithModelPool(pool *ModelPool, auto_put ...bool) *DbModel {
 	return md
 }
 
-func (md *DbModel)PutToPool()  {
+func (md *DbModel) PutToPool() {
 	if md.md_pool != nil {
 		md.md_pool.Put(md)
 	}
 }
 
-func (md *DbModel)split_pool() *ModelPool {
+func (md *DbModel) split_pool() *ModelPool {
 	pool := md.md_pool
 	md.md_pool = nil
 	return pool
 }
 
-func (md *DbModel)put_pool(pool *ModelPool)  {
+func (md *DbModel) put_pool(pool *ModelPool) {
 	if pool != nil {
 		md.md_pool = pool
 		pool.Put(md)
 	}
 }
 
-func (md *DbModel)GetModelEnt() interface{} {
+func (md *DbModel) GetModelEnt() interface{} {
 	return md.ent_ptr
 }
 
-func (md *DbModel)GetContext() context.Context {
+func (md *DbModel) GetContext() context.Context {
 	return md.ctx
 }
 
-func (md *DbModel)Context(ctx context.Context) *DbModel {
+func (md *DbModel) Context(ctx context.Context) *DbModel {
 	md.ctx = ctx
 	return md
 }
 
-func (md *DbModel)UsePrepare(val bool) *DbModel {
+func (md *DbModel) UsePrepare(val bool) *DbModel {
 	md.use_prepare.Valid = true
 	md.use_prepare.Bool = val
 	return md
 }
 
-func (md *DbModel)ShowLog(val bool) *DbModel {
+func (md *DbModel) ShowLog(val bool) *DbModel {
 	md.show_log.Valid = true
 	md.show_log.Bool = val
 	return md
 }
 
-func (md *DbModel)UseMaster(val bool) *DbModel {
+func (md *DbModel) UseMaster(val bool) *DbModel {
 	md.use_master.Valid = true
 	md.use_master.Bool = val
 	return md
 }
 
-func (md *DbModel)TableName(val string) *DbModel {
+func (md *DbModel) TableName(val string) *DbModel {
 	md.table_name = val
 	return md
 }
 
-func (md *DbModel)TableAlias(alias string) *DbJoint {
+func (md *DbModel) TableAlias(alias string) *DbJoint {
 	md.table_alias = alias
 
 	lk := &DbJoint{}
@@ -152,10 +152,10 @@ func (md *DbModel)TableAlias(alias string) *DbJoint {
 	return lk
 }
 
-func (md *DbModel)get_field_index(dbname string) int {
+func (md *DbModel) get_field_index(dbname string) int {
 	index := -1
 	num := len(md.flds_info)
-	for i:=0; i < num; i++ {
+	for i := 0; i < num; i++ {
 		if md.flds_info[i].DbName == dbname {
 			index = i
 			break
@@ -164,10 +164,10 @@ func (md *DbModel)get_field_index(dbname string) int {
 	return index
 }
 
-func (md *DbModel)get_field_index_byname(fname string) int {
+func (md *DbModel) get_field_index_byname(fname string) int {
 	index := -1
 	num := len(md.flds_info)
-	for i:=0; i < num; i++ {
+	for i := 0; i < num; i++ {
 		if md.flds_info[i].FieldName == fname {
 			index = i
 			break
@@ -176,10 +176,10 @@ func (md *DbModel)get_field_index_byname(fname string) int {
 	return index
 }
 
-func (md *DbModel)get_field_index_byaddr(fldg_ptr interface{}) int {
+func (md *DbModel) get_field_index_byaddr(fldg_ptr interface{}) int {
 	index := -1
 	num := len(md.flds_addr)
-	for i:=0; i < num; i++ {
+	for i := 0; i < num; i++ {
 		if md.flds_addr[i].VAddr == fldg_ptr {
 			index = i
 			break
@@ -188,7 +188,7 @@ func (md *DbModel)get_field_index_byaddr(fldg_ptr interface{}) int {
 	return index
 }
 
-func (md *DbModel)set_flag_by_name(field string, flag bool) bool {
+func (md *DbModel) set_flag_by_name(field string, flag bool) bool {
 	index := md.get_field_index(field)
 	if index < 0 {
 		return false
@@ -197,7 +197,7 @@ func (md *DbModel)set_flag_by_name(field string, flag bool) bool {
 	return true
 }
 
-func (md *DbModel)set_flag_by_addr(fldg_ptr interface{}, flag bool) bool {
+func (md *DbModel) set_flag_by_addr(fldg_ptr interface{}, flag bool) bool {
 	index := md.get_field_index_byaddr(fldg_ptr)
 	if index < 0 {
 		return false
@@ -206,23 +206,23 @@ func (md *DbModel)set_flag_by_addr(fldg_ptr interface{}, flag bool) bool {
 	return true
 }
 
-func (md *DbModel)SelectALL() *DbModel {
+func (md *DbModel) SelectALL() *DbModel {
 	num := len(md.flds_addr)
-	for i:=0; i < num; i++ {
+	for i := 0; i < num; i++ {
 		md.flds_addr[i].Flag = true
 	}
 	return md
 }
 
-func (md *DbModel)OmitALL() *DbModel {
+func (md *DbModel) OmitALL() *DbModel {
 	num := len(md.flds_addr)
-	for i:=0; i < num; i++ {
+	for i := 0; i < num; i++ {
 		md.flds_addr[i].Flag = false
 	}
 	return md
 }
 
-func (md *DbModel)Select(fields ...string) *DbModel {
+func (md *DbModel) Select(fields ...string) *DbModel {
 	if md.flag_omit == false {
 		md.OmitALL()
 		md.flag_omit = true
@@ -240,7 +240,7 @@ func (md *DbModel)Select(fields ...string) *DbModel {
 	return md
 }
 
-func (md *DbModel)SelectX(fields ...interface{}) *DbModel {
+func (md *DbModel) SelectX(fields ...interface{}) *DbModel {
 	if md.flag_omit == false {
 		md.OmitALL()
 		md.flag_omit = true
@@ -260,9 +260,9 @@ func (md *DbModel)SelectX(fields ...interface{}) *DbModel {
 	return md
 }
 
-func (md *DbModel)Omit(fields ...string) *DbModel {
+func (md *DbModel) Omit(fields ...string) *DbModel {
 	md.SelectALL()
-	for _, field := range fields{
+	for _, field := range fields {
 		//field = strings.Trim(field, " ")
 		ind := md.get_field_index(field)
 		if ind >= 0 {
@@ -274,7 +274,7 @@ func (md *DbModel)Omit(fields ...string) *DbModel {
 	return md
 }
 
-func (md *DbModel)OmitX(fields ...interface{}) *DbModel {
+func (md *DbModel) OmitX(fields ...interface{}) *DbModel {
 	md.SelectALL()
 	for _, fld_ptr := range fields {
 		if fld_ptr == nil {
@@ -295,7 +295,7 @@ func (md *DbModel)OmitX(fields ...interface{}) *DbModel {
 }
 
 //设置字段的值，并选中该字段
-func (md *DbModel)SetValue(fld_ptr interface{}, val interface{}) error {
+func (md *DbModel) SetValue(fld_ptr interface{}, val interface{}) error {
 	err := set_value(fld_ptr, val)
 	if err != nil {
 		md.Err = err
@@ -305,7 +305,7 @@ func (md *DbModel)SetValue(fld_ptr interface{}, val interface{}) error {
 	return nil
 }
 
-func (md *DbModel)AndX(field_ptr interface{}, oper string, vals ...interface{}) *DbModel {
+func (md *DbModel) AndX(field_ptr interface{}, oper string, vals ...interface{}) *DbModel {
 	index := md.get_field_index_byaddr(field_ptr)
 	if index < 0 {
 		md.Err = errors.New("field_ptr not find")
@@ -326,7 +326,7 @@ func (md *DbModel)AndX(field_ptr interface{}, oper string, vals ...interface{}) 
 	return md
 }
 
-func (md *DbModel)OrX(field_ptr interface{}, oper string, vals ...interface{}) *DbModel {
+func (md *DbModel) OrX(field_ptr interface{}, oper string, vals ...interface{}) *DbModel {
 	index := md.get_field_index_byaddr(field_ptr)
 	if index < 0 {
 		md.Err = errors.New("field_ptr not find")
@@ -347,92 +347,92 @@ func (md *DbModel)OrX(field_ptr interface{}, oper string, vals ...interface{}) *
 	return md
 }
 
-func (md *DbModel)SetWhere(sqlw *DbWhere) *DbModel {
+func (md *DbModel) SetWhere(sqlw *DbWhere) *DbModel {
 	md.db_where.Init(sqlw.Tpl_sql, sqlw.Values...)
 	return md
 }
-func (md *DbModel)Where(sql string, vals ...interface{}) *DbModel {
+func (md *DbModel) Where(sql string, vals ...interface{}) *DbModel {
 	md.db_where.Init(sql, vals...)
 	return md
 }
-func (md *DbModel)WhereIf(cond bool, sql string, vals ...interface{}) *DbModel {
+func (md *DbModel) WhereIf(cond bool, sql string, vals ...interface{}) *DbModel {
 	if cond {
 		md.db_where.Init(sql, vals...)
 	}
 	return md
 }
-func (md *DbModel)WhereIn(sql string, vals ...interface{}) *DbModel {
+func (md *DbModel) WhereIn(sql string, vals ...interface{}) *DbModel {
 	md.db_where.Reset()
 	md.db_where.AndIn(sql, vals...)
 	return md
 }
-func (md *DbModel)WhereNotIn(sql string, vals ...interface{}) *DbModel {
+func (md *DbModel) WhereNotIn(sql string, vals ...interface{}) *DbModel {
 	md.db_where.Reset()
 	md.db_where.AndNotIn(sql, vals...)
 	return md
 }
-func (md *DbModel)ID(val int64) *DbModel {
+func (md *DbModel) ID(val int64) *DbModel {
 	md.db_where.Init("id=?", val)
 	return md
 }
-func (md *DbModel)And(sql string, vals ...interface{}) *DbModel {
+func (md *DbModel) And(sql string, vals ...interface{}) *DbModel {
 	md.db_where.And(sql, vals...)
 	return md
 }
-func (md *DbModel)Or(sql string, vals ...interface{}) *DbModel {
+func (md *DbModel) Or(sql string, vals ...interface{}) *DbModel {
 	md.db_where.Or(sql, vals...)
 	return md
 }
-func (md *DbModel)AndIf(cond bool, sql string, vals ...interface{}) *DbModel {
+func (md *DbModel) AndIf(cond bool, sql string, vals ...interface{}) *DbModel {
 	md.db_where.AndIf(cond, sql, vals...)
 	return md
 }
-func (md *DbModel)OrIf(cond bool, sql string, vals ...interface{}) *DbModel {
+func (md *DbModel) OrIf(cond bool, sql string, vals ...interface{}) *DbModel {
 	md.db_where.OrIf(cond, sql, vals...)
 	return md
 }
-func (md *DbModel)AndExp(sqlw_sub *DbWhere) *DbModel {
+func (md *DbModel) AndExp(sqlw_sub *DbWhere) *DbModel {
 	md.db_where.AndExp(sqlw_sub)
 	return md
 }
-func (md *DbModel)OrExp(sqlw_sub *DbWhere) *DbModel {
+func (md *DbModel) OrExp(sqlw_sub *DbWhere) *DbModel {
 	md.db_where.OrExp(sqlw_sub)
 	return md
 }
-func (md *DbModel)AndIn(sql string, vals ...interface{}) *DbModel {
+func (md *DbModel) AndIn(sql string, vals ...interface{}) *DbModel {
 	md.db_where.AndIn(sql, vals...)
 	return md
 }
-func (md *DbModel)AndNotIn(sql string, vals ...interface{}) *DbModel {
+func (md *DbModel) AndNotIn(sql string, vals ...interface{}) *DbModel {
 	md.db_where.AndNotIn(sql, vals...)
 	return md
 }
-func (md *DbModel)OrIn(sql string, vals ...interface{}) *DbModel {
+func (md *DbModel) OrIn(sql string, vals ...interface{}) *DbModel {
 	md.db_where.AndIn(sql, vals...)
 	return md
 }
-func (md *DbModel)OrNotIn(sql string, vals ...interface{}) *DbModel {
+func (md *DbModel) OrNotIn(sql string, vals ...interface{}) *DbModel {
 	md.db_where.OrNotIn(sql, vals...)
 	return md
 }
-func (md *DbModel)OrderBy(val string) *DbModel {
+func (md *DbModel) OrderBy(val string) *DbModel {
 	md.order_by = val
 	return md
 }
-func (md *DbModel)Top(rows int64) *DbModel {
+func (md *DbModel) Top(rows int64) *DbModel {
 	md.db_limit = rows
 	return md
 }
-func (md *DbModel)Limit(rows int64) *DbModel {
+func (md *DbModel) Limit(rows int64) *DbModel {
 	md.db_limit = rows
 	return md
 }
-func (md *DbModel)Offset(offset int64) *DbModel {
+func (md *DbModel) Offset(offset int64) *DbModel {
 	md.db_offset = offset
 	return md
 }
-func (md *DbModel)Page(rows int64, page_no int64) *DbModel {
-	md.db_offset = page_no*rows
+func (md *DbModel) Page(rows int64, page_no int64) *DbModel {
+	md.db_offset = page_no * rows
 	md.db_limit = rows
 	return md
 }
