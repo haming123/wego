@@ -30,7 +30,7 @@ func CreateIntArray(arr_ptr interface{}, field string, def_val ...int64) ([]int6
 
 	var arr []int64
 	num := v_arr.Len()
-	for i:=0; i < num; i++ {
+	for i := 0; i < num; i++ {
 		v_item := v_arr.Index(i)
 		v_ff := v_item.FieldByIndex(fi_info.Index)
 		arr = append(arr, v_ff.Int())
@@ -43,3 +43,14 @@ func CreateIntArray(arr_ptr interface{}, field string, def_val ...int64) ([]int6
 	return arr, nil
 }
 
+func LRLike(val string) string {
+	return "%" + val + "%"
+}
+
+func LLike(val string) string {
+	return "%" + val
+}
+
+func RLike(val string) string {
+	return val + "%"
+}
