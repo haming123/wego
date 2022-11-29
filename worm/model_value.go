@@ -7,12 +7,16 @@ func getEntFieldAddrs(fields []FieldInfo, v_ent reflect.Value, flag bool) []Fiel
 	f_num := len(fields)
 	arr := make([]FieldValue, f_num)
 	v_ent = reflect.Indirect(v_ent)
-	for i:=0; i < f_num; i++ {
+	for i := 0; i < f_num; i++ {
 		f_name := fields[i].DbName
-		f_index := fields[i].FieldIndex
-		vv := v_ent.Field(f_index)
-		v_ptr := vv.Addr().Interface()
-
+		var v_ptr interface{}
+		if fields[i].FieldPos == nil {
+			vv := v_ent.Field(fields[i].FieldIndex)
+			v_ptr = vv.Addr().Interface()
+		} else {
+			vv := v_ent.FieldByIndex(fields[i].FieldPos)
+			v_ptr = vv.Addr().Interface()
+		}
 		var item FieldValue
 		item.FName = f_name
 		item.VAddr = v_ptr
@@ -26,10 +30,15 @@ func getEntFieldAddrs(fields []FieldInfo, v_ent reflect.Value, flag bool) []Fiel
 func rebindEntAddrs(fields []FieldInfo, v_ent reflect.Value, values []FieldValue) {
 	f_num := len(fields)
 	v_ent = reflect.Indirect(v_ent)
-	for i:=0; i < f_num; i++ {
-		f_index := fields[i].FieldIndex
-		vv := v_ent.Field(f_index)
-		v_ptr := vv.Addr().Interface()
+	for i := 0; i < f_num; i++ {
+		var v_ptr interface{}
+		if fields[i].FieldPos == nil {
+			vv := v_ent.Field(fields[i].FieldIndex)
+			v_ptr = vv.Addr().Interface()
+		} else {
+			vv := v_ent.FieldByIndex(fields[i].FieldPos)
+			v_ptr = vv.Addr().Interface()
+		}
 		values[i].VAddr = v_ptr
 	}
 }
@@ -44,8 +53,8 @@ func genScanAddr4Columns(columns []string, v_ent reflect.Value) []interface{} {
 	values := make([]interface{}, len(columns))
 	for i := 0; i < len(columns); i++ {
 		var ptr interface{} = nil
-		for j :=0; j < len(ent_flds); j++ {
-			if ent_flds[j].FName == columns[i]{
+		for j := 0; j < len(ent_flds); j++ {
+			if ent_flds[j].FName == columns[i] {
 				//ptr = ent_flds[j].VAddr
 				ptr = &ent_flds[j]
 				break

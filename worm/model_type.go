@@ -16,10 +16,10 @@ type DB_User struct {
 */
 
 const (
-	STR_AUTOINCR 	string = "autoincr"
-	STR_NOT_INSERT 	string = "n_insert"
-	STR_NOT_UPDATE 	string = "n_update"
-	STR_NOT_SELECT 	string = "n_select"
+	STR_AUTOINCR   string = "autoincr"
+	STR_NOT_INSERT string = "n_insert"
+	STR_NOT_UPDATE string = "n_update"
+	STR_NOT_SELECT string = "n_select"
 )
 
 type TableName interface {
@@ -27,25 +27,26 @@ type TableName interface {
 }
 
 type FieldInfo struct {
-	FieldIndex  int
-	FieldName  	string
-	FieldType  	reflect.Type
-	DbName  	string
-	AutoIncr 	bool
-	NotInsert 	bool
-	NotUpdate 	bool
-	NotSelect 	bool
+	FieldIndex int
+	FieldPos   []int
+	FieldName  string
+	FieldType  reflect.Type
+	DbName     string
+	AutoIncr   bool
+	NotInsert  bool
+	NotUpdate  bool
+	NotSelect  bool
 }
 
 type ModelInfo struct {
-	Fields []FieldInfo
-	TableName  	string
-	FieldID  	string
+	Fields    []FieldInfo
+	TableName string
+	FieldID   string
 }
 
 //struct信息的缓存
-var g_model_cache 	map[reflect.Type]*ModelInfo = make(map[reflect.Type]*ModelInfo)
-var g_model_mutex   sync.Mutex
+var g_model_cache map[reflect.Type]*ModelInfo = make(map[reflect.Type]*ModelInfo)
+var g_model_mutex sync.Mutex
 
 func getModelInfoUseCache(v_ent reflect.Value) *ModelInfo {
 	g_model_mutex.Lock()
@@ -70,10 +71,21 @@ func getModelInfo(v_ent reflect.Value) *ModelInfo {
 
 	v_ent = reflect.Indirect(v_ent)
 	t_ent := v_ent.Type()
+	getModelInfoNest(&minfo, t_ent, nil)
 
+	return &minfo
+}
+
+func getModelInfoNest(minfo *ModelInfo, t_ent reflect.Type, pos []int) {
 	f_num := t_ent.NumField()
-	for i:=0; i < f_num; i++{
+	for i := 0; i < f_num; i++ {
 		ff := t_ent.Field(i)
+		if ff.Anonymous == true {
+			pos = append(pos, i)
+			getModelInfoNest(minfo, ff.Type, pos)
+			continue
+		}
+
 		field_name := ff.Name
 		db_name := getFieldName(ff)
 		if len(db_name) < 1 {
@@ -82,6 +94,9 @@ func getModelInfo(v_ent reflect.Value) *ModelInfo {
 
 		finfo := FieldInfo{}
 		finfo.FieldIndex = i
+		if pos != nil {
+			finfo.FieldPos = append(pos, i)
+		}
 		finfo.FieldName = field_name
 		finfo.FieldType = ff.Type
 		finfo.DbName = db_name
@@ -93,8 +108,6 @@ func getModelInfo(v_ent reflect.Value) *ModelInfo {
 
 		minfo.Fields = append(minfo.Fields, finfo)
 	}
-
-	return &minfo
 }
 
 func getTableName(v_ent reflect.Value) string {
@@ -119,7 +132,7 @@ func getTableName(v_ent reflect.Value) string {
 	t_name := t_ent.Name()
 	t_name = strings.ToLower(t_name)
 	ind := strings.Index(t_name, "db_")
-	if ind>=0 {
+	if ind >= 0 {
 		ind += 3
 		t_name = t_name[ind:]
 	}
@@ -136,7 +149,7 @@ func getFieldName(ff reflect.StructField) string {
 
 	tag := ff.Tag.Get("db")
 	parts := strings.Split(tag, ";")
-	part0 := strings.Trim( parts[0], " ")
+	part0 := strings.Trim(parts[0], " ")
 	if part0 == "-" {
 		f_name = ""
 	} else if part0 != "" {
@@ -171,5 +184,3 @@ func parselFeildTag(finfo *FieldInfo, ff reflect.StructField) {
 		}
 	}
 }
-
-
