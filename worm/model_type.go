@@ -81,8 +81,7 @@ func getModelInfoNest(minfo *ModelInfo, t_ent reflect.Type, pos []int) {
 	for i := 0; i < f_num; i++ {
 		ff := t_ent.Field(i)
 		if ff.Anonymous == true {
-			pos = append(pos, i)
-			getModelInfoNest(minfo, ff.Type, pos)
+			getModelInfoNest(minfo, ff.Type, append(pos, i))
 			continue
 		}
 
