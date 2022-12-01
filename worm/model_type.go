@@ -28,14 +28,14 @@ type TableName interface {
 
 type FieldInfo struct {
 	FieldIndex int
-	FieldPos   []int
-	FieldName  string
-	FieldType  reflect.Type
-	DbName     string
-	AutoIncr   bool
-	NotInsert  bool
-	NotUpdate  bool
-	NotSelect  bool
+	//FieldPos   []int
+	FieldName string
+	FieldType reflect.Type
+	DbName    string
+	AutoIncr  bool
+	NotInsert bool
+	NotUpdate bool
+	NotSelect bool
 }
 
 type ModelInfo struct {
@@ -71,11 +71,46 @@ func getModelInfo(v_ent reflect.Value) *ModelInfo {
 
 	v_ent = reflect.Indirect(v_ent)
 	t_ent := v_ent.Type()
-	getModelInfoNest(&minfo, t_ent, nil)
+
+	f_num := t_ent.NumField()
+	for i := 0; i < f_num; i++ {
+		ff := t_ent.Field(i)
+		field_name := ff.Name
+		db_name := getFieldName(ff)
+		if len(db_name) < 1 {
+			continue
+		}
+
+		finfo := FieldInfo{}
+		finfo.FieldIndex = i
+		finfo.FieldName = field_name
+		finfo.FieldType = ff.Type
+		finfo.DbName = db_name
+		parselFeildTag(&finfo, ff)
+		if strings.ToLower(db_name) == "id" {
+			minfo.FieldID = db_name
+			finfo.AutoIncr = true
+		}
+
+		minfo.Fields = append(minfo.Fields, finfo)
+	}
 
 	return &minfo
 }
 
+/*
+//获取model信息（支持匿名字段）
+func getModelInfoAnonymous(v_ent reflect.Value) *ModelInfo {
+	minfo := ModelInfo{}
+	minfo.TableName = getTableName(v_ent)
+
+	v_ent = reflect.Indirect(v_ent)
+	t_ent := v_ent.Type()
+	getModelInfoNest(&minfo, t_ent, nil)
+
+	return &minfo
+}
+//获取model信息递归调用
 func getModelInfoNest(minfo *ModelInfo, t_ent reflect.Type, pos []int) {
 	f_num := t_ent.NumField()
 	for i := 0; i < f_num; i++ {
@@ -108,6 +143,7 @@ func getModelInfoNest(minfo *ModelInfo, t_ent reflect.Type, pos []int) {
 		minfo.Fields = append(minfo.Fields, finfo)
 	}
 }
+*/
 
 func getTableName(v_ent reflect.Value) string {
 	var t_ent = v_ent.Type()

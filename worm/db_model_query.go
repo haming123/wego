@@ -158,9 +158,9 @@ func (md *DbModel) Get(args ...interface{}) (bool, error) {
 		return false, errors.New("ent_ptr must be *Struct")
 	}
 
-	//若数组成员与model不同，则调用相应的函数选择对应的字段
-	//若数组成员是vo，则调用getSelectFieldsByVo选择对应的字段
-	//若数组成员是struct，则调用getSelectFieldsByEo选择对应的字段
+	//若args与model不同，则调用相应的函数选择对应的字段
+	//若args是vo，则调用getSelectFieldsByVo选择对应的字段
+	//若args是struct，则调用getSelectFieldsByEo选择对应的字段
 	var mo_ptr interface{} = nil
 	var vo_ptr VoLoader = nil
 	var eo_ptr interface{} = nil

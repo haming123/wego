@@ -10,28 +10,28 @@ import (
 )
 
 type VoSaver interface {
-	SaveToModel(md *DbModel, mo interface{})()
+	SaveToModel(md *DbModel, mo interface{})
 }
 
 type VoLoader interface {
-	LoadFromModel(md *DbModel, mo interface{})()
+	LoadFromModel(md *DbModel, mo interface{})
 }
 
 type VoInfo struct {
-	VoName  	string
-	VoIndex  	[]int
-	MoIndex  	[]int
-	ValFlag 	bool
+	VoName  string
+	VoIndex []int
+	MoIndex []int
+	ValFlag bool
 }
 type VoFields []VoInfo
 
 //vo、mo字段交集信息缓存
-var g_voCopy_cache 	map[string]VoFields = make(map[string]VoFields)
-var g_voCopy_mutex  sync.Mutex
+var g_voCopy_cache map[string]VoFields = make(map[string]VoFields)
+var g_voCopy_mutex sync.Mutex
 
 //与vo对应的mo的model的字段选中状态缓存
-var g_voLoad_cache 	map[string][]FieldValue = make(map[string][]FieldValue)
-var g_voLoad_mutex  sync.Mutex
+var g_voLoad_cache map[string][]FieldValue = make(map[string][]FieldValue)
+var g_voLoad_mutex sync.Mutex
 
 //首先从缓存中获取字段交集
 //若缓存中不存在，则生成字段交集
@@ -70,7 +70,9 @@ func getPubField4VoMo(vo_ptr interface{}, mo_ptr interface{}) (VoFields, error) 
 		return arr, nil
 	}
 
-	arr = genVoInfoJoinMo(t_vo, t_mo)
+	arr = make(VoFields, t_mo.NumField())
+	arr = arr[:0]
+	arr = getPubField4VoMoFunc(arr, t_vo, t_mo)
 	g_voCopy_cache[key] = arr
 	//fmt.Println("GenVoInfoJoinMo")
 
@@ -79,12 +81,11 @@ func getPubField4VoMo(vo_ptr interface{}, mo_ptr interface{}) (VoFields, error) 
 
 //生成vo与mo的字段交集信息
 //只有名称与类型相同的字段才属于字段交集
-func genVoInfoJoinMo(t_vo reflect.Type, t_mo reflect.Type) VoFields {
-	f_num := t_vo.NumField()
-	arr := make(VoFields, f_num);arr = arr[:0]
-	for i:=0; i < f_num; i++ {
-		ft_vo := t_vo.Field(i)
-		ft_mo, ok := t_mo.FieldByName(ft_vo.Name)
+func getPubField4VoMoFunc(arr VoFields, t_vo reflect.Type, t_mo reflect.Type) VoFields {
+	f_num := t_mo.NumField()
+	for i := 0; i < f_num; i++ {
+		ft_mo := t_mo.Field(i)
+		ft_vo, ok := t_vo.FieldByName(ft_mo.Name)
 		if !ok {
 			continue
 		}
@@ -101,6 +102,37 @@ func genVoInfoJoinMo(t_vo reflect.Type, t_mo reflect.Type) VoFields {
 	}
 	return arr
 }
+
+/*
+//生成vo与mo的字段交集信息
+//只有名称与类型相同的字段才属于字段交集
+func getPubField4VoMoNest(arr VoFields, t_vo reflect.Type, t_mo reflect.Type, pos []int) VoFields {
+	f_num := t_vo.NumField()
+	for i := 0; i < f_num; i++ {
+		ft_vo := t_vo.Field(i)
+		if ft_vo.Anonymous == true {
+			arr = getPubField4VoMoNest(arr, ft_vo.Type, t_mo, append(pos, i))
+			continue
+		}
+
+		ft_mo, ok := t_mo.FieldByName(ft_vo.Name)
+		if !ok {
+			continue
+		}
+		if ft_vo.Type != ft_mo.Type {
+			continue
+		}
+
+		var item VoInfo
+		item.VoName = ft_vo.Name
+		item.VoIndex = append(pos, i)
+		item.MoIndex = ft_mo.Index
+		item.ValFlag = true
+		arr = append(arr, item)
+	}
+	return arr
+}
+*/
 
 //获取与vo对应的mo的字段选中状态
 //首先查询缓存，若不存在缓存，则调用LoadFromModel来生成字段选中状态
@@ -131,13 +163,14 @@ func getSelectFieldsByVo(md *DbModel, vo_ptr VoLoader) {
 	vo_ptr.LoadFromModel(md, md.ent_ptr)
 	fld_num := len(md.flds_addr)
 	arr = make([]FieldValue, fld_num)
-	for i:=0; i < fld_num; i++ {
+	for i := 0; i < fld_num; i++ {
 		arr[i].Flag = md.flds_addr[i].Flag
 	}
 	g_voLoad_cache[key] = arr
 	//fmt.Println("LoadFromModel")
 }
 
+//从struct（ent对象）获取与model对象字段名称类型相同的字段集合
 func getSelectFieldsByEo(md *DbModel, vo_ptr interface{}) {
 	if md.flag_omit == false {
 		md.OmitALL()
@@ -316,7 +349,7 @@ func set_value(fld_ptr interface{}, val interface{}) error {
 			v_fld.SetInt(tmp)
 			return nil
 		case reflect.Float32, reflect.Float64:
-			tmp, err := strconv.ParseFloat(val.(string),  64)
+			tmp, err := strconv.ParseFloat(val.(string), 64)
 			if err != nil {
 				return err
 			}
