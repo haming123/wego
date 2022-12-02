@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	JOIN_INNER    	int = 0
-	JOIN_LJOIN     	int = 1
-	JOIN_RJOIN     	int = 2
+	JOIN_INNER int = 0
+	JOIN_LJOIN int = 1
+	JOIN_RJOIN int = 2
 )
 
 func get_join_type_str(join_type int) string {
@@ -25,15 +25,15 @@ func get_join_type_str(join_type int) string {
 
 type DbJoint struct {
 	SqlContex
-	db_ptr *DbSession
-	md_ptr *DbModel
-	md_arr []*DbModel
-	db_where DbWhere
-	order_by string
-	db_limit int64
+	db_ptr    *DbSession
+	md_ptr    *DbModel
+	md_arr    []*DbModel
+	db_where  DbWhere
+	order_by  string
+	db_limit  int64
 	db_offset int64
-	Err error
-	ctx context.Context
+	Err       error
+	ctx       context.Context
 }
 
 func NewJoint(dbs *DbSession, ent_ptr interface{}, alias string, fields ...string) *DbJoint {
@@ -52,37 +52,37 @@ func NewJoint(dbs *DbSession, ent_ptr interface{}, alias string, fields ...strin
 	return lk
 }
 
-func (lk *DbJoint)GetContext() context.Context {
+func (lk *DbJoint) GetContext() context.Context {
 	return lk.ctx
 }
 
-func (lk *DbJoint)Context(ctx context.Context) *DbJoint {
+func (lk *DbJoint) Context(ctx context.Context) *DbJoint {
 	lk.ctx = ctx
 	return lk
 }
 
-func (lk *DbJoint)UsePrepare(val bool) *DbJoint {
+func (lk *DbJoint) UsePrepare(val bool) *DbJoint {
 	lk.use_prepare.Valid = true
 	lk.use_prepare.Bool = val
 	return lk
 }
 
-func (lk *DbJoint)ShowLog(val bool) *DbJoint {
+func (lk *DbJoint) ShowLog(val bool) *DbJoint {
 	lk.show_log.Valid = true
 	lk.show_log.Bool = val
 	return lk
 }
 
-func (lk *DbJoint)UseMaster(val bool) *DbJoint {
+func (lk *DbJoint) UseMaster(val bool) *DbJoint {
 	lk.use_master.Valid = true
 	lk.use_master.Bool = val
 	return lk
 }
 
-func (lk *DbJoint)get_table_index(ent_type reflect.Type) int {
+func (lk *DbJoint) get_table_index(ent_type reflect.Type) int {
 	index := -1
 	num := len(lk.md_arr)
-	for i:=0; i < num; i++ {
+	for i := 0; i < num; i++ {
 		t_table_ent := reflect.TypeOf(lk.md_arr[i].ent_ptr).Elem()
 		if t_table_ent == ent_type {
 			index = i
@@ -99,7 +99,7 @@ func parselTableSelect(alias string, fields []string) []string {
 	}
 
 	table_star := alias + ".*"
-	for i:=0; i < len(fields); i++ {
+	for i := 0; i < len(fields); i++ {
 		if fields[i] == "*" || fields[i] == table_star {
 			fields = fields[:0]
 			return fields
@@ -112,7 +112,7 @@ func parselTableSelect(alias string, fields []string) []string {
 	return fields
 }
 
-func(lk *DbJoint)Join(ent_ptr interface{}, alias string, join_on string, fields ...string) *DbJoint {
+func (lk *DbJoint) Join(ent_ptr interface{}, alias string, join_on string, fields ...string) *DbJoint {
 	md := lk.db_ptr.NewModel(ent_ptr, true)
 	md.table_alias = alias
 	md.join_type = JOIN_INNER
@@ -127,7 +127,7 @@ func(lk *DbJoint)Join(ent_ptr interface{}, alias string, join_on string, fields 
 	return lk
 }
 
-func(lk *DbJoint)LeftJoin(ent_ptr interface{}, alias string, join_on string, fields ...string) *DbJoint {
+func (lk *DbJoint) LeftJoin(ent_ptr interface{}, alias string, join_on string, fields ...string) *DbJoint {
 	md := lk.db_ptr.NewModel(ent_ptr, true)
 	md.table_alias = alias
 	md.join_type = JOIN_LJOIN
@@ -142,7 +142,7 @@ func(lk *DbJoint)LeftJoin(ent_ptr interface{}, alias string, join_on string, fie
 	return lk
 }
 
-func(lk *DbJoint)RightJoin(ent_ptr interface{}, alias string, join_on string, fields ...string) *DbJoint {
+func (lk *DbJoint) RightJoin(ent_ptr interface{}, alias string, join_on string, fields ...string) *DbJoint {
 	md := lk.db_ptr.NewModel(ent_ptr, true)
 	md.table_alias = alias
 	md.join_type = JOIN_RJOIN
@@ -157,94 +157,94 @@ func(lk *DbJoint)RightJoin(ent_ptr interface{}, alias string, join_on string, fi
 	return lk
 }
 
-func (lk *DbJoint)SetWhere(sqlw *DbWhere) *DbJoint {
+func (lk *DbJoint) SetWhere(sqlw *DbWhere) *DbJoint {
 	lk.db_where.Init(sqlw.Tpl_sql, sqlw.Values...)
 	return lk
 }
-func (lk *DbJoint)Where(sql string, vals ...interface{}) *DbJoint {
+func (lk *DbJoint) Where(sql string, vals ...interface{}) *DbJoint {
 	lk.db_where.Init(sql, vals...)
 	return lk
 }
-func (lk *DbJoint)WhereIf(cond bool, sql string, vals ...interface{}) *DbJoint {
+func (lk *DbJoint) WhereIf(cond bool, sql string, vals ...interface{}) *DbJoint {
 	if cond {
 		lk.db_where.Init(sql, vals...)
 	}
 	return lk
 }
-func (lk *DbJoint)WhereIn(sql string, vals ...interface{}) *DbJoint {
+func (lk *DbJoint) WhereIn(sql string, vals ...interface{}) *DbJoint {
 	lk.db_where.Reset()
 	lk.db_where.AndIn(sql, vals...)
 	return lk
 }
-func (lk *DbJoint)WhereNotIn(sql string, vals ...interface{}) *DbJoint {
+func (lk *DbJoint) WhereNotIn(sql string, vals ...interface{}) *DbJoint {
 	lk.db_where.Reset()
 	lk.db_where.AndNotIn(sql, vals...)
 	return lk
 }
-func (lk *DbJoint)And(sql string, vals ...interface{}) *DbJoint {
+func (lk *DbJoint) And(sql string, vals ...interface{}) *DbJoint {
 	lk.db_where.And(sql, vals...)
 	return lk
 }
-func (lk *DbJoint)AndIf(cond bool, sql string, vals ...interface{}) *DbJoint {
+func (lk *DbJoint) AndIf(cond bool, sql string, vals ...interface{}) *DbJoint {
 	lk.db_where.AndIf(cond, sql, vals...)
 	return lk
 }
-func (lk *DbJoint)OrIf(cond bool, sql string, vals ...interface{}) *DbJoint {
+func (lk *DbJoint) OrIf(cond bool, sql string, vals ...interface{}) *DbJoint {
 	lk.db_where.OrIf(cond, sql, vals...)
 	return lk
 }
-func (lk *DbJoint)Or(sql string, vals ...interface{}) *DbJoint {
+func (lk *DbJoint) Or(sql string, vals ...interface{}) *DbJoint {
 	lk.db_where.Or(sql, vals...)
 	return lk
 }
-func (lk *DbJoint)AndExp(sqlw_sub *DbWhere) *DbJoint {
+func (lk *DbJoint) AndExp(sqlw_sub *DbWhere) *DbJoint {
 	lk.db_where.AndExp(sqlw_sub)
 	return lk
 }
-func (lk *DbJoint)OrExp(sqlw_sub *DbWhere) *DbJoint {
+func (lk *DbJoint) OrExp(sqlw_sub *DbWhere) *DbJoint {
 	lk.db_where.OrExp(sqlw_sub)
 	return lk
 }
-func (lk *DbJoint)AndIn(sql string, vals ...interface{}) *DbJoint {
+func (lk *DbJoint) AndIn(sql string, vals ...interface{}) *DbJoint {
 	lk.db_where.AndIn(sql, vals...)
 	return lk
 }
-func (lk *DbJoint)AndNotIn(sql string, vals ...interface{}) *DbJoint {
+func (lk *DbJoint) AndNotIn(sql string, vals ...interface{}) *DbJoint {
 	lk.db_where.AndNotIn(sql, vals...)
 	return lk
 }
-func (lk *DbJoint)OrIn(sql string, vals ...interface{}) *DbJoint {
+func (lk *DbJoint) OrIn(sql string, vals ...interface{}) *DbJoint {
 	lk.db_where.AndIn(sql, vals...)
 	return lk
 }
-func (lk *DbJoint)OrNotIn(sql string, vals ...interface{}) *DbJoint {
+func (lk *DbJoint) OrNotIn(sql string, vals ...interface{}) *DbJoint {
 	lk.db_where.OrNotIn(sql, vals...)
 	return lk
 }
-func (lk *DbJoint)OrderBy(val string) *DbJoint {
+func (lk *DbJoint) OrderBy(val string) *DbJoint {
 	lk.order_by = val
 	return lk
 }
-func (lk *DbJoint)Top(rows int64) *DbJoint {
+func (lk *DbJoint) Top(rows int64) *DbJoint {
 	lk.db_limit = rows
 	return lk
 }
-func (lk *DbJoint)Limit(rows int64) *DbJoint {
+func (lk *DbJoint) Limit(rows int64) *DbJoint {
 	lk.db_limit = rows
 	return lk
 }
-func (lk *DbJoint)Offset(offset int64) *DbJoint {
+func (lk *DbJoint) Offset(offset int64) *DbJoint {
 	lk.db_offset = offset
 	return lk
 }
-func (lk *DbJoint)Page(rows int64, page_no int64) *DbJoint {
-	lk.db_offset = page_no*rows
+func (lk *DbJoint) Page(rows int64, page_no int64) *DbJoint {
+	lk.db_offset = page_no * rows
 	lk.db_limit = rows
 	return lk
 }
 
-func (lk *DbJoint)get_scan_valus() []interface{} {
-	vals:= lk.md_ptr.get_scan_valus()
+func (lk *DbJoint) get_scan_valus() []interface{} {
+	vals := lk.md_ptr.get_scan_valus()
 	for _, table := range lk.md_arr {
 		vals = append(vals, table.get_scan_valus()...)
 	}
@@ -258,7 +258,7 @@ func call_after_query(md *DbModel) {
 	}
 }
 
-func (lk *DbJoint)Scan() (bool, error) {
+func (lk *DbJoint) Scan() (bool, error) {
 	if lk.Err != nil {
 		return false, lk.Err
 	}
@@ -272,7 +272,7 @@ func (lk *DbJoint)Scan() (bool, error) {
 		return false, nil
 	}
 
-	scan_vals:= lk.get_scan_valus()
+	scan_vals := lk.get_scan_valus()
 	err = rows.Scan(scan_vals...)
 	if err != nil {
 		rows.Close()
@@ -289,7 +289,7 @@ func (lk *DbJoint)Scan() (bool, error) {
 }
 
 //通过vo对象来选择需要查询的字段
-func (lk *DbJoint)select_field_by_vo(vo_ptr VoLoader)  {
+func (lk *DbJoint) select_field_by_vo(vo_ptr VoLoader) {
 	//调用：LoadFromModel获取vo对应的字段
 	//vo_ptr.LoadFromModel(lk.md_ptr, lk.md_ptr.ent_ptr)
 	getSelectFieldsByVo(lk.md_ptr, vo_ptr)
@@ -299,13 +299,21 @@ func (lk *DbJoint)select_field_by_vo(vo_ptr VoLoader)  {
 	}
 }
 
+//通过eo(struct)对象来选择需要查询的字段
+func (lk *DbJoint) select_field_by_eo(eo_ptr interface{}) {
+	getSelectFieldsByEo(lk.md_ptr, eo_ptr)
+	for _, table := range lk.md_arr {
+		getSelectFieldsByEo(table, eo_ptr)
+	}
+}
+
 //通过model的类型来获取一个model地址
-func (lk *DbJoint)get_model_by_ent_type(ent_type reflect.Type) *DbModel {
+func (lk *DbJoint) get_model_by_ent_type(ent_type reflect.Type) *DbModel {
 	if reflect.TypeOf(lk.md_ptr.ent_ptr).Elem() == ent_type {
 		return lk.md_ptr
 	}
 	num := len(lk.md_arr)
-	for i:=0; i < num; i++ {
+	for i := 0; i < num; i++ {
 		t_table_ent := reflect.TypeOf(lk.md_arr[i].ent_ptr).Elem()
 		if t_table_ent == ent_type {
 			return lk.md_arr[i]
@@ -314,6 +322,7 @@ func (lk *DbJoint)get_model_by_ent_type(ent_type reflect.Type) *DbModel {
 	return nil
 }
 
+/*
 //通过名称以及类型获取model对象以及mode的字段的序号
 func (lk *DbJoint)get_model_field_by_ent_type(fname string, ent_type reflect.Type) (*DbModel, int) {
 	index := lk.md_ptr.get_field_index_byname(fname)
@@ -329,11 +338,12 @@ func (lk *DbJoint)get_model_field_by_ent_type(fname string, ent_type reflect.Typ
 	}
 	return nil, -1
 }
+*/
 
 //绑定scan地址到目标对象
-func (lk *DbJoint)BindAddr2Struct(v_ent reflect.Value) {
+func (lk *DbJoint) BindAddr2Struct(v_ent reflect.Value) {
 	t_num := v_ent.NumField()
-	for t:=0; t < t_num; t++ {
+	for t := 0; t < t_num; t++ {
 		v_field := v_ent.Field(t)
 		t_field := v_field.Type()
 		if t_field.Kind() == reflect.Struct {
@@ -346,7 +356,7 @@ func (lk *DbJoint)BindAddr2Struct(v_ent reflect.Value) {
 	}
 }
 
-func (lk *DbJoint)Get(args ...interface{}) (bool, error) {
+func (lk *DbJoint) Get(args ...interface{}) (bool, error) {
 	if lk.Err != nil {
 		return false, lk.Err
 	}
@@ -361,7 +371,7 @@ func (lk *DbJoint)Get(args ...interface{}) (bool, error) {
 	}
 
 	ent_ptr := args[0]
-	if ent_ptr == nil{
+	if ent_ptr == nil {
 		return false, errors.New("ent_ptr must be *Struct")
 	}
 	//ent_ptr必须是一个指针
@@ -394,7 +404,7 @@ func (lk *DbJoint)Get(args ...interface{}) (bool, error) {
 		return false, nil
 	}
 
-	scan_vals:= lk.get_scan_valus()
+	scan_vals := lk.get_scan_valus()
 	err = rows.Scan(scan_vals...)
 	if err != nil {
 		rows.Close()
@@ -418,18 +428,95 @@ func (lk *DbJoint)Get(args ...interface{}) (bool, error) {
 	return true, nil
 }
 
-func (lk *DbJoint)Find(arr_ptr interface{}) error {
+func (lk *DbJoint) Get2(args ...interface{}) (bool, error) {
+	if lk.Err != nil {
+		return false, lk.Err
+	}
+
+	if len(args) > 1 {
+		return false, errors.New("arg number can not great 1")
+	}
+
+	//参数为空, 调用Scan()
+	if len(args) < 1 {
+		return lk.Scan()
+	}
+
+	ent_ptr := args[0]
+	if ent_ptr == nil {
+		return false, errors.New("ent_ptr must be *Struct")
+	}
+	//ent_ptr必须是一个指针
+	v_ent := reflect.ValueOf(ent_ptr)
+	if v_ent.Kind() != reflect.Ptr {
+		return false, errors.New("ent_ptr must be *Struct")
+	}
+	//ent_ptr必须是一个结构体指针
+	v_ent = reflect.Indirect(v_ent)
+	if v_ent.Kind() != reflect.Struct {
+		return false, errors.New("ent_ptr must be *Struct")
+	}
+
+	//若目标对象是一个vo，则通过vo来选择字段
+	//若目标对象不是一个vo，则通过与eo的字段交集来选择字段
+	vo_ptr, isvo := ent_ptr.(VoLoader)
+	if isvo {
+		lk.select_field_by_vo(vo_ptr)
+	} else {
+		lk.select_field_by_eo(ent_ptr)
+	}
+
+	sql_str := lk.db_ptr.engine.db_dialect.GenJointGetSql(lk)
+	rows, err := lk.db_ptr.ExecQuery(&lk.SqlContex, sql_str, lk.db_where.Values...)
+	if err != nil {
+		return false, err
+	}
+	if !rows.Next() {
+		rows.Close()
+		return false, nil
+	}
+
+	scan_vals := lk.get_scan_valus()
+	err = rows.Scan(scan_vals...)
+	if err != nil {
+		rows.Close()
+		return false, err
+	}
+
+	call_after_query(lk.md_ptr)
+	for _, table := range lk.md_arr {
+		call_after_query(table)
+	}
+
+	//若目标对象是一个vo，则调用LoadFromModel，给vo赋值
+	if isvo {
+		vo_ptr.LoadFromModel(nil, lk.md_ptr.ent_ptr)
+		for _, table := range lk.md_arr {
+			vo_ptr.LoadFromModel(nil, table.ent_ptr)
+		}
+	} else {
+		CopyDataFromModel(nil, ent_ptr, lk.md_ptr.ent_ptr)
+		for _, table := range lk.md_arr {
+			CopyDataFromModel(nil, ent_ptr, table.ent_ptr)
+		}
+	}
+
+	rows.Close()
+	return true, nil
+}
+
+func (lk *DbJoint) Find(arr_ptr interface{}) error {
 	if lk.Err != nil {
 		return lk.Err
 	}
 
 	v_arr := reflect.ValueOf(arr_ptr)
 	if v_arr.Kind() != reflect.Ptr {
-		return  errors.New("arr_ptr must be *Slice")
+		return errors.New("arr_ptr must be *Slice")
 	}
 	t_arr := GetDirectType(v_arr.Type())
 	if t_arr.Kind() != reflect.Slice {
-		return  errors.New("arr_ptr must be *Slice")
+		return errors.New("arr_ptr must be *Slice")
 	}
 	//获取数组成员的类型
 	t_item := GetDirectType(t_arr.Elem())
@@ -449,7 +536,7 @@ func (lk *DbJoint)Find(arr_ptr interface{}) error {
 	}
 
 	sql_str := lk.db_ptr.engine.db_dialect.GenJointFindSql(lk)
-	vals:= lk.get_scan_valus()
+	vals := lk.get_scan_valus()
 	rows, err := lk.db_ptr.ExecQuery(&lk.SqlContex, sql_str, lk.db_where.Values...)
 	if err != nil {
 		return err
@@ -473,6 +560,77 @@ func (lk *DbJoint)Find(arr_ptr interface{}) error {
 			vo_ptr.LoadFromModel(nil, lk.md_ptr.ent_ptr)
 			for _, table := range lk.md_arr {
 				vo_ptr.LoadFromModel(nil, table.ent_ptr)
+			}
+		}
+		v_arr_base.Set(reflect.Append(v_arr_base, v_item_base))
+	}
+
+	rows.Close()
+	return nil
+}
+
+func (lk *DbJoint) Find2(arr_ptr interface{}) error {
+	if lk.Err != nil {
+		return lk.Err
+	}
+
+	v_arr := reflect.ValueOf(arr_ptr)
+	if v_arr.Kind() != reflect.Ptr {
+		return errors.New("arr_ptr must be *Slice")
+	}
+	t_arr := GetDirectType(v_arr.Type())
+	if t_arr.Kind() != reflect.Slice {
+		return errors.New("arr_ptr must be *Slice")
+	}
+	//获取数组成员的类型
+	t_item := GetDirectType(t_arr.Elem())
+	if t_item.Kind() != reflect.Struct {
+		return errors.New("array item muse be Struct")
+	}
+
+	//若目标对象是一个vo，则通过vo来选择字段
+	//若目标对象不是一个vo，则通过与eo的字段交集来选择字段
+	v_item := reflect.New(t_item)
+	v_item_base := v_item.Elem()
+	ent_ptr := v_item.Interface()
+	vo_ptr, isvo := v_item.Interface().(VoLoader)
+	if isvo {
+		lk.select_field_by_vo(vo_ptr)
+	} else {
+		lk.select_field_by_eo(ent_ptr)
+	}
+
+	sql_str := lk.db_ptr.engine.db_dialect.GenJointFindSql(lk)
+	vals := lk.get_scan_valus()
+	rows, err := lk.db_ptr.ExecQuery(&lk.SqlContex, sql_str, lk.db_where.Values...)
+	if err != nil {
+		return err
+	}
+
+	v_arr_base := reflect.Indirect(v_arr)
+	for rows.Next() {
+		err = rows.Scan(vals...)
+		if err != nil {
+			rows.Close()
+			return err
+		}
+
+		call_after_query(lk.md_ptr)
+		for _, table := range lk.md_arr {
+			call_after_query(table)
+		}
+
+		//若目标对象是一个vo，则调用LoadFromModel，给v_item_base赋值
+		//若目标对象是一个eo，则调用CopyDataFromModel，给v_item_base赋值
+		if isvo {
+			vo_ptr.LoadFromModel(nil, lk.md_ptr.ent_ptr)
+			for _, table := range lk.md_arr {
+				vo_ptr.LoadFromModel(nil, table.ent_ptr)
+			}
+		} else {
+			CopyDataFromModel(nil, ent_ptr, lk.md_ptr.ent_ptr)
+			for _, table := range lk.md_arr {
+				CopyDataFromModel(nil, ent_ptr, table.ent_ptr)
 			}
 		}
 		v_arr_base.Set(reflect.Append(v_arr_base, v_item_base))
