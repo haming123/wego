@@ -1,6 +1,7 @@
 package worm
 
 import (
+	log "github.com/haming123/wego/dlog"
 	"testing"
 )
 
@@ -205,6 +206,7 @@ type BookVo2 struct {
 
 func TestModelGetBookVo1(t *testing.T) {
 	InitEngine4Test()
+	log.ShowIndent(true)
 
 	var vo BookVo2
 	_, err := Model(&DB_Book{}).Where("id=?", 1).Get(&vo)
