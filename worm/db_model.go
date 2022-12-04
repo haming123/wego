@@ -164,6 +164,18 @@ func (md *DbModel) get_field_index(dbname string) int {
 	return index
 }
 
+func (md *DbModel) get_field_index_byindex(no int) int {
+	index := -1
+	num := len(md.flds_info)
+	for i := 0; i < num; i++ {
+		if md.flds_info[i].FieldIndex == no {
+			index = i
+			break
+		}
+	}
+	return index
+}
+
 func (md *DbModel) get_field_index_byname(fname string) int {
 	index := -1
 	num := len(md.flds_info)
@@ -186,6 +198,15 @@ func (md *DbModel) get_field_index_byaddr(fldg_ptr interface{}) int {
 		}
 	}
 	return index
+}
+
+func (md *DbModel) set_flag_by_index(no int, flag bool) bool {
+	index := md.get_field_index_byindex(no)
+	if index < 0 {
+		return false
+	}
+	md.flds_addr[index].Flag = flag
+	return true
 }
 
 func (md *DbModel) set_flag_by_name(field string, flag bool) bool {

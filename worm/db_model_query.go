@@ -159,8 +159,8 @@ func (md *DbModel) Get(args ...interface{}) (bool, error) {
 	}
 
 	//若args与model不同，则调用相应的函数选择对应的字段
-	//若args是vo，则调用getSelectFieldsByVo选择对应的字段
-	//若args是struct，则调用getSelectFieldsByEo选择对应的字段
+	//若args是vo，则调用selectFieldsByVo选择对应的字段
+	//若args是struct，则调用selectFieldsByEo选择对应的字段
 	var mo_ptr interface{} = nil
 	var vo_ptr VoLoader = nil
 	var eo_ptr interface{} = nil
@@ -169,10 +169,10 @@ func (md *DbModel) Get(args ...interface{}) (bool, error) {
 		mo_ptr = ent_ptr
 	} else if ptr, ok := ent_ptr.(VoLoader); ok {
 		vo_ptr = ptr
-		getSelectFieldsByVo(md, vo_ptr)
+		selectFieldsByVo(md, vo_ptr)
 	} else {
 		eo_ptr = ent_ptr
-		getSelectFieldsByEo(md, ent_ptr)
+		selectFieldsByEo(md, ent_ptr)
 	}
 
 	has, err := md.Scan()
@@ -354,7 +354,7 @@ func (md *DbModel) Find(arr_ptr interface{}) error {
 	var item_vo VoLoader = nil
 	var item_ptr interface{} = nil
 	v_item_base := reflect.Indirect(reflect.ValueOf(md.ent_ptr))
-	if t_item != GetDirectType(reflect.TypeOf(md.ent_ptr)) {
+	if t_item != v_item_base.Type() {
 		v_item := reflect.New(t_item)
 		item_ptr = v_item.Interface()
 		vo_ptr, ok := item_ptr.(VoLoader)
@@ -365,12 +365,12 @@ func (md *DbModel) Find(arr_ptr interface{}) error {
 	}
 
 	//若数组成员与model不同，则调用相应的函数选择对应的字段
-	//若数组成员是vo，则调用getSelectFieldsByVo选择对应的字段
-	//若数组成员是struct，则调用getSelectFieldsByEo选择对应的字段
+	//若数组成员是vo，则调用selectFieldsByVo选择对应的字段
+	//若数组成员是struct，则调用selectFieldsByEo选择对应的字段
 	if item_vo != nil {
-		getSelectFieldsByVo(md, item_vo)
+		selectFieldsByVo(md, item_vo)
 	} else if item_ptr != nil {
-		getSelectFieldsByEo(md, item_ptr)
+		selectFieldsByEo(md, item_ptr)
 	}
 
 	if hook, isHook := md.ent_ptr.(BeforeQueryInterface); isHook {
@@ -398,7 +398,7 @@ func (md *DbModel) Find(arr_ptr interface{}) error {
 
 		//若数组成员与model不同，则调用相应的函数给v_item赋值
 		//若数组成员是vo，则调用LoadFromModel给v_item赋值
-		//若数组成员是struct，则调用CopyDataFromModel给v_item赋值
+		//若数组成员是eo，则调用CopyDataFromModel给v_item赋值
 		if item_vo != nil {
 			item_vo.LoadFromModel(nil, md.ent_ptr)
 		} else if item_ptr != nil {

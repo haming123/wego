@@ -288,25 +288,7 @@ func (lk *DbJoint) Scan() (bool, error) {
 	return true, nil
 }
 
-//通过vo对象来选择需要查询的字段
-func (lk *DbJoint) select_field_by_vo(vo_ptr VoLoader) {
-	//调用：LoadFromModel获取vo对应的字段
-	//vo_ptr.LoadFromModel(lk.md_ptr, lk.md_ptr.ent_ptr)
-	getSelectFieldsByVo(lk.md_ptr, vo_ptr)
-	for _, table := range lk.md_arr {
-		//vo_ptr.LoadFromModel(table, table.ent_ptr)
-		getSelectFieldsByVo(table, vo_ptr)
-	}
-}
-
-//通过eo(struct)对象来选择需要查询的字段
-func (lk *DbJoint) select_field_by_eo(eo_ptr interface{}) {
-	getSelectFieldsByEo(lk.md_ptr, eo_ptr)
-	for _, table := range lk.md_arr {
-		getSelectFieldsByEo(table, eo_ptr)
-	}
-}
-
+/*
 //通过model的类型来获取一个model地址
 func (lk *DbJoint) get_model_by_ent_type(ent_type reflect.Type) *DbModel {
 	if reflect.TypeOf(lk.md_ptr.ent_ptr).Elem() == ent_type {
@@ -322,7 +304,6 @@ func (lk *DbJoint) get_model_by_ent_type(ent_type reflect.Type) *DbModel {
 	return nil
 }
 
-/*
 //通过名称以及类型获取model对象以及mode的字段的序号
 func (lk *DbJoint)get_model_field_by_ent_type(fname string, ent_type reflect.Type) (*DbModel, int) {
 	index := lk.md_ptr.get_field_index_byname(fname)
@@ -338,7 +319,6 @@ func (lk *DbJoint)get_model_field_by_ent_type(fname string, ent_type reflect.Typ
 	}
 	return nil, -1
 }
-*/
 
 //绑定scan地址到目标对象
 func (lk *DbJoint) BindAddr2Struct(v_ent reflect.Value) {
@@ -427,8 +407,28 @@ func (lk *DbJoint) Get(args ...interface{}) (bool, error) {
 	rows.Close()
 	return true, nil
 }
+*/
 
-func (lk *DbJoint) Get2(args ...interface{}) (bool, error) {
+//通过vo对象来选择需要查询的字段
+func (lk *DbJoint) select_field_by_vo(vo_ptr VoLoader) {
+	//调用：LoadFromModel获取vo对应的字段
+	//vo_ptr.LoadFromModel(lk.md_ptr, lk.md_ptr.ent_ptr)
+	selectFieldsByVo(lk.md_ptr, vo_ptr)
+	for _, table := range lk.md_arr {
+		//vo_ptr.LoadFromModel(table, table.ent_ptr)
+		selectFieldsByVo(table, vo_ptr)
+	}
+}
+
+//通过eo(struct)对象来选择需要查询的字段
+func (lk *DbJoint) select_field_by_eo(eo_ptr interface{}) {
+	selectFieldsByEo(lk.md_ptr, eo_ptr)
+	for _, table := range lk.md_arr {
+		selectFieldsByEo(table, eo_ptr)
+	}
+}
+
+func (lk *DbJoint) Get(args ...interface{}) (bool, error) {
 	if lk.Err != nil {
 		return false, lk.Err
 	}
@@ -505,6 +505,7 @@ func (lk *DbJoint) Get2(args ...interface{}) (bool, error) {
 	return true, nil
 }
 
+/*
 func (lk *DbJoint) Find(arr_ptr interface{}) error {
 	if lk.Err != nil {
 		return lk.Err
@@ -568,8 +569,9 @@ func (lk *DbJoint) Find(arr_ptr interface{}) error {
 	rows.Close()
 	return nil
 }
+*/
 
-func (lk *DbJoint) Find2(arr_ptr interface{}) error {
+func (lk *DbJoint) Find(arr_ptr interface{}) error {
 	if lk.Err != nil {
 		return lk.Err
 	}

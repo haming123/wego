@@ -28,14 +28,13 @@ type TableName interface {
 
 type FieldInfo struct {
 	FieldIndex int
-	//FieldPos   []int
-	FieldName string
-	FieldType reflect.Type
-	DbName    string
-	AutoIncr  bool
-	NotInsert bool
-	NotUpdate bool
-	NotSelect bool
+	FieldName  string
+	FieldType  reflect.Type
+	DbName     string
+	AutoIncr   bool
+	NotInsert  bool
+	NotUpdate  bool
+	NotSelect  bool
 }
 
 type ModelInfo struct {

@@ -4,52 +4,35 @@ import (
 	"testing"
 )
 
-func TestModelJoinGet (t *testing.T) {
+type UserBookEo struct {
+	User
+	DB_Book
+}
+
+func TestModelJoinGet(t *testing.T) {
 	InitEngine4Test()
 
-	type Data struct {
-		User      	User
-		Book      	DB_Book
-	}
-	var data Data
+	var data UserBookEo
 
-	tb := Model(&User{}).Select("id","name","age").TableAlias("u")
+	tb := Model(&User{}).Select("id", "name", "age").TableAlias("u")
 	tb.Join(&DB_Book{}, "b", "b.author=u.id", "name")
 	_, err := tb.Where("u.id=?", 1).Get(&data)
-	if err != nil{
+	if err != nil {
 		t.Error(err)
 		return
 	}
 	t.Log(data)
 }
 
-func TestModelJoinGetVo (t *testing.T) {
+func TestModelJoinFind(t *testing.T) {
 	InitEngine4Test()
 
-	var vo UserBookVo
-	tb := Model(&User{}).Select("id","name","age").TableAlias("u")
-	tb.Join(&DB_Book{}, "b", "b.author=u.id", "")
-	_, err := tb.Where("u.id=?", 1).Get(&vo)
-	if err != nil{
-		t.Error(err)
-		return
-	}
-	t.Log(vo)
-}
+	var datas []UserBookEo
 
-func TestModelJoinFind (t *testing.T) {
-	InitEngine4Test()
-
-	type Data struct {
-		User      	User
-		Book      	DB_Book
-	}
-	var datas []Data
-
-	tb := Model(&User{}).Select("id","name","age").TableAlias("u")
+	tb := Model(&User{}).Select("id", "name", "age").TableAlias("u")
 	tb.LeftJoin(&DB_Book{}, "b", "b.author=u.id", "name")
-	err := tb.WhereIn("u.id", 1,6).Find(&datas)
-	if err != nil{
+	err := tb.WhereIn("u.id", 1, 6).Find(&datas)
+	if err != nil {
 		t.Error(err)
 		return
 	}
@@ -58,14 +41,35 @@ func TestModelJoinFind (t *testing.T) {
 	}
 }
 
-func TestModelJoinFindVo (t *testing.T) {
+type UserBookEo2 struct {
+	User User
+	Book DB_Book
+}
+
+func TestModelJoinGet2(t *testing.T) {
 	InitEngine4Test()
 
-	var datas []UserBookVo
-	tb := Model(&User{}).Select("id","name","age").TableAlias("u")
-	tb.LeftJoin(&DB_Book{}, "b", "b.author=u.id", "")
-	err := tb.WhereIn("u.id", 1,6).Find(&datas)
-	if err != nil{
+	var data UserBookEo2
+
+	tb := Model(&User{}).Select("id", "name", "age").TableAlias("u")
+	tb.Join(&DB_Book{}, "b", "b.author=u.id", "name")
+	_, err := tb.Where("u.id=?", 1).Get(&data)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(data)
+}
+
+func TestModelJoinFind2(t *testing.T) {
+	InitEngine4Test()
+
+	var datas []UserBookEo2
+
+	tb := Model(&User{}).Select("id", "name", "age").TableAlias("u")
+	tb.LeftJoin(&DB_Book{}, "b", "b.author=u.id", "name")
+	err := tb.WhereIn("u.id", 1, 6).Find(&datas)
+	if err != nil {
 		t.Error(err)
 		return
 	}
@@ -73,5 +77,3 @@ func TestModelJoinFindVo (t *testing.T) {
 		t.Log(item)
 	}
 }
-
-

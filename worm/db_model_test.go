@@ -18,12 +18,6 @@ CREATE TABLE user (
 )
 */
 
-type UserEo struct {
-	DB_id   int64
-	DB_name string
-	Age     int
-}
-
 type User struct {
 	DB_id   int64 `db:";autoincr"`
 	DB_name string
@@ -172,18 +166,6 @@ func TestModelGetMo(t *testing.T) {
 	t.Log(ent)
 }
 
-func TestModelGetEo(t *testing.T) {
-	InitEngine4Test()
-
-	var ent UserEo
-	_, err := Model(&User{}).ID(1).Get(&ent)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	t.Log(ent)
-}
-
 func TestModelExist(t *testing.T) {
 	InitEngine4Test()
 
@@ -231,34 +213,6 @@ func TestModelFindMo(t *testing.T) {
 
 	var users []User
 	err := Model(&User{}).Select("id", "name").AndIn("id", 5, 6).Find(&users)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	for _, item := range users {
-		t.Log(item)
-	}
-}
-
-func TestModelFindVo(t *testing.T) {
-	InitEngine4Test()
-
-	var users []UserVo
-	err := Model(&User{}).AndIn("id", 5, 6).Find(&users)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	for _, item := range users {
-		t.Log(item)
-	}
-}
-
-func TestModelFindStruct(t *testing.T) {
-	InitEngine4Test()
-
-	var users []UserEo
-	err := Model(&User{}).AndIn("id", 5, 6).Find(&users)
 	if err != nil {
 		t.Error(err)
 		return
