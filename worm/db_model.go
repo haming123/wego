@@ -16,6 +16,7 @@ type DbModel struct {
 	table_alias string
 	field_id    string
 	flds_info   []FieldInfo
+	flds_map    map[string]int
 	flds_addr   []FieldValue
 	flds_ent    []int
 	db_where    DbWhere
@@ -50,6 +51,7 @@ func NewModel(dbs *DbSession, ent_ptr interface{}, flag bool) *DbModel {
 	md.table_name = minfo.TableName
 	md.field_id = minfo.FieldID
 	md.flds_info = minfo.Fields
+	md.flds_map = minfo.NameMap
 	md.flds_addr = getEntFieldAddrs(minfo.Fields, v_ent, flag)
 	return md
 }
@@ -151,38 +153,24 @@ func (md *DbModel) TableAlias(alias string) *DbJoint {
 	return lk
 }
 
-func (md *DbModel) get_field_index(dbname string) int {
-	index := -1
-	num := len(md.flds_info)
-	for i := 0; i < num; i++ {
-		if md.flds_info[i].DbName == dbname {
-			index = i
-			break
-		}
-	}
-	return index
+func (md *DbModel) get_field_index(fname string) int {
+	return md.get_field_index_byname(fname)
 }
 
 func (md *DbModel) get_field_index_byindex(no int) int {
-	index := -1
-	num := len(md.flds_info)
-	for i := 0; i < num; i++ {
-		if md.flds_info[i].FieldIndex == no {
-			index = i
-			break
-		}
+	if no < 0 {
+		return -1
+	} else if no >= len(md.flds_info) {
+		return -1
+	} else {
+		return no
 	}
-	return index
 }
 
 func (md *DbModel) get_field_index_byname(fname string) int {
-	index := -1
-	num := len(md.flds_info)
-	for i := 0; i < num; i++ {
-		if md.flds_info[i].FieldName == fname {
-			index = i
-			break
-		}
+	index, ok := md.flds_map[fname]
+	if ok == false {
+		return -1
 	}
 	return index
 }

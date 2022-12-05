@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-//追加选中一批字段(通过字段地址匹配)
+//追加选中一批字段(通过地址字段匹配)
 func (md *DbModel) add_field_ent_addr(fields ...interface{}) *DbModel {
 	for _, fld_ptr := range fields {
 		if fld_ptr == nil {
@@ -28,7 +28,7 @@ func (md *DbModel) add_field_ent_addr(fields ...interface{}) *DbModel {
 	return md
 }
 
-//追加选中一批字段(通过字段地址匹配)
+//追加选中一批字段(通过index匹配)
 func (md *DbModel) add_field_ent_index(fields ...int) *DbModel {
 	for _, index := range fields {
 		index := md.get_field_index_byindex(index)

@@ -8,9 +8,15 @@ import (
 )
 
 func (md *DbModel) GetFieldFlag4Select(i int) bool {
+	//没有被人工选择
 	if md.flds_addr[i].Flag == false {
 		return false
 	}
+	//没有被自动选择
+	if md.flds_ent != nil && md.flds_ent[i] == 0 {
+		return false
+	}
+	//该字段不用于tSelect
 	if md.flds_info[i].NotSelect == true {
 		return false
 	}
@@ -142,10 +148,6 @@ func (md *DbModel) Get(args ...interface{}) (bool, error) {
 
 	//参数为空, 调用Scan()
 	if len(args) < 1 {
-		if md.flds_ent != nil {
-			genSelectionByFieldIndex(md, md.flds_ent)
-			md.flds_ent = nil
-		}
 		return md.Scan()
 	}
 

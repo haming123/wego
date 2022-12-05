@@ -8,11 +8,17 @@ func getEntFieldAddrs(fields []FieldInfo, v_ent reflect.Value, flag bool) []Fiel
 	arr := make([]FieldValue, f_num)
 	v_ent = reflect.Indirect(v_ent)
 	for i := 0; i < f_num; i++ {
+		var item FieldValue
+		item.VAddr = nil
+		if fields[i].FieldIndex < 0 {
+			arr[i] = item
+			continue
+		}
+
 		f_name := fields[i].DbName
 		vv := v_ent.Field(fields[i].FieldIndex)
 		v_ptr := vv.Addr().Interface()
 
-		var item FieldValue
 		item.FName = f_name
 		item.VAddr = v_ptr
 		item.Flag = flag

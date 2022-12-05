@@ -6,12 +6,19 @@ import (
 )
 
 func (md *DbModel) GetFieldFlag4Insert(i int) bool {
+	//没有被人工选择
 	if md.flds_addr[i].Flag == false {
 		return false
 	}
+	//没有被自动选择
+	if md.flds_ent != nil && md.flds_ent[i] == 0 {
+		return false
+	}
+	//自增字段
 	if md.flds_info[i].AutoIncr == true {
 		return false
 	}
+	//该字段不用于insert
 	if md.flds_info[i].NotInsert == true {
 		return false
 	}
@@ -42,10 +49,6 @@ func (md *DbModel) get_fieldaddr_insert() []interface{} {
 func (md *DbModel) insertWithOutput() (int64, error) {
 	if md.Err != nil {
 		return 0, md.Err
-	}
-
-	if md.flds_ent != nil {
-		genSelectionByFieldIndex(md, md.flds_ent)
 	}
 
 	if hook, ok := md.ent_ptr.(BeforeInsertInterface); ok {
@@ -85,11 +88,6 @@ func (md *DbModel) exec_insert() (int64, error) {
 
 	if md.Err != nil {
 		return 0, md.Err
-	}
-
-	if md.flds_ent != nil {
-		genSelectionByFieldIndex(md, md.flds_ent)
-		md.flds_ent = nil
 	}
 
 	if hook, ok := md.ent_ptr.(BeforeInsertInterface); ok {
@@ -159,12 +157,19 @@ func (md *DbModel) Insert(args ...interface{}) (int64, error) {
 }
 
 func (md *DbModel) GetFieldFlag4Update(i int) bool {
+	//没有被人工选择
 	if md.flds_addr[i].Flag == false {
 		return false
 	}
+	//没有被自动选择
+	if md.flds_ent != nil && md.flds_ent[i] == 0 {
+		return false
+	}
+	//自增字段
 	if md.flds_info[i].AutoIncr == true {
 		return false
 	}
+	//该字段不用于Update
 	if md.flds_info[i].NotUpdate == true {
 		return false
 	}
@@ -195,11 +200,6 @@ func (md *DbModel) get_fieldaddr_update() []interface{} {
 func (md *DbModel) exec_update() (int64, error) {
 	if md.Err != nil {
 		return 0, md.Err
-	}
-
-	if md.flds_ent != nil {
-		genSelectionByFieldIndex(md, md.flds_ent)
-		md.flds_ent = nil
 	}
 
 	if len(md.db_where.Tpl_sql) < 1 {

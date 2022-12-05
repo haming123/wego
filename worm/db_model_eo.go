@@ -30,26 +30,6 @@ func NewPublicFields(num int) *PublicFields {
 var g_pubfield_cache map[string]*PublicFields = make(map[string]*PublicFields)
 var g_pubfield_mutex sync.Mutex
 
-//与vo对应的mo的model的selection缓存
-var g_field_ent_cache map[string][]int = make(map[string][]int)
-var g_field_ent_mutex sync.Mutex
-
-//计算字段索引与Model选择集的交集
-func genSelectionByFieldIndex(md *DbModel, fld_ext []int) {
-	if fld_ext == nil {
-		return
-	}
-
-	num := len(md.flds_addr)
-	for i := 0; i < num; i++ {
-		if fld_ext[i] > 0 && md.flds_addr[i].Flag {
-			md.flds_addr[i].Flag = true
-		} else {
-			md.flds_addr[i].Flag = false
-		}
-	}
-}
-
 //生成vo与mo的字段交集信息
 //只有名称与类型相同的字段才属于字段交集
 func genPubField4VoMo(pflds *PublicFields, t_vo reflect.Type, t_mo reflect.Type) {
@@ -108,37 +88,20 @@ func getPubField4VoMo(cache_key string, t_vo reflect.Type, t_mo reflect.Type) (*
 
 //获取与Eo对象对应的mo的字段选中状态
 func selectFieldsByEo(md *DbModel, vo_ptr interface{}) {
-	g_field_ent_mutex.Lock()
-	defer g_field_ent_mutex.Unlock()
-
-	//获取选择集缓存
-	//计算缓存选择集与Model选择集的交集
+	//获取字段交集
 	t_vo := GetDirectType(reflect.TypeOf(vo_ptr))
 	t_mo := GetDirectType(reflect.TypeOf(md.ent_ptr))
 	cache_key := t_vo.String() + t_mo.String()
-	if selection_ext, ok := g_field_ent_cache[cache_key]; ok {
-		genSelectionByFieldIndex(md, selection_ext)
-		return
-	}
-
-	//获取字段交集
 	pflds, err := getPubField4VoMo(cache_key, t_vo, t_mo)
 	if err != nil {
 		return
 	}
 
 	//将公共字段添加到选扩展择集中
-	//若存在model字段，不用设置扩展选择集
+	//若存在model字段，不用设置扩展选择集（选择全部）
 	if pflds.ModelField < 0 {
 		for _, item := range pflds.Fields {
 			md.add_field_ent_index(item.MoIndex)
 		}
 	}
-
-	//缓存vo的选择集
-	g_field_ent_cache[cache_key] = md.flds_ent
-	//计算缓存选择集与Model选择集的交集
-	genSelectionByFieldIndex(md, md.flds_ent)
-	//清空临时选择集
-	md.flds_ent = nil
 }
