@@ -18,15 +18,15 @@ type VoLoader interface {
 //CopyDataFromModel会调用getPubField4VoMo来获取字段交集
 //生成字段选中状态后，将字段选中状态缓存起来
 func selectFieldsByVo(md *DbModel, vo_ptr VoLoader) {
-	g_selection_mutex.Lock()
-	defer g_selection_mutex.Unlock()
+	g_field_ent_mutex.Lock()
+	defer g_field_ent_mutex.Unlock()
 
 	//获取选择集缓存
 	//计算缓存选择集与Model选择集的交集
 	t_vo := GetDirectType(reflect.TypeOf(vo_ptr))
 	t_mo := GetDirectType(reflect.TypeOf(md.ent_ptr))
 	cache_key := t_vo.String() + t_mo.String()
-	if selection_ext, ok := g_selection_cache[cache_key]; ok {
+	if selection_ext, ok := g_field_ent_cache[cache_key]; ok {
 		genSelectionByFieldIndex(md, selection_ext)
 		return
 	}
@@ -34,10 +34,10 @@ func selectFieldsByVo(md *DbModel, vo_ptr VoLoader) {
 	//通过LoadFromModel来设置字段的选中状态
 	vo_ptr.LoadFromModel(md, md.ent_ptr)
 	//缓存vo的选择集
-	g_selection_cache[cache_key] = md.flds_ext
+	g_field_ent_cache[cache_key] = md.flds_ent
 
 	//计算缓存选择集与Model选择集的交集
-	genSelectionByFieldIndex(md, md.flds_ext)
+	genSelectionByFieldIndex(md, md.flds_ent)
 	//清空临时选择集
-	md.flds_ext = nil
+	md.flds_ent = nil
 }

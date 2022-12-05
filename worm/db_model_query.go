@@ -82,6 +82,7 @@ func (md *DbModel) Scan() (bool, error) {
 		pool := md.split_pool()
 		defer md.put_pool(pool)
 	}
+
 	if md.Err != nil {
 		return false, md.Err
 	}
@@ -130,6 +131,7 @@ func (md *DbModel) Get(args ...interface{}) (bool, error) {
 		pool := md.split_pool()
 		defer md.put_pool(pool)
 	}
+
 	if md.Err != nil {
 		return false, md.Err
 	}
@@ -140,6 +142,10 @@ func (md *DbModel) Get(args ...interface{}) (bool, error) {
 
 	//参数为空, 调用Scan()
 	if len(args) < 1 {
+		if md.flds_ent != nil {
+			genSelectionByFieldIndex(md, md.flds_ent)
+			md.flds_ent = nil
+		}
 		return md.Scan()
 	}
 

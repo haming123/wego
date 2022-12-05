@@ -44,8 +44,8 @@ func (md *DbModel) insertWithOutput() (int64, error) {
 		return 0, md.Err
 	}
 
-	if md.flds_ext != nil {
-		genSelectionByFieldIndex(md, md.flds_ext)
+	if md.flds_ent != nil {
+		genSelectionByFieldIndex(md, md.flds_ent)
 	}
 
 	if hook, ok := md.ent_ptr.(BeforeInsertInterface); ok {
@@ -87,8 +87,9 @@ func (md *DbModel) exec_insert() (int64, error) {
 		return 0, md.Err
 	}
 
-	if md.flds_ext != nil {
-		genSelectionByFieldIndex(md, md.flds_ext)
+	if md.flds_ent != nil {
+		genSelectionByFieldIndex(md, md.flds_ent)
+		md.flds_ent = nil
 	}
 
 	if hook, ok := md.ent_ptr.(BeforeInsertInterface); ok {
@@ -196,8 +197,9 @@ func (md *DbModel) exec_update() (int64, error) {
 		return 0, md.Err
 	}
 
-	if md.flds_ext != nil {
-		genSelectionByFieldIndex(md, md.flds_ext)
+	if md.flds_ent != nil {
+		genSelectionByFieldIndex(md, md.flds_ent)
+		md.flds_ent = nil
 	}
 
 	if len(md.db_where.Tpl_sql) < 1 {

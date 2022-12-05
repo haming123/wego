@@ -17,7 +17,7 @@ type DbModel struct {
 	field_id    string
 	flds_info   []FieldInfo
 	flds_addr   []FieldValue
-	flds_ext    []int
+	flds_ent    []int
 	db_where    DbWhere
 	group_by    string
 	order_by    string
