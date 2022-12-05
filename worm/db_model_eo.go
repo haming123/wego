@@ -1,7 +1,6 @@
 package worm
 
 import (
-	"errors"
 	"reflect"
 	"sync"
 )
@@ -28,52 +27,27 @@ func NewPublicFields(num int) *PublicFields {
 	return &flds
 }
 
-//vo、mo字段交集信息缓存
-var g_pflds_cache map[string]*PublicFields = make(map[string]*PublicFields)
-var g_pflds_mutex sync.Mutex
+//vo、mo字段交集缓存
+var g_pubfield_cache map[string]*PublicFields = make(map[string]*PublicFields)
+var g_pubfield_mutex sync.Mutex
 
-//首先从缓存中获取字段交集
-//若缓存中不存在，则生成字段交集
-func getPubField4VoMo(vo_ptr interface{}, mo_ptr interface{}) (*PublicFields, error) {
-	g_pflds_mutex.Lock()
-	defer g_pflds_mutex.Unlock()
+//与vo对应的mo的model的selection缓存
+var g_selection_cache map[string][]int = make(map[string][]int)
+var g_selection_mutex sync.Mutex
 
-	var pflds *PublicFields = nil
-	if vo_ptr == nil {
-		return pflds, errors.New("vo_ptr is nil")
-	}
-	t_vo := reflect.TypeOf(vo_ptr)
-	if t_vo.Kind() != reflect.Ptr {
-		return pflds, errors.New("vo_ptr must be Pointer")
-	}
-	t_vo = GetDirectType(t_vo)
-	if t_vo.Kind() != reflect.Struct {
-		return pflds, errors.New("vo_ptr  muse be Struct")
+//计算字段索引与Model选择集的交集
+func genSelectionByFieldIndex(md *DbModel, fld_ext []int) {
+	if fld_ext == nil {
+		return
 	}
 
-	if mo_ptr == nil {
-		return pflds, errors.New("mo_ptr is nil")
+	num := len(md.flds_addr)
+	for i := 0; i < num; i++ {
+		md.flds_addr[i].Flag = false
+		if fld_ext[i] > 0 && md.flds_addr[i].Flag {
+			md.flds_addr[i].Flag = true
+		}
 	}
-	t_mo := reflect.TypeOf(mo_ptr)
-	if t_mo.Kind() != reflect.Ptr {
-		return pflds, errors.New("mo_ptr must be Pointer")
-	}
-	t_mo = GetDirectType(t_mo)
-	if t_mo.Kind() != reflect.Struct {
-		return pflds, errors.New("mo_ptr  muse be Struct")
-	}
-
-	key := t_vo.String() + t_mo.String()
-	val, ok := g_pflds_cache[key]
-	if ok {
-		return val, nil
-	}
-
-	pflds = NewPublicFields(t_mo.NumField())
-	genPubField4VoMo(pflds, t_vo, t_mo)
-	g_pflds_cache[key] = pflds
-
-	return pflds, nil
 }
 
 //生成vo与mo的字段交集信息
@@ -112,170 +86,60 @@ func genPubField4VoMo(pflds *PublicFields, t_vo reflect.Type, t_mo reflect.Type)
 	}
 }
 
-//从Eo对象（一般性的struct）获取与model对象字段名称类型相同的字段集合
+//首先从缓存中获取字段交集
+//若缓存中不存在，则生成字段交集
+func getPubField4VoMo(cache_key string, t_vo reflect.Type, t_mo reflect.Type) (*PublicFields, error) {
+	g_pubfield_mutex.Lock()
+	defer g_pubfield_mutex.Unlock()
+
+	if cache_key == "" {
+		cache_key = t_vo.String() + t_mo.String()
+	}
+	val, ok := g_pubfield_cache[cache_key]
+	if ok {
+		return val, nil
+	}
+
+	pflds := NewPublicFields(t_mo.NumField())
+	genPubField4VoMo(pflds, t_vo, t_mo)
+	g_pubfield_cache[cache_key] = pflds
+
+	return pflds, nil
+}
+
+//获取与Eo对象对应的mo的字段选中状态
 func selectFieldsByEo(md *DbModel, vo_ptr interface{}) {
-	if md.flag_omit == false {
-		md.OmitALL()
-		md.flag_omit = true
-	}
+	g_selection_mutex.Lock()
+	defer g_selection_mutex.Unlock()
 
-	if vo_ptr == nil {
-		return
-	}
-	v_vo := reflect.ValueOf(vo_ptr)
-	if v_vo.Kind() != reflect.Ptr {
-		return
-	}
-	v_vo = reflect.Indirect(v_vo)
-	if v_vo.Kind() != reflect.Struct {
+	//获取选择集缓存
+	//计算缓存选择集与Model选择集的交集
+	t_vo := GetDirectType(reflect.TypeOf(vo_ptr))
+	t_mo := GetDirectType(reflect.TypeOf(md.ent_ptr))
+	cache_key := t_vo.String() + t_mo.String()
+	if selection_ext, ok := g_selection_cache[cache_key]; ok {
+		genSelectionByFieldIndex(md, selection_ext)
 		return
 	}
 
 	//获取字段交集
-	pflds, err := getPubField4VoMo(vo_ptr, md.ent_ptr)
+	pflds, err := getPubField4VoMo(cache_key, t_vo, t_mo)
 	if err != nil {
 		return
 	}
 
-	//若vo中存在Model字段，意味着需要选择全部的Model字段
-	if pflds.ModelField >= 0 {
-		md.SelectALL()
-		return
-	}
-
-	//根据字段索引获取model字段的地址，然后根据地址选中对应的字段
-	for _, item := range pflds.Fields {
-		md.set_flag_by_index(item.MoIndex, true)
-	}
-}
-
-//执行vo=mo的赋值操作，只有名称相同、类型相同的字段才能赋值
-//若md != nil，则获取mo的字段地址，并调用md的set_flag_by_addr函数来选中该字段
-//只有被选中的字段才需要从数据库中查询
-func CopyDataFromModel(md *DbModel, vo_ptr interface{}, mo_ptr interface{}) (int, error) {
-	if vo_ptr == nil {
-		return 0, errors.New("vo_ptr is nil")
-	}
-	v_vo := reflect.ValueOf(vo_ptr)
-	if v_vo.Kind() != reflect.Ptr {
-		return 0, errors.New("vo_ptr must be Pointer")
-	}
-	v_vo = reflect.Indirect(v_vo)
-	if v_vo.Kind() != reflect.Struct {
-		return 0, errors.New("vo_ptr  muse be Struct")
-	}
-
-	if mo_ptr == nil {
-		return 0, errors.New("mo_ptr is nil")
-	}
-	v_mo := reflect.ValueOf(mo_ptr)
-	if v_mo.Kind() != reflect.Ptr {
-		return 0, errors.New("mo_ptr must be Pointer")
-	}
-	v_mo = reflect.Indirect(v_mo)
-	if v_mo.Kind() != reflect.Struct {
-		return 0, errors.New("mo_ptr  muse be Struct")
-	}
-
-	if md != nil && md.flag_omit == false {
-		md.OmitALL()
-		md.flag_omit = true
-	}
-
-	//获取字段交集
-	pflds, err := getPubField4VoMo(vo_ptr, mo_ptr)
-	if err != nil {
-		return 0, err
-	}
-	//fmt.Println(pflds)
-
-	//若vo中存在Model字段，只需要赋值Model对应的字段即可
-	if pflds.ModelField >= 0 {
-		fv_vo := v_vo.Field(pflds.ModelField)
-		if fv_vo.CanSet() == true {
-			fv_vo.Set(v_mo)
-			return 1, nil
+	//将公共字段添加到选扩展择集中
+	//若存在model字段，不用设置扩展选择集
+	if pflds.ModelField < 0 {
+		for _, item := range pflds.Fields {
+			md.add_field_ext_index(item.MoIndex)
 		}
 	}
 
-	count := 0
-	for _, item := range pflds.Fields {
-		fv_vo := v_vo.FieldByIndex(item.VoIndex)
-		fv_mo := v_mo.Field(item.MoIndex)
-		if fv_vo.CanSet() == false {
-			continue
-		}
-		fv_vo.Set(fv_mo)
-		count += 1
-
-		if md != nil {
-			md.set_flag_by_index(item.MoIndex, true)
-		}
-	}
-	return count, nil
-}
-
-//执行mo=vo的赋值操作，只有名称相同、类型相同的字段才能赋值
-//若md != nil，则获取mo的字段地址，并调用md的set_flag_by_addr函数来选中该字段
-//只有被选中的字段才能更新到数据库中
-func CopyDataToModel(md *DbModel, vo_ptr interface{}, mo_ptr interface{}) (int, error) {
-	if vo_ptr == nil {
-		return 0, errors.New("vo_ptr is nil")
-	}
-	v_vo := reflect.ValueOf(vo_ptr)
-	if v_vo.Kind() != reflect.Ptr {
-		return 0, errors.New("vo_ptr must be Pointer")
-	}
-	v_vo = reflect.Indirect(v_vo)
-	if v_vo.Kind() != reflect.Struct {
-		return 0, errors.New("vo_ptr  muse be Struct")
-	}
-
-	if mo_ptr == nil {
-		return 0, errors.New("mo_ptr is nil")
-	}
-	v_mo := reflect.ValueOf(mo_ptr)
-	if v_mo.Kind() != reflect.Ptr {
-		return 0, errors.New("mo_ptr must be Pointer")
-	}
-	v_mo = reflect.Indirect(v_mo)
-	if v_mo.Kind() != reflect.Struct {
-		return 0, errors.New("mo_ptr  muse be Struct")
-	}
-
-	if md != nil && md.flag_omit == false {
-		md.OmitALL()
-		md.flag_omit = true
-	}
-
-	//获取字段交集
-	pflds, err := getPubField4VoMo(vo_ptr, mo_ptr)
-	if err != nil {
-		return 0, err
-	}
-
-	//若vo中存在Model字段，只需要赋值Model对应的字段即可
-	if pflds.ModelField >= 0 {
-		fv_vo := v_vo.Field(pflds.ModelField)
-		if v_mo.CanSet() == true {
-			v_mo.Set(fv_vo)
-			return 1, nil
-		}
-	}
-
-	count := 0
-	for _, item := range pflds.Fields {
-		fv_vo := v_vo.FieldByIndex(item.VoIndex)
-		fv_mo := v_mo.Field(item.MoIndex)
-		if fv_mo.CanSet() == false {
-			continue
-		}
-		fv_mo.Set(fv_vo)
-		count += 1
-
-		if md != nil {
-			md.set_flag_by_index(item.MoIndex, true)
-		}
-	}
-	return count, nil
+	//缓存vo的选择集
+	g_selection_cache[cache_key] = md.flds_ext
+	//计算缓存选择集与Model选择集的交集
+	genSelectionByFieldIndex(md, md.flds_ext)
+	//清空临时选择集
+	md.flds_ext = nil
 }

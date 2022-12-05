@@ -8,6 +8,174 @@ import (
 	"time"
 )
 
+//追加选中一批字段(通过字段地址匹配)
+func (md *DbModel) add_field_ext_addr(fields ...interface{}) *DbModel {
+	for _, fld_ptr := range fields {
+		if fld_ptr == nil {
+			md.Err = errors.New("field addr is nil")
+			return md
+		}
+		index := md.get_field_index_byaddr(fld_ptr)
+		if index < 0 {
+			md.Err = errors.New("field not find")
+			return md
+		}
+		if md.flds_ext == nil {
+			md.flds_ext = make([]int, len(md.flds_addr))
+		}
+		md.flds_ext[index] = 1
+	}
+	return md
+}
+
+//追加选中一批字段(通过字段地址匹配)
+func (md *DbModel) add_field_ext_index(fields ...int) *DbModel {
+	for _, index := range fields {
+		index := md.get_field_index_byindex(index)
+		if index < 0 {
+			md.Err = errors.New("field not find")
+			return md
+		}
+		if md.flds_ext == nil {
+			md.flds_ext = make([]int, len(md.flds_addr))
+		}
+		md.flds_ext[index] = 1
+	}
+	return md
+}
+
+//执行vo=mo的赋值操作，只有名称相同、类型相同的字段才能赋值
+//若md != nil，则获取mo的字段地址，并调用md的set_flag_by_addr函数来选中该字段
+//只有被选中的字段才需要从数据库中查询
+func CopyDataFromModel(md *DbModel, vo_ptr interface{}, mo_ptr interface{}) (int, error) {
+	if vo_ptr == nil {
+		return 0, errors.New("vo_ptr is nil")
+	}
+	v_vo := reflect.ValueOf(vo_ptr)
+	if v_vo.Kind() != reflect.Ptr {
+		return 0, errors.New("vo_ptr must be Pointer")
+	}
+	v_vo = reflect.Indirect(v_vo)
+	if v_vo.Kind() != reflect.Struct {
+		return 0, errors.New("vo_ptr  muse be Struct")
+	}
+
+	if mo_ptr == nil {
+		return 0, errors.New("mo_ptr is nil")
+	}
+	v_mo := reflect.ValueOf(mo_ptr)
+	if v_mo.Kind() != reflect.Ptr {
+		return 0, errors.New("mo_ptr must be Pointer")
+	}
+	v_mo = reflect.Indirect(v_mo)
+	if v_mo.Kind() != reflect.Struct {
+		return 0, errors.New("mo_ptr  muse be Struct")
+	}
+
+	//获取字段交集
+	pflds, err := getPubField4VoMo("", v_vo.Type(), v_mo.Type())
+	if err != nil {
+		return 0, err
+	}
+
+	//将公共字段添加到选扩展择集中
+	//若存在model字段，不用设置扩展选择集
+	if md != nil {
+		if pflds.ModelField < 0 {
+			for _, item := range pflds.Fields {
+				md.add_field_ext_index(item.MoIndex)
+			}
+		}
+	}
+
+	//若vo中存在Model字段，只需要赋值Model对应的字段即可
+	if pflds.ModelField >= 0 {
+		fv_vo := v_vo.Field(pflds.ModelField)
+		if fv_vo.CanSet() == true {
+			fv_vo.Set(v_mo)
+			return 1, nil
+		}
+	}
+
+	count := 0
+	for _, item := range pflds.Fields {
+		fv_vo := v_vo.FieldByIndex(item.VoIndex)
+		fv_mo := v_mo.Field(item.MoIndex)
+		if fv_vo.CanSet() == false {
+			continue
+		}
+		fv_vo.Set(fv_mo)
+		count += 1
+	}
+	return count, nil
+}
+
+//执行mo=vo的赋值操作，只有名称相同、类型相同的字段才能赋值
+//若md != nil，则获取mo的字段地址，并调用md的set_flag_by_addr函数来选中该字段
+//只有被选中的字段才能更新到数据库中
+func CopyDataToModel(md *DbModel, vo_ptr interface{}, mo_ptr interface{}) (int, error) {
+	if vo_ptr == nil {
+		return 0, errors.New("vo_ptr is nil")
+	}
+	v_vo := reflect.ValueOf(vo_ptr)
+	if v_vo.Kind() != reflect.Ptr {
+		return 0, errors.New("vo_ptr must be Pointer")
+	}
+	v_vo = reflect.Indirect(v_vo)
+	if v_vo.Kind() != reflect.Struct {
+		return 0, errors.New("vo_ptr  muse be Struct")
+	}
+
+	if mo_ptr == nil {
+		return 0, errors.New("mo_ptr is nil")
+	}
+	v_mo := reflect.ValueOf(mo_ptr)
+	if v_mo.Kind() != reflect.Ptr {
+		return 0, errors.New("mo_ptr must be Pointer")
+	}
+	v_mo = reflect.Indirect(v_mo)
+	if v_mo.Kind() != reflect.Struct {
+		return 0, errors.New("mo_ptr  muse be Struct")
+	}
+
+	//获取字段交集
+	pflds, err := getPubField4VoMo("", v_vo.Type(), v_mo.Type())
+	if err != nil {
+		return 0, err
+	}
+
+	//将公共字段添加到选扩展择集中
+	//若存在model字段，不用设置扩展选择集
+	if md != nil {
+		if pflds.ModelField < 0 {
+			for _, item := range pflds.Fields {
+				md.add_field_ext_index(item.MoIndex)
+			}
+		}
+	}
+
+	//若vo中存在Model字段，只需要赋值Model对应的字段即可
+	if pflds.ModelField >= 0 {
+		fv_vo := v_vo.Field(pflds.ModelField)
+		if v_mo.CanSet() == true {
+			v_mo.Set(fv_vo)
+			return 1, nil
+		}
+	}
+
+	count := 0
+	for _, item := range pflds.Fields {
+		fv_vo := v_vo.FieldByIndex(item.VoIndex)
+		fv_mo := v_mo.Field(item.MoIndex)
+		if fv_mo.CanSet() == false {
+			continue
+		}
+		fv_mo.Set(fv_vo)
+		count += 1
+	}
+	return count, nil
+}
+
 func set_value(fld_ptr interface{}, val interface{}) error {
 	if fld_ptr == nil {
 		return errors.New("fld_ptr must be Pointer")
@@ -69,6 +237,17 @@ func set_value(fld_ptr interface{}, val interface{}) error {
 	return errors.New(fmt.Sprintf("incorrect data type: %v != %v", t_fld, t_val))
 }
 
+//设置字段的值，并选中该字段
+func (md *DbModel) SetValue(fld_ptr interface{}, val interface{}) error {
+	err := set_value(fld_ptr, val)
+	if err != nil {
+		md.Err = err
+		return err
+	}
+	md.add_field_ext_addr(fld_ptr)
+	return nil
+}
+
 func SetValue(md *DbModel, fld_ptr interface{}, val interface{}) error {
 	if md != nil {
 		return md.SetValue(fld_ptr, val)
@@ -81,7 +260,7 @@ func GetPointer(md *DbModel, fld_ptr interface{}) interface{} {
 	if md == nil {
 		return fld_ptr
 	} else {
-		md.SelectX(fld_ptr)
+		md.add_field_ext_addr(fld_ptr)
 		return fld_ptr
 	}
 }
@@ -95,7 +274,7 @@ func GetIndirect(md *DbModel, fld_ptr interface{}) interface{} {
 	if md == nil {
 		return v_fld.Interface()
 	} else {
-		md.SelectX(fld_ptr)
+		md.add_field_ext_addr(fld_ptr)
 		return v_fld.Interface()
 	}
 }
@@ -104,7 +283,7 @@ func GetBool(md *DbModel, fld_ptr *bool) bool {
 	if md == nil {
 		return *fld_ptr
 	} else {
-		md.SelectX(fld_ptr)
+		md.add_field_ext_addr(fld_ptr)
 		return *fld_ptr
 	}
 }
@@ -113,7 +292,7 @@ func GetInt(md *DbModel, fld_ptr *int) int {
 	if md == nil {
 		return *fld_ptr
 	} else {
-		md.SelectX(fld_ptr)
+		md.add_field_ext_addr(fld_ptr)
 		return *fld_ptr
 	}
 }
@@ -122,7 +301,7 @@ func GetInt32(md *DbModel, fld_ptr *int32) int32 {
 	if md == nil {
 		return *fld_ptr
 	} else {
-		md.SelectX(fld_ptr)
+		md.add_field_ext_addr(fld_ptr)
 		return *fld_ptr
 	}
 }
@@ -131,7 +310,7 @@ func GetInt64(md *DbModel, fld_ptr *int64) int64 {
 	if md == nil {
 		return *fld_ptr
 	} else {
-		md.SelectX(fld_ptr)
+		md.add_field_ext_addr(fld_ptr)
 		return *fld_ptr
 	}
 }
@@ -140,7 +319,7 @@ func GetFloat32(md *DbModel, fld_ptr *float32) float32 {
 	if md == nil {
 		return *fld_ptr
 	} else {
-		md.SelectX(fld_ptr)
+		md.add_field_ext_addr(fld_ptr)
 		return *fld_ptr
 	}
 }
@@ -149,7 +328,7 @@ func GetFloat64(md *DbModel, fld_ptr *float64) float64 {
 	if md == nil {
 		return *fld_ptr
 	} else {
-		md.SelectX(fld_ptr)
+		md.add_field_ext_addr(fld_ptr)
 		return *fld_ptr
 	}
 }
@@ -158,7 +337,7 @@ func GetString(md *DbModel, fld_ptr *string) string {
 	if md == nil {
 		return *fld_ptr
 	} else {
-		md.SelectX(fld_ptr)
+		md.add_field_ext_addr(fld_ptr)
 		return *fld_ptr
 	}
 }
@@ -167,7 +346,7 @@ func GetTime(md *DbModel, fld_ptr *time.Time) time.Time {
 	if md == nil {
 		return *fld_ptr
 	} else {
-		md.SelectX(fld_ptr)
+		md.add_field_ext_addr(fld_ptr)
 		return *fld_ptr
 	}
 }

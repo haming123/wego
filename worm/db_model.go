@@ -17,6 +17,7 @@ type DbModel struct {
 	field_id    string
 	flds_info   []FieldInfo
 	flds_addr   []FieldValue
+	flds_ext    []int
 	db_where    DbWhere
 	group_by    string
 	order_by    string
@@ -26,7 +27,6 @@ type DbModel struct {
 	join_on     string
 	md_pool     *ModelPool
 	auto_put    bool
-	flag_omit   bool
 	Err         error
 }
 
@@ -67,7 +67,6 @@ func (md *DbModel) Reset() {
 	md.join_on = ""
 	md.auto_put = false
 	md.md_pool = nil
-	md.flag_omit = false
 	md.Err = nil
 	md.SqlContex.Reset()
 	md.db_where.Reset()
@@ -243,12 +242,8 @@ func (md *DbModel) OmitALL() *DbModel {
 	return md
 }
 
-func (md *DbModel) Select(fields ...string) *DbModel {
-	if md.flag_omit == false {
-		md.OmitALL()
-		md.flag_omit = true
-	}
-
+//追加选中一批字段
+func (md *DbModel) AddField(fields ...string) *DbModel {
 	for _, field := range fields {
 		//field = strings.Trim(field, " ")
 		ind := md.get_field_index(field)
@@ -261,12 +256,8 @@ func (md *DbModel) Select(fields ...string) *DbModel {
 	return md
 }
 
-func (md *DbModel) SelectX(fields ...interface{}) *DbModel {
-	if md.flag_omit == false {
-		md.OmitALL()
-		md.flag_omit = true
-	}
-
+//追加选中一批字段
+func (md *DbModel) AddFieldX(fields ...interface{}) *DbModel {
 	for _, fld_ptr := range fields {
 		if fld_ptr == nil {
 			md.Err = errors.New("field addr is nil")
@@ -281,6 +272,21 @@ func (md *DbModel) SelectX(fields ...interface{}) *DbModel {
 	return md
 }
 
+//选中一批字段
+func (md *DbModel) Select(fields ...string) *DbModel {
+	//每次都要清空当前选择集
+	md.OmitALL()
+	return md.AddField(fields...)
+}
+
+//选中一批字段
+func (md *DbModel) SelectX(fields ...interface{}) *DbModel {
+	//每次都要清空当前选择集
+	md.OmitALL()
+	return md.AddFieldX(fields...)
+}
+
+//排除若干字段，其余全部选中
 func (md *DbModel) Omit(fields ...string) *DbModel {
 	md.SelectALL()
 	for _, field := range fields {
@@ -295,6 +301,7 @@ func (md *DbModel) Omit(fields ...string) *DbModel {
 	return md
 }
 
+//排除若干字段，其余全部选中
 func (md *DbModel) OmitX(fields ...interface{}) *DbModel {
 	md.SelectALL()
 	for _, fld_ptr := range fields {
@@ -313,17 +320,6 @@ func (md *DbModel) OmitX(fields ...interface{}) *DbModel {
 		}
 	}
 	return md
-}
-
-//设置字段的值，并选中该字段
-func (md *DbModel) SetValue(fld_ptr interface{}, val interface{}) error {
-	err := set_value(fld_ptr, val)
-	if err != nil {
-		md.Err = err
-		return err
-	}
-	md.SelectX(fld_ptr)
-	return nil
 }
 
 func (md *DbModel) AndX(field_ptr interface{}, oper string, vals ...interface{}) *DbModel {
