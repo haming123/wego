@@ -12,11 +12,7 @@ func (md *DbModel) GetFieldFlag4Select(i int) bool {
 	if md.flds_addr[i].Flag == false {
 		return false
 	}
-	//没有被自动选择
-	if md.flds_ent != nil && md.flds_ent[i] == 0 {
-		return false
-	}
-	//该字段不用于tSelect
+	//该字段不用于Select
 	if md.flds_info[i].NotSelect == true {
 		return false
 	}
@@ -207,6 +203,7 @@ func (md *DbModel) Exist() (bool, error) {
 		pool := md.split_pool()
 		defer md.put_pool(pool)
 	}
+
 	if md.Err != nil {
 		return false, md.Err
 	}
@@ -235,6 +232,7 @@ func (md *DbModel) Count(field ...string) (int64, error) {
 		pool := md.split_pool()
 		defer md.put_pool(pool)
 	}
+
 	if md.Err != nil {
 		return 0, md.Err
 	}
@@ -279,6 +277,7 @@ func (md *DbModel) DistinctCount(field string) (int64, error) {
 		pool := md.split_pool()
 		defer md.put_pool(pool)
 	}
+
 	if md.Err != nil {
 		return 0, md.Err
 	}
@@ -337,6 +336,7 @@ func (md *DbModel) Find(arr_ptr interface{}) error {
 		pool := md.split_pool()
 		defer md.put_pool(pool)
 	}
+
 	if md.Err != nil {
 		return md.Err
 	}

@@ -18,7 +18,6 @@ type DbModel struct {
 	flds_info   []FieldInfo
 	flds_map    map[string]int
 	flds_addr   []FieldValue
-	flds_ent    []int
 	db_where    DbWhere
 	group_by    string
 	order_by    string
@@ -27,8 +26,12 @@ type DbModel struct {
 	join_type   int
 	join_on     string
 	md_pool     *ModelPool
-	auto_put    bool
-	Err         error
+	//自动人工选择标志
+	flag_edit bool
+	//字段自动选择标志
+	flag_auto bool
+	auto_put  bool
+	Err       error
 }
 
 func NewModel(dbs *DbSession, ent_ptr interface{}, flag bool) *DbModel {
@@ -67,6 +70,8 @@ func (md *DbModel) Reset() {
 	md.db_offset = 0
 	md.join_type = 0
 	md.join_on = ""
+	md.flag_edit = false
+	md.flag_auto = false
 	md.auto_put = false
 	md.md_pool = nil
 	md.Err = nil
@@ -215,6 +220,7 @@ func (md *DbModel) set_flag_by_addr(fldg_ptr interface{}, flag bool) bool {
 }
 
 func (md *DbModel) SelectALL() *DbModel {
+	md.flag_edit = true
 	num := len(md.flds_addr)
 	for i := 0; i < num; i++ {
 		md.flds_addr[i].Flag = true
@@ -223,6 +229,7 @@ func (md *DbModel) SelectALL() *DbModel {
 }
 
 func (md *DbModel) OmitALL() *DbModel {
+	md.flag_edit = true
 	num := len(md.flds_addr)
 	for i := 0; i < num; i++ {
 		md.flds_addr[i].Flag = false
@@ -232,6 +239,7 @@ func (md *DbModel) OmitALL() *DbModel {
 
 //追加选中一批字段
 func (md *DbModel) AddField(fields ...string) *DbModel {
+	md.flag_edit = true
 	for _, field := range fields {
 		//field = strings.Trim(field, " ")
 		ind := md.get_field_index(field)
@@ -246,6 +254,7 @@ func (md *DbModel) AddField(fields ...string) *DbModel {
 
 //追加选中一批字段
 func (md *DbModel) AddFieldX(fields ...interface{}) *DbModel {
+	md.flag_edit = true
 	for _, fld_ptr := range fields {
 		if fld_ptr == nil {
 			md.Err = errors.New("field addr is nil")
@@ -262,6 +271,7 @@ func (md *DbModel) AddFieldX(fields ...interface{}) *DbModel {
 
 //选中一批字段
 func (md *DbModel) Select(fields ...string) *DbModel {
+	md.flag_edit = true
 	//每次都要清空当前选择集
 	md.OmitALL()
 	return md.AddField(fields...)
@@ -269,6 +279,7 @@ func (md *DbModel) Select(fields ...string) *DbModel {
 
 //选中一批字段
 func (md *DbModel) SelectX(fields ...interface{}) *DbModel {
+	md.flag_edit = true
 	//每次都要清空当前选择集
 	md.OmitALL()
 	return md.AddFieldX(fields...)
@@ -276,6 +287,7 @@ func (md *DbModel) SelectX(fields ...interface{}) *DbModel {
 
 //排除若干字段，其余全部选中
 func (md *DbModel) Omit(fields ...string) *DbModel {
+	md.flag_edit = true
 	md.SelectALL()
 	for _, field := range fields {
 		//field = strings.Trim(field, " ")
@@ -291,6 +303,7 @@ func (md *DbModel) Omit(fields ...string) *DbModel {
 
 //排除若干字段，其余全部选中
 func (md *DbModel) OmitX(fields ...interface{}) *DbModel {
+	md.flag_edit = true
 	md.SelectALL()
 	for _, fld_ptr := range fields {
 		if fld_ptr == nil {

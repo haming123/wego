@@ -10,15 +10,11 @@ func (md *DbModel) GetFieldFlag4Insert(i int) bool {
 	if md.flds_addr[i].Flag == false {
 		return false
 	}
-	//没有被自动选择
-	if md.flds_ent != nil && md.flds_ent[i] == 0 {
-		return false
-	}
 	//自增字段
 	if md.flds_info[i].AutoIncr == true {
 		return false
 	}
-	//该字段不用于insert
+	//该字段不用于Insert
 	if md.flds_info[i].NotInsert == true {
 		return false
 	}
@@ -117,6 +113,7 @@ func (md *DbModel) Insert(args ...interface{}) (int64, error) {
 		pool := md.split_pool()
 		defer md.put_pool(pool)
 	}
+
 	if md.Err != nil {
 		return 0, md.Err
 	}
@@ -159,10 +156,6 @@ func (md *DbModel) Insert(args ...interface{}) (int64, error) {
 func (md *DbModel) GetFieldFlag4Update(i int) bool {
 	//没有被人工选择
 	if md.flds_addr[i].Flag == false {
-		return false
-	}
-	//没有被自动选择
-	if md.flds_ent != nil && md.flds_ent[i] == 0 {
 		return false
 	}
 	//自增字段
@@ -234,6 +227,7 @@ func (md *DbModel) Update(args ...interface{}) (int64, error) {
 		pool := md.split_pool()
 		defer md.put_pool(pool)
 	}
+
 	if md.Err != nil {
 		return 0, md.Err
 	}
@@ -278,6 +272,7 @@ func (md *DbModel) Delete() (int64, error) {
 		pool := md.split_pool()
 		defer md.put_pool(pool)
 	}
+
 	if md.Err != nil {
 		return 0, md.Err
 	}
@@ -313,6 +308,7 @@ func (md *DbModel) UpdateOrInsert(id int64, args ...interface{}) (affected int64
 		pool := md.split_pool()
 		defer md.put_pool(pool)
 	}
+
 	if md.Err != nil {
 		return 0, id, md.Err
 	}
@@ -332,6 +328,7 @@ func (md *DbModel) Save(args ...interface{}) (affected int64, insertId int64, er
 		pool := md.split_pool()
 		defer md.put_pool(pool)
 	}
+
 	if md.Err != nil {
 		return 0, 0, md.Err
 	}
@@ -356,6 +353,7 @@ func (md *DbModel) InsertIfNotExist(args ...interface{}) (affected int64, insert
 		pool := md.split_pool()
 		defer md.put_pool(pool)
 	}
+
 	if md.Err != nil {
 		return 0, 0, md.Err
 	}

@@ -77,3 +77,40 @@ func TestModelJoinFind2(t *testing.T) {
 		t.Log(item)
 	}
 }
+
+type UserBookEo3 struct {
+	User
+	DB_author int64
+}
+
+func TestModelJoinGet3(t *testing.T) {
+	InitEngine4Test()
+
+	var data UserBookEo3
+
+	tb := Model(&User{}).Select("id", "name", "age").TableAlias("u")
+	tb.Join(&DB_Book{}, "b", "b.author=u.id")
+	_, err := tb.Where("u.id=?", 1).Get(&data)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(data)
+}
+
+func TestModelJoinFind3(t *testing.T) {
+	InitEngine4Test()
+
+	var datas []UserBookEo3
+
+	tb := Model(&User{}).Select("id", "name", "age").TableAlias("u")
+	tb.LeftJoin(&DB_Book{}, "b", "b.author=u.id")
+	err := tb.WhereIn("u.id", 1, 6).Find(&datas)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	for _, item := range datas {
+		t.Log(item)
+	}
+}

@@ -64,6 +64,30 @@ func TestModelGetVo(t *testing.T) {
 	t.Log(vo)
 }
 
+func TestModelGetVoLack(t *testing.T) {
+	InitEngine4Test()
+
+	var vo UserVo
+	_, err := Model(&User{}).Select("id", "name").Where("id=?", 1).Get(&vo)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(vo)
+}
+
+func TestModelGetVoExceed(t *testing.T) {
+	InitEngine4Test()
+
+	var vo UserVo
+	_, err := Model(&User{}).Select("id", "name", "created").Where("id=?", 1).Get(&vo)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(vo)
+}
+
 func TestModelFindVo(t *testing.T) {
 	InitEngine4Test()
 

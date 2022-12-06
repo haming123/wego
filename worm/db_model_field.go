@@ -8,39 +8,45 @@ import (
 	"time"
 )
 
-//追加选中一批字段(通过地址字段匹配)
-func (md *DbModel) add_field_ent_addr(fields ...interface{}) *DbModel {
+//自动模式追加一批字段(通过地址字段匹配)
+//添加字段前需要清空当前状态（缺省选择全部）
+func (md *DbModel) auto_add_field_addr(fields ...interface{}) *DbModel {
+	if md.flag_auto == false {
+		md.OmitALL()
+		md.flag_auto = true
+	}
+
 	for _, fld_ptr := range fields {
 		if fld_ptr == nil {
 			md.Err = errors.New("field addr is nil")
 			return md
 		}
-		index := md.get_field_index_byaddr(fld_ptr)
-		if index < 0 {
-			md.Err = errors.New("field not find")
+		ret := md.set_flag_by_addr(fld_ptr, true)
+		if ret == false {
+			md.Err = errors.New("field not found")
 			return md
 		}
-		if md.flds_ent == nil {
-			md.flds_ent = make([]int, len(md.flds_addr))
-		}
-		md.flds_ent[index] = 1
 	}
+
 	return md
 }
 
-//追加选中一批字段(通过index匹配)
-func (md *DbModel) add_field_ent_index(fields ...int) *DbModel {
+//自动模式追加一批字段(通过index匹配)
+//添加字段前需要清空当前状态（缺省选择全部）
+func (md *DbModel) auto_add_field_index(fields ...int) *DbModel {
+	if md.flag_auto == false {
+		md.OmitALL()
+		md.flag_auto = true
+	}
+
 	for _, index := range fields {
-		index := md.get_field_index_byindex(index)
-		if index < 0 {
-			md.Err = errors.New("field not find")
+		ret := md.set_flag_by_index(index, true)
+		if ret == false {
+			md.Err = errors.New("field not found")
 			return md
 		}
-		if md.flds_ent == nil {
-			md.flds_ent = make([]int, len(md.flds_addr))
-		}
-		md.flds_ent[index] = 1
 	}
+
 	return md
 }
 
@@ -83,7 +89,7 @@ func CopyDataFromModel(md *DbModel, vo_ptr interface{}, mo_ptr interface{}) (int
 	if md != nil {
 		if pflds.ModelField < 0 {
 			for _, item := range pflds.Fields {
-				md.add_field_ent_index(item.MoIndex)
+				md.auto_add_field_index(item.MoIndex)
 			}
 		}
 	}
@@ -149,7 +155,7 @@ func CopyDataToModel(md *DbModel, vo_ptr interface{}, mo_ptr interface{}) (int, 
 	if md != nil {
 		if pflds.ModelField < 0 {
 			for _, item := range pflds.Fields {
-				md.add_field_ent_index(item.MoIndex)
+				md.auto_add_field_index(item.MoIndex)
 			}
 		}
 	}
@@ -244,7 +250,7 @@ func (md *DbModel) SetValue(fld_ptr interface{}, val interface{}) error {
 		md.Err = err
 		return err
 	}
-	md.add_field_ent_addr(fld_ptr)
+	md.auto_add_field_addr(fld_ptr)
 	return nil
 }
 
@@ -260,7 +266,7 @@ func GetPointer(md *DbModel, fld_ptr interface{}) interface{} {
 	if md == nil {
 		return fld_ptr
 	} else {
-		md.add_field_ent_addr(fld_ptr)
+		md.auto_add_field_addr(fld_ptr)
 		return fld_ptr
 	}
 }
@@ -274,7 +280,7 @@ func GetIndirect(md *DbModel, fld_ptr interface{}) interface{} {
 	if md == nil {
 		return v_fld.Interface()
 	} else {
-		md.add_field_ent_addr(fld_ptr)
+		md.auto_add_field_addr(fld_ptr)
 		return v_fld.Interface()
 	}
 }
@@ -283,7 +289,7 @@ func GetBool(md *DbModel, fld_ptr *bool) bool {
 	if md == nil {
 		return *fld_ptr
 	} else {
-		md.add_field_ent_addr(fld_ptr)
+		md.auto_add_field_addr(fld_ptr)
 		return *fld_ptr
 	}
 }
@@ -292,7 +298,7 @@ func GetInt(md *DbModel, fld_ptr *int) int {
 	if md == nil {
 		return *fld_ptr
 	} else {
-		md.add_field_ent_addr(fld_ptr)
+		md.auto_add_field_addr(fld_ptr)
 		return *fld_ptr
 	}
 }
@@ -301,7 +307,7 @@ func GetInt32(md *DbModel, fld_ptr *int32) int32 {
 	if md == nil {
 		return *fld_ptr
 	} else {
-		md.add_field_ent_addr(fld_ptr)
+		md.auto_add_field_addr(fld_ptr)
 		return *fld_ptr
 	}
 }
@@ -310,7 +316,7 @@ func GetInt64(md *DbModel, fld_ptr *int64) int64 {
 	if md == nil {
 		return *fld_ptr
 	} else {
-		md.add_field_ent_addr(fld_ptr)
+		md.auto_add_field_addr(fld_ptr)
 		return *fld_ptr
 	}
 }
@@ -319,7 +325,7 @@ func GetFloat32(md *DbModel, fld_ptr *float32) float32 {
 	if md == nil {
 		return *fld_ptr
 	} else {
-		md.add_field_ent_addr(fld_ptr)
+		md.auto_add_field_addr(fld_ptr)
 		return *fld_ptr
 	}
 }
@@ -328,7 +334,7 @@ func GetFloat64(md *DbModel, fld_ptr *float64) float64 {
 	if md == nil {
 		return *fld_ptr
 	} else {
-		md.add_field_ent_addr(fld_ptr)
+		md.auto_add_field_addr(fld_ptr)
 		return *fld_ptr
 	}
 }
@@ -337,7 +343,7 @@ func GetString(md *DbModel, fld_ptr *string) string {
 	if md == nil {
 		return *fld_ptr
 	} else {
-		md.add_field_ent_addr(fld_ptr)
+		md.auto_add_field_addr(fld_ptr)
 		return *fld_ptr
 	}
 }
@@ -346,7 +352,7 @@ func GetTime(md *DbModel, fld_ptr *time.Time) time.Time {
 	if md == nil {
 		return *fld_ptr
 	} else {
-		md.add_field_ent_addr(fld_ptr)
+		md.auto_add_field_addr(fld_ptr)
 		return *fld_ptr
 	}
 }

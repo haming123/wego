@@ -88,6 +88,11 @@ func getPubField4VoMo(cache_key string, t_vo reflect.Type, t_mo reflect.Type) (*
 
 //获取与Eo对象对应的mo的字段选中状态
 func selectFieldsByEo(md *DbModel, vo_ptr interface{}) {
+	//若进行了字段的人工选择，则不需要进行字段的自动选择
+	if md.flag_edit == true {
+		return
+	}
+
 	//获取字段交集
 	t_vo := GetDirectType(reflect.TypeOf(vo_ptr))
 	t_mo := GetDirectType(reflect.TypeOf(md.ent_ptr))
@@ -101,7 +106,7 @@ func selectFieldsByEo(md *DbModel, vo_ptr interface{}) {
 	//若存在model字段，不用设置扩展选择集（选择全部）
 	if pflds.ModelField < 0 {
 		for _, item := range pflds.Fields {
-			md.add_field_ent_index(item.MoIndex)
+			md.auto_add_field_index(item.MoIndex)
 		}
 	}
 }
