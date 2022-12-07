@@ -50,6 +50,17 @@ func (md *DbModel) auto_add_field_index(fields ...int) *DbModel {
 	return md
 }
 
+func (md *DbModel) auto_add_field_all() *DbModel {
+	if md.flag_auto == false {
+		md.flag_auto = true
+	}
+	num := len(md.flds_addr)
+	for i := 0; i < num; i++ {
+		md.flds_addr[i].Flag = true
+	}
+	return md
+}
+
 //执行vo=mo的赋值操作，只有名称相同、类型相同的字段才能赋值
 //若md != nil，则获取mo的字段地址，并调用md的set_flag_by_addr函数来选中该字段
 //只有被选中的字段才需要从数据库中查询

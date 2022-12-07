@@ -12,6 +12,8 @@ type DbModel struct {
 	SqlContex
 	db_ptr      *DbSession
 	ent_ptr     interface{}
+	ent_type    reflect.Type
+	ent_value   reflect.Value
 	table_name  string
 	table_alias string
 	field_id    string
@@ -31,7 +33,12 @@ type DbModel struct {
 	//字段自动选择标志
 	flag_auto bool
 	auto_put  bool
-	Err       error
+	//对应的Vo中Model字段索引号
+	VoModelField int
+	//其他字段索引信息
+	VoFields []FieldIndex
+
+	Err error
 }
 
 func NewModel(dbs *DbSession, ent_ptr interface{}, flag bool) *DbModel {
@@ -51,6 +58,8 @@ func NewModel(dbs *DbSession, ent_ptr interface{}, flag bool) *DbModel {
 	md := &DbModel{}
 	md.db_ptr = dbs
 	md.ent_ptr = ent_ptr
+	md.ent_type = v_ent.Type()
+	md.ent_value = v_ent
 	md.table_name = minfo.TableName
 	md.field_id = minfo.FieldID
 	md.flds_info = minfo.Fields
@@ -153,7 +162,8 @@ func (md *DbModel) TableAlias(alias string) *DbJoint {
 
 	lk := &DbJoint{}
 	lk.db_ptr = md.db_ptr
-	lk.md_ptr = md
+	//lk.md_ptr = md
+	lk.md_arr = append(lk.md_arr, md)
 	//TG.SetWhere(&md.db_where)
 	return lk
 }

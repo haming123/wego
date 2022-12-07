@@ -5,6 +5,13 @@ import (
 	"sync"
 )
 
+type FieldIndex2 struct {
+	FieldName string
+	PIndex    int
+	FIndex    int
+	MoIndex   int
+}
+
 type FieldIndex struct {
 	FieldName string
 	VoIndex   []int
