@@ -90,7 +90,7 @@ func CopyDataFromModel(md *DbModel, vo_ptr interface{}, mo_ptr interface{}) (int
 	}
 
 	//获取字段交集
-	pflds, err := getPubField4VoMo("", v_vo.Type(), v_mo.Type())
+	pflds, err := getPubField4VoMo(md, "", v_vo.Type(), v_mo.Type())
 	if err != nil {
 		return 0, err
 	}
@@ -156,7 +156,7 @@ func CopyDataToModel(md *DbModel, vo_ptr interface{}, mo_ptr interface{}) (int, 
 	}
 
 	//获取字段交集
-	pflds, err := getPubField4VoMo("", v_vo.Type(), v_mo.Type())
+	pflds, err := getPubField4VoMo(md, "", v_vo.Type(), v_mo.Type())
 	if err != nil {
 		return 0, err
 	}

@@ -18,10 +18,10 @@ Oracle	:name
 type ColumnInfo struct {
 	Name            string
 	SQLType         string
-	DbType        	string
+	DbType          string
 	Comment         string
-	Length 			int
-	Length2 		int
+	Length          int
+	Length2         int
 	Nullable        bool
 	IsPrimaryKey    bool
 	IsAutoIncrement bool
@@ -55,19 +55,19 @@ type Dialect interface {
 type DialectBase struct {
 }
 
-func (db *DialectBase)GetName() string {
+func (db *DialectBase) GetName() string {
 	return ""
 }
 
-func (db *DialectBase)DbType2GoType(colType string) string {
+func (db *DialectBase) DbType2GoType(colType string) string {
 	return colType
 }
 
-func (db *DialectBase)GetColumns(db_raw *sql.DB, tableName string) ([]ColumnInfo, error) {
+func (db *DialectBase) GetColumns(db_raw *sql.DB, tableName string) ([]ColumnInfo, error) {
 	return nil, nil
 }
 
-func (db *DialectBase)LimitSql(offset int64, limit int64) string {
+func (db *DialectBase) LimitSql(offset int64, limit int64) string {
 	return ""
 }
 
@@ -76,24 +76,23 @@ func (db *DialectBase) ParsePlaceholder(sql_tpl string) string {
 	return tpl_str
 }
 
-func (db *DialectBase)ModelInsertHasOutput(md *DbModel) bool {
+func (db *DialectBase) ModelInsertHasOutput(md *DbModel) bool {
 	return false
 }
 
-func (db *DialectBase)TableInsertHasOutput(tb *DbTable) bool {
+func (db *DialectBase) TableInsertHasOutput(tb *DbTable) bool {
 	return false
 }
 
-
-func (db *DialectBase)GenModelInsertSql(md *DbModel) string {
+func (db *DialectBase) GenModelInsertSql(md *DbModel) string {
 	var buffer bytes.Buffer
-	index := 0;
+	index := 0
 	buffer.WriteString(fmt.Sprintf("insert into %s (", md.table_name))
 	for i, item := range md.flds_addr {
 		if md.GetFieldFlag4Insert(i) == false {
 			continue
 		}
-		if index > 0{
+		if index > 0 {
 			buffer.WriteString(",")
 		}
 		buffer.WriteString(item.FName)
@@ -101,7 +100,7 @@ func (db *DialectBase)GenModelInsertSql(md *DbModel) string {
 	}
 	buffer.WriteString(")")
 
-	index = 0;
+	index = 0
 	buffer.WriteString(" values (")
 	for i, _ := range md.flds_addr {
 		if md.GetFieldFlag4Insert(i) == false {
@@ -118,17 +117,17 @@ func (db *DialectBase)GenModelInsertSql(md *DbModel) string {
 	return buffer.String()
 }
 
-func (db *DialectBase)GenModelUpdateSql(md *DbModel) string {
+func (db *DialectBase) GenModelUpdateSql(md *DbModel) string {
 	var buffer bytes.Buffer
 	buffer.WriteString("update ")
 	buffer.WriteString(md.table_name)
 	buffer.WriteString(" set ")
-	index := 0;
+	index := 0
 	for i, item := range md.flds_addr {
 		if md.GetFieldFlag4Update(i) == false {
 			continue
 		}
-		if index > 0{
+		if index > 0 {
 			buffer.WriteString(",")
 		}
 		buffer.WriteString(item.FName)
@@ -136,7 +135,7 @@ func (db *DialectBase)GenModelUpdateSql(md *DbModel) string {
 		index += 1
 	}
 
-	if len(md.db_where.Tpl_sql)>0 {
+	if len(md.db_where.Tpl_sql) > 0 {
 		buffer.WriteString(" where ")
 		buffer.WriteString(md.db_where.Tpl_sql)
 	}
@@ -144,18 +143,18 @@ func (db *DialectBase)GenModelUpdateSql(md *DbModel) string {
 	return buffer.String()
 }
 
-func (db *DialectBase)GenModelDeleteSql(md *DbModel) string {
+func (db *DialectBase) GenModelDeleteSql(md *DbModel) string {
 	var buffer bytes.Buffer
 	buffer.WriteString("delete from ")
 	buffer.WriteString(md.table_name)
-	if len(md.db_where.Tpl_sql)>0 {
+	if len(md.db_where.Tpl_sql) > 0 {
 		buffer.WriteString(" where ")
 		buffer.WriteString(md.db_where.Tpl_sql)
 	}
 	return buffer.String()
 }
 
-func (db *DialectBase)GenModelGetSql(md *DbModel) string {
+func (db *DialectBase) GenModelGetSql(md *DbModel) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("select ")
@@ -167,7 +166,7 @@ func (db *DialectBase)GenModelGetSql(md *DbModel) string {
 		buffer.WriteString(md.table_alias)
 	}
 
-	if len(md.db_where.Tpl_sql)>0 {
+	if len(md.db_where.Tpl_sql) > 0 {
 		buffer.WriteString(" where ")
 		buffer.WriteString(md.db_where.Tpl_sql)
 	}
@@ -186,7 +185,7 @@ func (db *DialectBase)GenModelGetSql(md *DbModel) string {
 	return buffer.String()
 }
 
-func (db *DialectBase)GenModelFindSql(md *DbModel) string {
+func (db *DialectBase) GenModelFindSql(md *DbModel) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("select ")
@@ -198,7 +197,7 @@ func (db *DialectBase)GenModelFindSql(md *DbModel) string {
 		buffer.WriteString(md.table_alias)
 	}
 
-	if len(md.db_where.Tpl_sql)>0 {
+	if len(md.db_where.Tpl_sql) > 0 {
 		buffer.WriteString(" where ")
 		buffer.WriteString(md.db_where.Tpl_sql)
 	}
@@ -222,12 +221,12 @@ func (db *DialectBase)GenModelFindSql(md *DbModel) string {
 	return buffer.String()
 }
 
-func (db *DialectBase)GenJointGetSql(lk *DbJoint) string {
+func (db *DialectBase) GenJointGetSql(lk *DbJoint) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("select ")
-	buffer.WriteString(lk.md_ptr.gen_select_fields())
-	for _, table := range  lk.md_arr {
+	//buffer.WriteString(lk.md_ptr.gen_select_fields())
+	for _, table := range lk.md_arr {
 		str := table.gen_select_fields()
 		if len(str) < 1 {
 			continue
@@ -237,11 +236,11 @@ func (db *DialectBase)GenJointGetSql(lk *DbJoint) string {
 	}
 
 	buffer.WriteString(" from ")
-	buffer.WriteString(lk.md_ptr.table_name)
-	if len(lk.md_ptr.table_alias) > 0 {
-		buffer.WriteString(" ")
-		buffer.WriteString(lk.md_ptr.table_alias)
-	}
+	//buffer.WriteString(lk.md_ptr.table_name)
+	//if len(lk.md_ptr.table_alias) > 0 {
+	//	buffer.WriteString(" ")
+	//	buffer.WriteString(lk.md_ptr.table_alias)
+	//}
 
 	for _, table := range lk.md_arr {
 		buffer.WriteString(" ")
@@ -258,7 +257,7 @@ func (db *DialectBase)GenJointGetSql(lk *DbJoint) string {
 		}
 	}
 
-	if len(lk.db_where.Tpl_sql)>0 {
+	if len(lk.db_where.Tpl_sql) > 0 {
 		buffer.WriteString(" where ")
 		buffer.WriteString(lk.db_where.Tpl_sql)
 	}
@@ -272,12 +271,12 @@ func (db *DialectBase)GenJointGetSql(lk *DbJoint) string {
 	return buffer.String()
 }
 
-func (db *DialectBase)GenJointFindSql(lk *DbJoint) string {
+func (db *DialectBase) GenJointFindSql(lk *DbJoint) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("select ")
-	buffer.WriteString(lk.md_ptr.gen_select_fields())
-	for _, table := range  lk.md_arr {
+	//buffer.WriteString(lk.md_ptr.gen_select_fields())
+	for _, table := range lk.md_arr {
 		str := table.gen_select_fields()
 		if len(str) < 1 {
 			continue
@@ -287,11 +286,11 @@ func (db *DialectBase)GenJointFindSql(lk *DbJoint) string {
 	}
 
 	buffer.WriteString(" from ")
-	buffer.WriteString(lk.md_ptr.table_name)
-	if len(lk.md_ptr.table_alias) > 0 {
-		buffer.WriteString(" ")
-		buffer.WriteString(lk.md_ptr.table_alias)
-	}
+	//buffer.WriteString(lk.md_ptr.table_name)
+	//if len(lk.md_ptr.table_alias) > 0 {
+	//	buffer.WriteString(" ")
+	//	buffer.WriteString(lk.md_ptr.table_alias)
+	//}
 
 	for _, table := range lk.md_arr {
 		buffer.WriteString(" ")
@@ -308,7 +307,7 @@ func (db *DialectBase)GenJointFindSql(lk *DbJoint) string {
 		}
 	}
 
-	if len(lk.db_where.Tpl_sql)>0 {
+	if len(lk.db_where.Tpl_sql) > 0 {
 		buffer.WriteString(" where ")
 		buffer.WriteString(lk.db_where.Tpl_sql)
 	}
@@ -329,9 +328,9 @@ func (db *DialectBase)GenJointFindSql(lk *DbJoint) string {
 
 //生成insert sql语句
 //sql语句与values数组必须在一个循环中生成，因为map多次遍历时次序可能不同
-func (db *DialectBase)GenTableInsertSql(tb *DbTable) (string, []interface{}) {
-	index := 0;
-	vals:= []interface{}{}
+func (db *DialectBase) GenTableInsertSql(tb *DbTable) (string, []interface{}) {
+	index := 0
+	vals := []interface{}{}
 
 	var buffer1 bytes.Buffer
 	buffer1.WriteString(fmt.Sprintf("insert into %s (", tb.table_name))
@@ -367,16 +366,16 @@ func (db *DialectBase)GenTableInsertSql(tb *DbTable) (string, []interface{}) {
 
 //生成 update sql语句
 //sql语句与values数组必须在一个循环中生成，因为map多次遍历时次序可能不同
-func (db *DialectBase)GenTableUpdateSql(tb *DbTable) (string, []interface{}) {
+func (db *DialectBase) GenTableUpdateSql(tb *DbTable) (string, []interface{}) {
 	var buffer bytes.Buffer
 	buffer.WriteString("update ")
 	buffer.WriteString(tb.table_name)
 	buffer.WriteString(" set ")
 
-	index := 0;
-	vals:= []interface{}{}
+	index := 0
+	vals := []interface{}{}
 	for name, val := range tb.fld_values {
-		if index > 0{
+		if index > 0 {
 			buffer.WriteString(",")
 		}
 		buffer.WriteString(name)
@@ -395,7 +394,7 @@ func (db *DialectBase)GenTableUpdateSql(tb *DbTable) (string, []interface{}) {
 		index += 1
 	}
 
-	if len(tb.db_where.Tpl_sql)>0 {
+	if len(tb.db_where.Tpl_sql) > 0 {
 		buffer.WriteString(" where ")
 		buffer.WriteString(tb.db_where.Tpl_sql)
 	}
@@ -403,15 +402,15 @@ func (db *DialectBase)GenTableUpdateSql(tb *DbTable) (string, []interface{}) {
 	return buffer.String(), vals
 }
 
-func (db *DialectBase)GenTableDeleteSql(tb *DbTable) string {
+func (db *DialectBase) GenTableDeleteSql(tb *DbTable) string {
 	sql_str := fmt.Sprintf("delete from %s", tb.table_name)
-	if len(tb.db_where.Tpl_sql)>0 {
+	if len(tb.db_where.Tpl_sql) > 0 {
 		sql_str += " where " + tb.db_where.Tpl_sql
 	}
 	return sql_str
 }
 
-func (db *DialectBase)GenTableGetSql(tb *DbTable) string {
+func (db *DialectBase) GenTableGetSql(tb *DbTable) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("select ")
@@ -423,11 +422,11 @@ func (db *DialectBase)GenTableGetSql(tb *DbTable) string {
 		buffer.WriteString(tb.table_alias)
 	}
 
-	if len(tb.join_str)>0 {
+	if len(tb.join_str) > 0 {
 		buffer.WriteString(tb.join_str)
 	}
 
-	if len(tb.db_where.Tpl_sql)>0 {
+	if len(tb.db_where.Tpl_sql) > 0 {
 		buffer.WriteString(" where ")
 		buffer.WriteString(tb.db_where.Tpl_sql)
 	}
@@ -437,7 +436,7 @@ func (db *DialectBase)GenTableGetSql(tb *DbTable) string {
 		buffer.WriteString(tb.group_by)
 	}
 
-	if len(tb.db_having.Tpl_sql)>0 {
+	if len(tb.db_having.Tpl_sql) > 0 {
 		buffer.WriteString(" having ")
 		buffer.WriteString(tb.db_having.Tpl_sql)
 	}
@@ -451,7 +450,7 @@ func (db *DialectBase)GenTableGetSql(tb *DbTable) string {
 	return buffer.String()
 }
 
-func (db *DialectBase)GenTableFindSql(tb *DbTable) string {
+func (db *DialectBase) GenTableFindSql(tb *DbTable) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("select ")
@@ -463,11 +462,11 @@ func (db *DialectBase)GenTableFindSql(tb *DbTable) string {
 		buffer.WriteString(tb.table_alias)
 	}
 
-	if len(tb.join_str)>0 {
+	if len(tb.join_str) > 0 {
 		buffer.WriteString(tb.join_str)
 	}
 
-	if len(tb.db_where.Tpl_sql)>0 {
+	if len(tb.db_where.Tpl_sql) > 0 {
 		buffer.WriteString(" where ")
 		buffer.WriteString(tb.db_where.Tpl_sql)
 	}
@@ -477,7 +476,7 @@ func (db *DialectBase)GenTableFindSql(tb *DbTable) string {
 		buffer.WriteString(tb.group_by)
 	}
 
-	if len(tb.db_having.Tpl_sql)>0 {
+	if len(tb.db_having.Tpl_sql) > 0 {
 		buffer.WriteString(" having ")
 		buffer.WriteString(tb.db_having.Tpl_sql)
 	}

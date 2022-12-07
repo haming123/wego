@@ -12,10 +12,15 @@ type FieldIndex2 struct {
 	MoIndex   int
 }
 
+//匿名字段嵌套的最大深度
+const MaxNestDeep int = 10
+
+type FieldPos [MaxNestDeep]int
 type FieldIndex struct {
 	FieldName string
 	VoIndex   []int
 	MoIndex   int
+	VoField   FieldPos
 }
 
 type PublicFields struct {
@@ -72,9 +77,59 @@ func genPubField4VoMo(pflds *PublicFields, t_vo reflect.Type, t_mo reflect.Type)
 	}
 }
 
+//生成vo与mo的字段交集信息
+//只有名称与类型相同的字段才属于字段交集
+//deep必须从0开始
+func genPubField4VoMoNest(pflds *PublicFields, md *DbModel, t_vo reflect.Type, pos FieldPos, deep int) {
+	//超过最大层次，则退出
+	if deep >= len(pos) {
+		return
+	}
+
+	f_num := t_vo.NumField()
+	for ff := 0; ff < f_num; ff++ {
+		ft_vo := t_vo.Field(ff)
+
+		//只有第1层(deep=0)字段才判断是否为Model类型
+		//若存在Model类型的字段, 则直接退出（意味着选中全部Model的字段）
+		if deep < 1 {
+			if ft_vo.Type == md.ent_type {
+				pflds.ModelField = ff
+				return
+			}
+		}
+
+		//若是匿名字段,则递归调用
+		if ft_vo.Anonymous {
+			pos[deep] = ff
+			genPubField4VoMoNest(pflds, md, ft_vo.Type, pos, deep+1)
+			continue
+		}
+
+		//通过eo字段名称查询model中字段的位置
+		mo_index := md.get_field_index_byname2(ft_vo.Name)
+		if mo_index < 0 {
+			continue
+		}
+
+		//只有类型与名称一致才算匹配上
+		if md.flds_info[mo_index].FieldType != ft_vo.Type {
+			continue
+		}
+
+		var item FieldIndex
+		item.FieldName = ft_vo.Name
+		item.MoIndex = mo_index
+		item.VoField = pos
+		item.VoField[deep] = ff
+		item.VoIndex = item.VoField[0 : deep+1]
+		pflds.Fields = append(pflds.Fields, item)
+	}
+}
+
 //首先从缓存中获取字段交集
 //若缓存中不存在，则生成字段交集
-func getPubField4VoMo(cache_key string, t_vo reflect.Type, t_mo reflect.Type) (*PublicFields, error) {
+func getPubField4VoMo(md *DbModel, cache_key string, t_vo reflect.Type, t_mo reflect.Type) (*PublicFields, error) {
 	g_pubfield_mutex.Lock()
 	defer g_pubfield_mutex.Unlock()
 
@@ -87,7 +142,9 @@ func getPubField4VoMo(cache_key string, t_vo reflect.Type, t_mo reflect.Type) (*
 	}
 
 	pflds := NewPublicFields(t_mo.NumField())
-	genPubField4VoMo(pflds, t_vo, t_mo)
+	//genPubField4VoMo(pflds, t_vo, t_mo)
+	var pos FieldPos
+	genPubField4VoMoNest(pflds, md, t_vo, pos, 0)
 	g_pubfield_cache[cache_key] = pflds
 
 	return pflds, nil
@@ -104,7 +161,7 @@ func selectFieldsByEo(md *DbModel, vo_ptr interface{}) {
 	t_vo := GetDirectType(reflect.TypeOf(vo_ptr))
 	t_mo := GetDirectType(reflect.TypeOf(md.ent_ptr))
 	cache_key := t_vo.String() + t_mo.String()
-	pflds, err := getPubField4VoMo(cache_key, t_vo, t_mo)
+	pflds, err := getPubField4VoMo(md, cache_key, t_vo, t_mo)
 	if err != nil {
 		return
 	}

@@ -19,6 +19,7 @@ type DbModel struct {
 	field_id    string
 	flds_info   []FieldInfo
 	flds_map    map[string]int
+	flds_map2   map[string]int
 	flds_addr   []FieldValue
 	db_where    DbWhere
 	group_by    string
@@ -64,6 +65,7 @@ func NewModel(dbs *DbSession, ent_ptr interface{}, flag bool) *DbModel {
 	md.field_id = minfo.FieldID
 	md.flds_info = minfo.Fields
 	md.flds_map = minfo.NameMap
+	md.flds_map2 = minfo.NameMap2
 	md.flds_addr = getEntFieldAddrs(minfo.Fields, v_ent, flag)
 	return md
 }
@@ -184,6 +186,14 @@ func (md *DbModel) get_field_index_byindex(no int) int {
 
 func (md *DbModel) get_field_index_byname(fname string) int {
 	index, ok := md.flds_map[fname]
+	if ok == false {
+		return -1
+	}
+	return index
+}
+
+func (md *DbModel) get_field_index_byname2(fname string) int {
+	index, ok := md.flds_map2[fname]
 	if ok == false {
 		return -1
 	}

@@ -40,6 +40,7 @@ type FieldInfo struct {
 type ModelInfo struct {
 	Fields    []FieldInfo
 	NameMap   map[string]int
+	NameMap2  map[string]int
 	TableName string
 	FieldID   string
 }
@@ -75,6 +76,7 @@ func getModelInfo(v_ent reflect.Value) *ModelInfo {
 	f_num := t_ent.NumField()
 	minfo.Fields = make([]FieldInfo, f_num)
 	minfo.NameMap = make(map[string]int)
+	minfo.NameMap2 = make(map[string]int)
 	for i := 0; i < f_num; i++ {
 		finfo := FieldInfo{}
 		finfo.FieldIndex = -1
@@ -99,6 +101,7 @@ func getModelInfo(v_ent reflect.Value) *ModelInfo {
 
 		minfo.Fields[i] = finfo
 		minfo.NameMap[db_name] = i
+		minfo.NameMap2[ff.Name] = i
 	}
 
 	return &minfo
