@@ -89,25 +89,12 @@ func CopyDataFromModel(md *DbModel, vo_ptr interface{}, mo_ptr interface{}) (int
 		return 0, errors.New("mo_ptr  muse be Struct")
 	}
 
-	//获取字段交集
-	pflds, err := getPubField4VoMo(md, "", v_vo.Type(), v_mo.Type())
-	if err != nil {
-		return 0, err
-	}
-
-	//将公共字段添加到选扩展择集中
-	//若存在model字段，不用设置扩展选择集
-	if md != nil {
-		if pflds.ModelField < 0 {
-			for _, item := range pflds.Fields {
-				md.auto_add_field_index(item.MoIndex)
-			}
-		}
-	}
+	//获取字段交集, 并将公共字段添加到选择集中
+	md.selectFieldsByEo(v_vo.Type())
 
 	//若vo中存在Model字段，只需要赋值Model对应的字段即可
-	if pflds.ModelField >= 0 {
-		fv_vo := v_vo.Field(pflds.ModelField)
+	if md.VoFields.ModelField >= 0 {
+		fv_vo := v_vo.Field(md.VoFields.ModelField)
 		if fv_vo.CanSet() == true {
 			fv_vo.Set(v_mo)
 			return 1, nil
@@ -115,7 +102,7 @@ func CopyDataFromModel(md *DbModel, vo_ptr interface{}, mo_ptr interface{}) (int
 	}
 
 	count := 0
-	for _, item := range pflds.Fields {
+	for _, item := range md.VoFields.Fields {
 		fv_vo := v_vo.FieldByIndex(item.VoIndex)
 		fv_mo := v_mo.Field(item.MoIndex)
 		if fv_vo.CanSet() == false {
@@ -155,33 +142,20 @@ func CopyDataToModel(md *DbModel, vo_ptr interface{}, mo_ptr interface{}) (int, 
 		return 0, errors.New("mo_ptr  muse be Struct")
 	}
 
-	//获取字段交集
-	pflds, err := getPubField4VoMo(md, "", v_vo.Type(), v_mo.Type())
-	if err != nil {
-		return 0, err
-	}
-
-	//将公共字段添加到选扩展择集中
-	//若存在model字段，不用设置扩展选择集
-	if md != nil {
-		if pflds.ModelField < 0 {
-			for _, item := range pflds.Fields {
-				md.auto_add_field_index(item.MoIndex)
-			}
-		}
-	}
+	//获取字段交集, 并将公共字段添加到选择集中
+	md.selectFieldsByEo(v_vo.Type())
 
 	//若vo中存在Model字段，只需要赋值Model对应的字段即可
-	if pflds.ModelField >= 0 {
-		fv_vo := v_vo.Field(pflds.ModelField)
-		if v_mo.CanSet() == true {
-			v_mo.Set(fv_vo)
+	if md.VoFields.ModelField >= 0 {
+		fv_vo := v_vo.Field(md.VoFields.ModelField)
+		if fv_vo.CanSet() == true {
+			fv_vo.Set(v_mo)
 			return 1, nil
 		}
 	}
 
 	count := 0
-	for _, item := range pflds.Fields {
+	for _, item := range md.VoFields.Fields {
 		fv_vo := v_vo.FieldByIndex(item.VoIndex)
 		fv_mo := v_mo.Field(item.MoIndex)
 		if fv_mo.CanSet() == false {

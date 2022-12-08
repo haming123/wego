@@ -45,9 +45,8 @@ var g_joint_field_mutex sync.Mutex
 
 type DbJoint struct {
 	SqlContex
-	db_ptr *DbSession
-	//md_ptr    *DbModel
-	md_arr    []*DbModel
+	db_ptr    *DbSession
+	tables    []*DbModel
 	db_where  DbWhere
 	order_by  string
 	db_limit  int64
@@ -68,8 +67,7 @@ func NewJoint(dbs *DbSession, ent_ptr interface{}, alias string, fields ...strin
 
 	lk := &DbJoint{}
 	lk.db_ptr = dbs
-	//lk.md_ptr = md
-	lk.md_arr = append(lk.md_arr, md)
+	lk.tables = append(lk.tables, md)
 	return lk
 }
 
@@ -102,9 +100,9 @@ func (lk *DbJoint) UseMaster(val bool) *DbJoint {
 
 func (lk *DbJoint) get_table_index(ent_type reflect.Type) int {
 	index := -1
-	num := len(lk.md_arr)
+	num := len(lk.tables)
 	for i := 0; i < num; i++ {
-		t_table_ent := reflect.TypeOf(lk.md_arr[i].ent_ptr).Elem()
+		t_table_ent := reflect.TypeOf(lk.tables[i].ent_ptr).Elem()
 		if t_table_ent == ent_type {
 			index = i
 			break
@@ -144,7 +142,7 @@ func (lk *DbJoint) Join(ent_ptr interface{}, alias string, join_on string, field
 			md.Select(fields...)
 		}
 	}
-	lk.md_arr = append(lk.md_arr, md)
+	lk.tables = append(lk.tables, md)
 	return lk
 }
 
@@ -159,7 +157,7 @@ func (lk *DbJoint) LeftJoin(ent_ptr interface{}, alias string, join_on string, f
 			md.Select(fields...)
 		}
 	}
-	lk.md_arr = append(lk.md_arr, md)
+	lk.tables = append(lk.tables, md)
 	return lk
 }
 
@@ -174,7 +172,7 @@ func (lk *DbJoint) RightJoin(ent_ptr interface{}, alias string, join_on string, 
 			md.Select(fields...)
 		}
 	}
-	lk.md_arr = append(lk.md_arr, md)
+	lk.tables = append(lk.tables, md)
 	return lk
 }
 
@@ -265,9 +263,8 @@ func (lk *DbJoint) Page(rows int64, page_no int64) *DbJoint {
 }
 
 func (lk *DbJoint) get_scan_valus() []interface{} {
-	//vals := lk.md_ptr.get_scan_valus()
 	var vals []interface{}
-	for _, table := range lk.md_arr {
+	for _, table := range lk.tables {
 		vals = append(vals, table.get_scan_valus()...)
 	}
 	return vals
@@ -279,157 +276,6 @@ func call_after_query(md *DbModel) {
 		hook.AfterQuery(md.ctx)
 	}
 }
-
-func (lk *DbJoint) Scan() (bool, error) {
-	if lk.Err != nil {
-		return false, lk.Err
-	}
-	sql_str := lk.db_ptr.engine.db_dialect.GenJointGetSql(lk)
-	rows, err := lk.db_ptr.ExecQuery(&lk.SqlContex, sql_str, lk.db_where.Values...)
-	if err != nil {
-		return false, err
-	}
-	if !rows.Next() {
-		rows.Close()
-		return false, nil
-	}
-
-	scan_vals := lk.get_scan_valus()
-	err = rows.Scan(scan_vals...)
-	if err != nil {
-		rows.Close()
-		return false, err
-	}
-
-	//call_after_query(lk.md_ptr)
-	for _, table := range lk.md_arr {
-		call_after_query(table)
-	}
-
-	rows.Close()
-	return true, nil
-}
-
-/*
-//通过model的类型来获取一个model地址
-func (lk *DbJoint) get_model_by_ent_type(ent_type reflect.Type) *DbModel {
-	if reflect.TypeOf(lk.md_ptr.ent_ptr).Elem() == ent_type {
-		return lk.md_ptr
-	}
-	num := len(lk.md_arr)
-	for i := 0; i < num; i++ {
-		t_table_ent := reflect.TypeOf(lk.md_arr[i].ent_ptr).Elem()
-		if t_table_ent == ent_type {
-			return lk.md_arr[i]
-		}
-	}
-	return nil
-}
-
-//通过名称以及类型获取model对象以及mode的字段的序号
-func (lk *DbJoint)get_model_field_by_ent_type(fname string, ent_type reflect.Type) (*DbModel, int) {
-	index := lk.md_ptr.get_field_index_byname(fname)
-	if index >=0 && lk.md_ptr.flds_info[index].FieldType == ent_type {
-		return lk.md_ptr, index
-	}
-	num := len(lk.md_arr)
-	for i:=0; i < num; i++ {
-		index := lk.md_arr[i].get_field_index_byname(fname)
-		if index >=0 && lk.md_arr[i].flds_info[index].FieldType == ent_type {
-			return lk.md_arr[i], index
-		}
-	}
-	return nil, -1
-}
-
-//绑定scan地址到目标对象
-func (lk *DbJoint) BindAddr2Struct(v_ent reflect.Value) {
-	t_num := v_ent.NumField()
-	for t := 0; t < t_num; t++ {
-		v_field := v_ent.Field(t)
-		t_field := v_field.Type()
-		if t_field.Kind() == reflect.Struct {
-			md := lk.get_model_by_ent_type(t_field)
-			if md != nil {
-				rebindEntAddrs(md.flds_info, v_field, md.flds_addr)
-				continue
-			}
-		}
-	}
-}
-
-func (lk *DbJoint) Get(args ...interface{}) (bool, error) {
-	if lk.Err != nil {
-		return false, lk.Err
-	}
-
-	if len(args) > 1 {
-		return false, errors.New("arg number can not great 1")
-	}
-
-	//参数为空, 调用Scan()
-	if len(args) < 1 {
-		return lk.Scan()
-	}
-
-	ent_ptr := args[0]
-	if ent_ptr == nil {
-		return false, errors.New("ent_ptr must be *Struct")
-	}
-	//ent_ptr必须是一个指针
-	v_ent := reflect.ValueOf(ent_ptr)
-	if v_ent.Kind() != reflect.Ptr {
-		return false, errors.New("ent_ptr must be *Struct")
-	}
-	//ent_ptr必须是一个结构体指针
-	v_ent = reflect.Indirect(v_ent)
-	if v_ent.Kind() != reflect.Struct {
-		return false, errors.New("ent_ptr must be *Struct")
-	}
-
-	//若目标对象是一个vo，则通过vo来选择字段
-	//若目标对象不是一个vo，则需要重新进行地址绑定，将scan的地址绑定到目标对象
-	vo_ptr, isvo := ent_ptr.(VoLoader)
-	if isvo {
-		lk.select_field_by_vo(vo_ptr)
-	} else {
-		lk.BindAddr2Struct(v_ent)
-	}
-
-	sql_str := lk.db_ptr.engine.db_dialect.GenJointGetSql(lk)
-	rows, err := lk.db_ptr.ExecQuery(&lk.SqlContex, sql_str, lk.db_where.Values...)
-	if err != nil {
-		return false, err
-	}
-	if !rows.Next() {
-		rows.Close()
-		return false, nil
-	}
-
-	scan_vals := lk.get_scan_valus()
-	err = rows.Scan(scan_vals...)
-	if err != nil {
-		rows.Close()
-		return false, err
-	}
-
-	call_after_query(lk.md_ptr)
-	for _, table := range lk.md_arr {
-		call_after_query(table)
-	}
-
-	//若目标对象是一个vo，则调用LoadFromModel，给vo赋值
-	if isvo {
-		vo_ptr.LoadFromModel(nil, lk.md_ptr.ent_ptr)
-		for _, table := range lk.md_arr {
-			vo_ptr.LoadFromModel(nil, table.ent_ptr)
-		}
-	}
-
-	rows.Close()
-	return true, nil
-}
-*/
 
 //查找与Model名称、类型一致的字段，选中该字段，记录该字段的索引位置
 func (lk *DbJoint) genPubField4VoMoNest(cache *JointEoFieldCache, t_vo reflect.Type, pos FieldPos, deep int) {
@@ -446,8 +292,8 @@ func (lk *DbJoint) genPubField4VoMoNest(cache *JointEoFieldCache, t_vo reflect.T
 		//只有第1层(deep=0)字段才判断是否为Model类型
 		if deep < 1 && ft_vo.Type.Kind() == reflect.Struct {
 			is_model_field := false
-			for m := 0; m < len(lk.md_arr); m++ {
-				md := lk.md_arr[m]
+			for m := 0; m < len(lk.tables); m++ {
+				md := lk.tables[m]
 				if ft_vo.Type == md.ent_type {
 					cache.models[m].ModelField = ff
 					is_model_field = true
@@ -466,9 +312,9 @@ func (lk *DbJoint) genPubField4VoMoNest(cache *JointEoFieldCache, t_vo reflect.T
 			continue
 		}
 
-		for m := 0; m < len(lk.md_arr); m++ {
-			md := lk.md_arr[m]
-			if cache.models[m].ModelField >= 0 {
+		for mm := 0; mm < len(lk.tables); mm++ {
+			md := lk.tables[mm]
+			if cache.models[mm].ModelField >= 0 {
 				continue
 			}
 
@@ -489,40 +335,40 @@ func (lk *DbJoint) genPubField4VoMoNest(cache *JointEoFieldCache, t_vo reflect.T
 			item.VoField = pos
 			item.VoField[deep] = ff
 			item.VoIndex = item.VoField[0 : deep+1]
-			cache.models[m].Fields = append(cache.models[m].Fields, item)
+			cache.models[mm].Fields = append(cache.models[mm].Fields, item)
 			break
 		}
 	}
 }
 
+//通过eo(struct)对象来选择需要查询的字段
 //首先从缓存中获取字段交集
 //若缓存中不存在，则生成字段交集
-func (lk *DbJoint) getPubField4VoMo(t_vo reflect.Type) {
+func (lk *DbJoint) select_field_by_eo(t_vo reflect.Type) {
 	g_joint_field_mutex.Lock()
 	defer g_joint_field_mutex.Unlock()
 
 	//生成缓存的key
 	cache_key := t_vo.String()
-	for m := 0; m < len(lk.md_arr); m++ {
-		md := lk.md_arr[m]
+	for mm := 0; mm < len(lk.tables); mm++ {
+		md := lk.tables[mm]
 		cache_key += md.ent_type.String()
 	}
 
 	//从缓存中获取字段交集
+	//若没有字段交集的缓存，调用genPubField4VoMoNest生成字段交集
 	cache, ok := g_joint_field_cache[cache_key]
 	if !ok {
-		//没有字段交集的缓存，调用genPubField4VoMoNest生成字段交集
 		var pos FieldPos
-		cache = newJointEoFieldCache(lk.md_arr)
+		cache = newJointEoFieldCache(lk.tables)
 		lk.genPubField4VoMoNest(cache, t_vo, pos, 0)
 		g_joint_field_cache[cache_key] = cache
 	}
 
 	//将公共字段添加到选择集中
-	for m := 0; m < len(lk.md_arr) && m < len(cache.models); m++ {
-		pflds := &cache.models[m]
-		md := lk.md_arr[m]
-		md.VoFields = pflds
+	for mm := 0; mm < len(lk.tables) && mm < len(cache.models); mm++ {
+		md := lk.tables[mm]
+		md.VoFields = &cache.models[mm]
 
 		//若进行了字段的人工选择，则不需要进行字段的自动选择
 		if md.flag_edit {
@@ -530,6 +376,7 @@ func (lk *DbJoint) getPubField4VoMo(t_vo reflect.Type) {
 		}
 
 		//若存在model类型一致的字段，不用额外选择字段（缺省选择全部）
+		pflds := &cache.models[mm]
 		if pflds.ModelField < 0 {
 			for _, item := range pflds.Fields {
 				md.auto_add_field_index(item.MoIndex)
@@ -540,8 +387,8 @@ func (lk *DbJoint) getPubField4VoMo(t_vo reflect.Type) {
 
 //把Model中地址的值赋值给vo对象
 func (lk *DbJoint) CopyModelData2Eo(v_vo reflect.Value) {
-	for m := 0; m < len(lk.md_arr); m++ {
-		md := lk.md_arr[m]
+	for mm := 0; mm < len(lk.tables); mm++ {
+		md := lk.tables[mm]
 		pflds := md.VoFields
 
 		//若vo中存在Model字段，只需要赋值Model对应的字段即可
@@ -564,30 +411,48 @@ func (lk *DbJoint) CopyModelData2Eo(v_vo reflect.Value) {
 	}
 }
 
-//把Model中地址的值赋值给vo对象
-func (lk *DbJoint) CopyModelData2Vo(vo_ptr VoLoader) {
-	for _, md := range lk.md_arr {
-		vo_ptr.LoadFromModel(nil, md.ent_ptr)
-	}
-}
-
-//通过eo(struct)对象来选择需要查询的字段
-func (lk *DbJoint) select_field_by_eo2(eo_ptr interface{}) {
-	for _, md := range lk.md_arr {
-		selectFieldsByEo(md, eo_ptr)
-	}
-}
-
-//通过eo(struct)对象来选择需要查询的字段
-func (lk *DbJoint) select_field_by_eo(t_vo reflect.Type) {
-	lk.getPubField4VoMo(t_vo)
-}
-
 //通过vo对象来选择需要查询的字段
 func (lk *DbJoint) select_field_by_vo(vo_ptr VoLoader) {
-	for _, table := range lk.md_arr {
+	for _, table := range lk.tables {
 		selectFieldsByVo(table, vo_ptr)
 	}
+}
+
+//把Model中地址的值赋值给vo对象
+func (lk *DbJoint) CopyModelData2Vo(vo_ptr VoLoader) {
+	for _, table := range lk.tables {
+		vo_ptr.LoadFromModel(nil, table.ent_ptr)
+	}
+}
+
+func (lk *DbJoint) Scan() (bool, error) {
+	if lk.Err != nil {
+		return false, lk.Err
+	}
+
+	sql_str := lk.db_ptr.engine.db_dialect.GenJointGetSql(lk)
+	rows, err := lk.db_ptr.ExecQuery(&lk.SqlContex, sql_str, lk.db_where.Values...)
+	if err != nil {
+		return false, err
+	}
+	if !rows.Next() {
+		rows.Close()
+		return false, nil
+	}
+
+	scan_vals := lk.get_scan_valus()
+	err = rows.Scan(scan_vals...)
+	if err != nil {
+		rows.Close()
+		return false, err
+	}
+
+	for _, table := range lk.tables {
+		call_after_query(table)
+	}
+
+	rows.Close()
+	return true, nil
 }
 
 func (lk *DbJoint) Get(args ...interface{}) (bool, error) {
@@ -626,7 +491,6 @@ func (lk *DbJoint) Get(args ...interface{}) (bool, error) {
 		lk.select_field_by_vo(vo_ptr)
 	} else {
 		lk.select_field_by_eo(v_ent.Type())
-		//lk.select_field_by_eo2(ent_ptr)
 	}
 
 	sql_str := lk.db_ptr.engine.db_dialect.GenJointGetSql(lk)
@@ -646,93 +510,20 @@ func (lk *DbJoint) Get(args ...interface{}) (bool, error) {
 		return false, err
 	}
 
-	//call_after_query(lk.md_ptr)
-	for _, table := range lk.md_arr {
+	for _, table := range lk.tables {
 		call_after_query(table)
 	}
 
 	//若目标对象是一个vo，则调用LoadFromModel，给vo赋值
 	if isvo {
-		//for _, table := range lk.md_arr {
-		//	vo_ptr.LoadFromModel(nil, table.ent_ptr)
-		//}
 		lk.CopyModelData2Vo(vo_ptr)
 	} else {
-		//for _, table := range lk.md_arr {
-		//	CopyDataFromModel(nil, ent_ptr, table.ent_ptr)
-		//}
 		lk.CopyModelData2Eo(v_ent)
 	}
 
 	rows.Close()
 	return true, nil
 }
-
-/*
-func (lk *DbJoint) Find(arr_ptr interface{}) error {
-	if lk.Err != nil {
-		return lk.Err
-	}
-
-	v_arr := reflect.ValueOf(arr_ptr)
-	if v_arr.Kind() != reflect.Ptr {
-		return errors.New("arr_ptr must be *Slice")
-	}
-	t_arr := GetDirectType(v_arr.Type())
-	if t_arr.Kind() != reflect.Slice {
-		return errors.New("arr_ptr must be *Slice")
-	}
-	//获取数组成员的类型
-	t_item := GetDirectType(t_arr.Elem())
-	if t_item.Kind() != reflect.Struct {
-		return errors.New("array item muse be Struct")
-	}
-
-	//若目标对象是一个vo，则通过vo来选择字段
-	//若目标对象不是一个vo，则需要重新进行地址绑定，将scan的地址绑定到目标对象
-	v_item := reflect.New(t_item)
-	v_item_base := v_item.Elem()
-	vo_ptr, isvo := v_item.Interface().(VoLoader)
-	if isvo {
-		lk.select_field_by_vo(vo_ptr)
-	} else {
-		lk.BindAddr2Struct(v_item_base)
-	}
-
-	sql_str := lk.db_ptr.engine.db_dialect.GenJointFindSql(lk)
-	vals := lk.get_scan_valus()
-	rows, err := lk.db_ptr.ExecQuery(&lk.SqlContex, sql_str, lk.db_where.Values...)
-	if err != nil {
-		return err
-	}
-
-	v_arr_base := reflect.Indirect(v_arr)
-	for rows.Next() {
-		err = rows.Scan(vals...)
-		if err != nil {
-			rows.Close()
-			return err
-		}
-
-		call_after_query(lk.md_ptr)
-		for _, table := range lk.md_arr {
-			call_after_query(table)
-		}
-
-		//若目标对象是一个vo，则调用LoadFromModel，给vo赋值
-		if isvo {
-			vo_ptr.LoadFromModel(nil, lk.md_ptr.ent_ptr)
-			for _, table := range lk.md_arr {
-				vo_ptr.LoadFromModel(nil, table.ent_ptr)
-			}
-		}
-		v_arr_base.Set(reflect.Append(v_arr_base, v_item_base))
-	}
-
-	rows.Close()
-	return nil
-}
-*/
 
 func (lk *DbJoint) Find(arr_ptr interface{}) error {
 	if lk.Err != nil {
@@ -755,10 +546,9 @@ func (lk *DbJoint) Find(arr_ptr interface{}) error {
 
 	//若目标对象是一个vo，则通过vo来选择字段
 	//若目标对象不是一个vo，则通过与eo的字段交集来选择字段
-	v_item := reflect.New(t_item)
-	v_item_base := v_item.Elem()
-	ent_ptr := v_item.Interface()
-	vo_ptr, isvo := v_item.Interface().(VoLoader)
+	v_item_ptr := reflect.New(t_item)
+	v_item := v_item_ptr.Elem()
+	vo_ptr, isvo := v_item_ptr.Interface().(VoLoader)
 	if isvo {
 		lk.select_field_by_vo(vo_ptr)
 	} else {
@@ -780,25 +570,18 @@ func (lk *DbJoint) Find(arr_ptr interface{}) error {
 			return err
 		}
 
-		//call_after_query(lk.md_ptr)
-		for _, table := range lk.md_arr {
+		for _, table := range lk.tables {
 			call_after_query(table)
 		}
 
-		//若目标对象是一个vo，则调用LoadFromModel，给v_item_base赋值
-		//若目标对象是一个eo，则调用CopyDataFromModel，给v_item_base赋值
+		//若目标对象是一个vo，则调用CopyModelData2Vo，给v_item_base赋值
+		//若目标对象是一个eo，则调用CopyModelData2Eo，给v_item_base赋值
 		if isvo {
-			//vo_ptr.LoadFromModel(nil, lk.md_ptr.ent_ptr)
-			for _, table := range lk.md_arr {
-				vo_ptr.LoadFromModel(nil, table.ent_ptr)
-			}
+			lk.CopyModelData2Vo(vo_ptr)
 		} else {
-			//CopyDataFromModel(nil, ent_ptr, lk.md_ptr.ent_ptr)
-			for _, table := range lk.md_arr {
-				CopyDataFromModel(nil, ent_ptr, table.ent_ptr)
-			}
+			lk.CopyModelData2Eo(v_item)
 		}
-		v_arr_base.Set(reflect.Append(v_arr_base, v_item_base))
+		v_arr_base.Set(reflect.Append(v_arr_base, v_item))
 	}
 
 	rows.Close()

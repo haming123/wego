@@ -29,15 +29,14 @@ type DbModel struct {
 	join_type   int
 	join_on     string
 	md_pool     *ModelPool
+	auto_put    bool
 	//自动人工选择标志
 	flag_edit bool
 	//字段自动选择标志
 	flag_auto bool
-	auto_put  bool
-	//通过Vo选择的字段的索引信息
+	//通过Vo选择的字段的缓存数据
 	VoFields *PublicFields
-
-	Err error
+	Err      error
 }
 
 func NewModel(dbs *DbSession, ent_ptr interface{}, flag bool) *DbModel {
@@ -162,8 +161,7 @@ func (md *DbModel) TableAlias(alias string) *DbJoint {
 
 	lk := &DbJoint{}
 	lk.db_ptr = md.db_ptr
-	//lk.md_ptr = md
-	lk.md_arr = append(lk.md_arr, md)
+	lk.tables = append(lk.tables, md)
 	//TG.SetWhere(&md.db_where)
 	return lk
 }

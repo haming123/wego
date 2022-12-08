@@ -226,7 +226,7 @@ func (db *DialectBase) GenJointGetSql(lk *DbJoint) string {
 
 	index := 0
 	buffer.WriteString("select ")
-	for _, table := range lk.md_arr {
+	for _, table := range lk.tables {
 		str := table.gen_select_fields()
 		if len(str) < 1 {
 			continue
@@ -239,7 +239,7 @@ func (db *DialectBase) GenJointGetSql(lk *DbJoint) string {
 	}
 
 	buffer.WriteString(" from ")
-	for index, table := range lk.md_arr {
+	for index, table := range lk.tables {
 		if index > 0 {
 			buffer.WriteString(" ")
 			buffer.WriteString(get_join_type_str(table.join_type))
@@ -275,7 +275,7 @@ func (db *DialectBase) GenJointFindSql(lk *DbJoint) string {
 
 	index := 0
 	buffer.WriteString("select ")
-	for _, table := range lk.md_arr {
+	for _, table := range lk.tables {
 		str := table.gen_select_fields()
 		if len(str) < 1 {
 			continue
@@ -288,7 +288,7 @@ func (db *DialectBase) GenJointFindSql(lk *DbJoint) string {
 	}
 
 	buffer.WriteString(" from ")
-	for index, table := range lk.md_arr {
+	for index, table := range lk.tables {
 		if index > 0 {
 			buffer.WriteString(" ")
 			buffer.WriteString(get_join_type_str(table.join_type))

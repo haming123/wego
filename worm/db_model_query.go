@@ -167,16 +167,13 @@ func (md *DbModel) Get(args ...interface{}) (bool, error) {
 	//若args是struct，则调用selectFieldsByEo选择对应的字段
 	var mo_ptr interface{} = nil
 	var vo_ptr VoLoader = nil
-	var eo_ptr interface{} = nil
-	v_base := reflect.Indirect(reflect.ValueOf(md.ent_ptr))
-	if v_ent.Type() == v_base.Type() {
+	if v_ent.Type() == md.ent_type {
 		mo_ptr = ent_ptr
 	} else if ptr, ok := ent_ptr.(VoLoader); ok {
 		vo_ptr = ptr
 		selectFieldsByVo(md, vo_ptr)
 	} else {
-		eo_ptr = ent_ptr
-		selectFieldsByEo(md, ent_ptr)
+		md.selectFieldsByEo(v_ent.Type())
 	}
 
 	has, err := md.Scan()
@@ -188,11 +185,11 @@ func (md *DbModel) Get(args ...interface{}) (bool, error) {
 	//若数组成员是vo，则调用LoadFromModel给ent_ptr赋值
 	//若数组成员是struct，则调用CopyDataFromModel给ent_ptr赋值
 	if mo_ptr != nil {
-		v_ent.Set(v_base)
+		v_ent.Set(md.ent_value)
 	} else if vo_ptr != nil {
 		vo_ptr.LoadFromModel(nil, md.ent_ptr)
 	} else {
-		CopyDataFromModel(nil, eo_ptr, md.ent_ptr)
+		md.CopyModelData2Eo(v_ent)
 	}
 
 	return true, nil
@@ -357,19 +354,20 @@ func (md *DbModel) Find(arr_ptr interface{}) error {
 		return errors.New("arr_ptr must be *Struct")
 	}
 
-	//若数组成员与model相同，则v_item_base指向md.ent_ptr
-	//若数组成员与model不同，则创建一个成员对象v_item, 并使v_item_base指向v_item
+	//若数组成员与model相同，则v_item指向md.ent_value
+	//若数组成员与model不同，则创建一个成员对象v_item_ptr, 并使v_item指向v_item_ptr
 	var item_vo VoLoader = nil
-	var item_ptr interface{} = nil
-	v_item_base := reflect.Indirect(reflect.ValueOf(md.ent_ptr))
-	if t_item != v_item_base.Type() {
-		v_item := reflect.New(t_item)
-		item_ptr = v_item.Interface()
-		vo_ptr, ok := item_ptr.(VoLoader)
+	var item_eo interface{} = nil
+	v_item := md.ent_value
+	if t_item != md.ent_type {
+		v_item_ptr := reflect.New(t_item)
+		v_item = v_item_ptr.Elem()
+
+		item_eo = v_item_ptr.Interface()
+		vo_ptr, ok := item_eo.(VoLoader)
 		if ok {
 			item_vo = vo_ptr
 		}
-		v_item_base = reflect.Indirect(v_item)
 	}
 
 	//若数组成员与model不同，则调用相应的函数选择对应的字段
@@ -377,8 +375,8 @@ func (md *DbModel) Find(arr_ptr interface{}) error {
 	//若数组成员是struct，则调用selectFieldsByEo选择对应的字段
 	if item_vo != nil {
 		selectFieldsByVo(md, item_vo)
-	} else if item_ptr != nil {
-		selectFieldsByEo(md, item_ptr)
+	} else if item_eo != nil {
+		md.selectFieldsByEo(t_item)
 	}
 
 	if hook, isHook := md.ent_ptr.(BeforeQueryInterface); isHook {
@@ -409,10 +407,10 @@ func (md *DbModel) Find(arr_ptr interface{}) error {
 		//若数组成员是eo，则调用CopyDataFromModel给v_item赋值
 		if item_vo != nil {
 			item_vo.LoadFromModel(nil, md.ent_ptr)
-		} else if item_ptr != nil {
-			CopyDataFromModel(nil, item_ptr, md.ent_ptr)
+		} else if item_eo != nil {
+			md.CopyModelData2Eo(v_item)
 		}
-		v_arr_base.Set(reflect.Append(v_arr_base, v_item_base))
+		v_arr_base.Set(reflect.Append(v_arr_base, v_item))
 	}
 
 	rows.Close()

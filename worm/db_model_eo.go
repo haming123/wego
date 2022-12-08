@@ -44,7 +44,7 @@ var g_pubfield_mutex sync.Mutex
 
 //生成vo与mo的字段交集信息
 //只有名称与类型相同的字段才属于字段交集
-func genPubField4VoMo(pflds *PublicFields, t_vo reflect.Type, t_mo reflect.Type) {
+func genPubField4VoMo(md *DbModel, pflds *PublicFields, t_vo reflect.Type, t_mo reflect.Type) {
 	//遍历vo的结构体，看看是否有Model类型的字段
 	//Model类型的字段，则获取字段索引，并退出（意味着选中全部Model的字段）
 	//只进行第一级字段的检查
@@ -80,7 +80,7 @@ func genPubField4VoMo(pflds *PublicFields, t_vo reflect.Type, t_mo reflect.Type)
 //生成vo与mo的字段交集信息
 //只有名称与类型相同的字段才属于字段交集
 //deep必须从0开始
-func genPubField4VoMoNest(pflds *PublicFields, md *DbModel, t_vo reflect.Type, pos FieldPos, deep int) {
+func (md *DbModel) genPubField4VoMoNest(pflds *PublicFields, t_vo reflect.Type, pos FieldPos, deep int) {
 	//超过最大层次，则退出
 	if deep >= len(pos) {
 		return
@@ -102,7 +102,7 @@ func genPubField4VoMoNest(pflds *PublicFields, md *DbModel, t_vo reflect.Type, p
 		//若是匿名字段,则递归调用
 		if ft_vo.Anonymous {
 			pos[deep] = ff
-			genPubField4VoMoNest(pflds, md, ft_vo.Type, pos, deep+1)
+			md.genPubField4VoMoNest(pflds, ft_vo.Type, pos, deep+1)
 			continue
 		}
 
@@ -127,39 +127,23 @@ func genPubField4VoMoNest(pflds *PublicFields, md *DbModel, t_vo reflect.Type, p
 	}
 }
 
+//获取与Eo对象对应的mo的字段选中状态
 //首先从缓存中获取字段交集
 //若缓存中不存在，则生成字段交集
-func getPubField4VoMo(md *DbModel, cache_key string, t_vo reflect.Type, t_mo reflect.Type) (*PublicFields, error) {
+func (md *DbModel) selectFieldsByEo(t_vo reflect.Type) {
 	g_pubfield_mutex.Lock()
 	defer g_pubfield_mutex.Unlock()
 
-	if cache_key == "" {
-		cache_key = t_vo.String() + t_mo.String()
-	}
-	val, ok := g_pubfield_cache[cache_key]
-	if ok {
-		return val, nil
-	}
-
-	pflds := NewPublicFields(t_mo.NumField())
-	//genPubField4VoMo(pflds, t_vo, t_mo)
-	var pos FieldPos
-	genPubField4VoMoNest(pflds, md, t_vo, pos, 0)
-	g_pubfield_cache[cache_key] = pflds
-
-	return pflds, nil
-}
-
-//获取与Eo对象对应的mo的字段选中状态
-func selectFieldsByEo(md *DbModel, vo_ptr interface{}) {
 	//获取字段交集
-	t_vo := GetDirectType(reflect.TypeOf(vo_ptr))
-	t_mo := GetDirectType(reflect.TypeOf(md.ent_ptr))
-	cache_key := t_vo.String() + t_mo.String()
-	pflds, err := getPubField4VoMo(md, cache_key, t_vo, t_mo)
-	if err != nil {
-		return
+	cache_key := t_vo.String() + md.ent_type.String()
+	cache, ok := g_pubfield_cache[cache_key]
+	if !ok {
+		var pos FieldPos
+		cache = NewPublicFields(md.ent_type.NumField())
+		md.genPubField4VoMoNest(cache, t_vo, pos, 0)
+		g_pubfield_cache[cache_key] = cache
 	}
+	md.VoFields = cache
 
 	//若进行了字段的人工选择，则不需要进行字段的自动选择
 	if md.flag_edit == true {
@@ -168,9 +152,30 @@ func selectFieldsByEo(md *DbModel, vo_ptr interface{}) {
 
 	//将公共字段添加到选择集中
 	//若存在model类型一致的字段，不用额外选择字段（缺省选择全部）
-	if pflds.ModelField < 0 {
-		for _, item := range pflds.Fields {
+	if cache.ModelField < 0 {
+		for _, item := range cache.Fields {
 			md.auto_add_field_index(item.MoIndex)
 		}
+	}
+}
+
+//把Model中地址的值赋值给vo对象
+func (md *DbModel) CopyModelData2Eo(v_vo reflect.Value) {
+	//若vo中存在Model字段，只需要赋值Model对应的字段即可
+	if md.VoFields.ModelField >= 0 {
+		fv_vo := v_vo.Field(md.VoFields.ModelField)
+		if fv_vo.CanSet() == true {
+			fv_vo.Set(md.ent_value)
+			return
+		}
+	}
+
+	for _, item := range md.VoFields.Fields {
+		fv_vo := v_vo.FieldByIndex(item.VoIndex)
+		fv_mo := md.ent_value.Field(item.MoIndex)
+		if fv_vo.CanSet() == false {
+			continue
+		}
+		fv_vo.Set(fv_mo)
 	}
 }
