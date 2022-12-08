@@ -34,10 +34,8 @@ type DbModel struct {
 	//字段自动选择标志
 	flag_auto bool
 	auto_put  bool
-	//对应的Vo中Model字段索引号
-	VoModelField int
-	//其他字段索引信息
-	VoFields []FieldIndex
+	//通过Vo选择的字段的索引信息
+	VoFields *PublicFields
 
 	Err error
 }

@@ -224,28 +224,27 @@ func (db *DialectBase) GenModelFindSql(md *DbModel) string {
 func (db *DialectBase) GenJointGetSql(lk *DbJoint) string {
 	var buffer bytes.Buffer
 
+	index := 0
 	buffer.WriteString("select ")
-	//buffer.WriteString(lk.md_ptr.gen_select_fields())
 	for _, table := range lk.md_arr {
 		str := table.gen_select_fields()
 		if len(str) < 1 {
 			continue
 		}
-		buffer.WriteString(",")
+		if index > 0 {
+			buffer.WriteString(",")
+		}
 		buffer.WriteString(table.gen_select_fields())
+		index += 1
 	}
 
 	buffer.WriteString(" from ")
-	//buffer.WriteString(lk.md_ptr.table_name)
-	//if len(lk.md_ptr.table_alias) > 0 {
-	//	buffer.WriteString(" ")
-	//	buffer.WriteString(lk.md_ptr.table_alias)
-	//}
-
-	for _, table := range lk.md_arr {
-		buffer.WriteString(" ")
-		buffer.WriteString(get_join_type_str(table.join_type))
-		buffer.WriteString(" ")
+	for index, table := range lk.md_arr {
+		if index > 0 {
+			buffer.WriteString(" ")
+			buffer.WriteString(get_join_type_str(table.join_type))
+			buffer.WriteString(" ")
+		}
 		buffer.WriteString(table.table_name)
 		if len(table.table_alias) > 0 {
 			buffer.WriteString(" ")
@@ -274,28 +273,27 @@ func (db *DialectBase) GenJointGetSql(lk *DbJoint) string {
 func (db *DialectBase) GenJointFindSql(lk *DbJoint) string {
 	var buffer bytes.Buffer
 
+	index := 0
 	buffer.WriteString("select ")
-	//buffer.WriteString(lk.md_ptr.gen_select_fields())
 	for _, table := range lk.md_arr {
 		str := table.gen_select_fields()
 		if len(str) < 1 {
 			continue
 		}
-		buffer.WriteString(",")
+		if index > 0 {
+			buffer.WriteString(",")
+		}
 		buffer.WriteString(table.gen_select_fields())
+		index += 1
 	}
 
 	buffer.WriteString(" from ")
-	//buffer.WriteString(lk.md_ptr.table_name)
-	//if len(lk.md_ptr.table_alias) > 0 {
-	//	buffer.WriteString(" ")
-	//	buffer.WriteString(lk.md_ptr.table_alias)
-	//}
-
-	for _, table := range lk.md_arr {
-		buffer.WriteString(" ")
-		buffer.WriteString(get_join_type_str(table.join_type))
-		buffer.WriteString(" ")
+	for index, table := range lk.md_arr {
+		if index > 0 {
+			buffer.WriteString(" ")
+			buffer.WriteString(get_join_type_str(table.join_type))
+			buffer.WriteString(" ")
+		}
 		buffer.WriteString(table.table_name)
 		if len(table.table_alias) > 0 {
 			buffer.WriteString(" ")
