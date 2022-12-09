@@ -49,11 +49,37 @@ func TestModelGetEo(t *testing.T) {
 	t.Log(vo)
 }
 
+func TestModelGetEoWithSelect(t *testing.T) {
+	InitEngine4Test()
+
+	var vo UserEo
+	_, err := Model(&User{}).Select("id", "name").Where("id=?", 1).Get(&vo)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(vo)
+}
+
 func TestModelFindEo(t *testing.T) {
 	InitEngine4Test()
 
 	var arr []UserEo
 	err := Model(&User{}).Where("id>?", 0).Find(&arr)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	for _, item := range arr {
+		t.Log(item)
+	}
+}
+
+func TestModelFindEoWithSelect(t *testing.T) {
+	InitEngine4Test()
+
+	var arr []UserEo
+	err := Model(&User{}).Select("id", "name").AndIn("id", 5, 6).Find(&arr)
 	if err != nil {
 		t.Error(err)
 		return

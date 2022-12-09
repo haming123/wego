@@ -42,10 +42,10 @@ func TestBatchInsertVo(t *testing.T) {
 	t.Logf("delete num=%d", num)
 }
 
-func TestBatchInsertVo2(t *testing.T) {
+func TestBatchInsertEo(t *testing.T) {
 	InitEngine4Test()
 
-	users := []UserVo{UserVo{DB_name: "batch1", Age: 33}, UserVo{DB_name: "batch2", Age: 33}}
+	users := []UserEo{UserEo{DB_name: "batch1", Age: 33}, UserEo{DB_name: "batch2", Age: 33}}
 	res, err := Model(&User{}).BatchInsert(&users)
 	if err != nil {
 		t.Error(err)

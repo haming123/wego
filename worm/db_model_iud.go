@@ -141,15 +141,16 @@ func (md *DbModel) Insert(args ...interface{}) (int64, error) {
 		return 0, errors.New("ent_ptr must be *Struct")
 	}
 
-	v_base := reflect.Indirect(reflect.ValueOf(md.ent_ptr))
-	if v_ent.Type() == v_base.Type() {
-		v_base.Set(v_ent)
+	//若ent_ptr与model相同，则将ent_ptr的值赋给md.ent_value
+	//若ent_ptr是一个vo，则调用SaveToModel来给md.ent_value赋值，并选择字段
+	//若ent_ptr是一个eo，则调用copyDataToModel来给md.ent_value赋值，并选择字段
+	if v_ent.Type() == md.ent_type {
+		md.ent_value.Set(v_ent)
 	} else if ptr, ok := ent_ptr.(VoSaver); ok {
 		ptr.SaveToModel(md, md.ent_ptr)
 	} else {
-		CopyDataToModel(md, ent_ptr, md.ent_ptr)
+		copyDataToModel(md, v_ent, md.ent_value)
 	}
-
 	return md.exec_insert()
 }
 
@@ -255,15 +256,16 @@ func (md *DbModel) Update(args ...interface{}) (int64, error) {
 		return 0, errors.New("ent_ptr must be *Struct")
 	}
 
-	v_base := reflect.Indirect(reflect.ValueOf(md.ent_ptr))
-	if v_ent.Type() == v_base.Type() {
-		v_base.Set(v_ent)
+	//若ent_ptr与model相同，则将ent_ptr的值赋给md.ent_value
+	//若ent_ptr是一个vo，则调用SaveToModel来给md.ent_value赋值，并选择字段
+	//若ent_ptr是一个eo，则调用copyDataToModel来给md.ent_value赋值，并选择字段
+	if v_ent.Type() == md.ent_type {
+		md.ent_value.Set(v_ent)
 	} else if ptr, ok := ent_ptr.(VoSaver); ok {
 		ptr.SaveToModel(md, md.ent_ptr)
 	} else {
-		CopyDataToModel(md, ent_ptr, md.ent_ptr)
+		copyDataToModel(md, v_ent, md.ent_value)
 	}
-
 	return md.exec_update()
 }
 

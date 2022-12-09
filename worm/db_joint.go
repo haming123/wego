@@ -116,6 +116,9 @@ func parselTableSelect(alias string, fields []string) []string {
 	if len(fields) < 1 {
 		return fields
 	}
+	if len(fields) == 1 && fields[0] == "" {
+		return fields[:0]
+	}
 
 	table_star := alias + ".*"
 	for i := 0; i < len(fields); i++ {
@@ -319,11 +322,10 @@ func (lk *DbJoint) genPubField4VoMoNest(cache *JointEoFieldCache, t_vo reflect.T
 			}
 
 			//通过eo字段名称查询model中字段的位置
-			mo_index := md.get_field_index_byname2(ft_vo.Name)
+			mo_index := md.get_field_index_goname(ft_vo.Name)
 			if mo_index < 0 {
 				continue
 			}
-
 			//只有类型与名称一致才算匹配上
 			if md.flds_info[mo_index].FieldType != ft_vo.Type {
 				continue
@@ -486,11 +488,12 @@ func (lk *DbJoint) Get(args ...interface{}) (bool, error) {
 
 	//若目标对象是一个vo，则通过vo来选择字段
 	//若目标对象不是一个vo，则通过与eo的字段交集来选择字段
+	t_ent := v_ent.Type()
 	vo_ptr, isvo := ent_ptr.(VoLoader)
 	if isvo {
 		lk.select_field_by_vo(vo_ptr)
 	} else {
-		lk.select_field_by_eo(v_ent.Type())
+		lk.select_field_by_eo(t_ent)
 	}
 
 	sql_str := lk.db_ptr.engine.db_dialect.GenJointGetSql(lk)

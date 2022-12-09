@@ -162,18 +162,19 @@ func (md *DbModel) Get(args ...interface{}) (bool, error) {
 		return false, errors.New("ent_ptr must be *Struct")
 	}
 
-	//若args与model不同，则调用相应的函数选择对应的字段
-	//若args是vo，则调用selectFieldsByVo选择对应的字段
-	//若args是struct，则调用selectFieldsByEo选择对应的字段
+	//若args是model类型，则将mo_ptr指向ent_ptr
+	//若args是vo，则调用selectFieldsByVo选择对应的字段，并将vo_ptr指向ent_ptr
+	//若args是eo，则调用selectFieldsByEo选择对应的字段
 	var mo_ptr interface{} = nil
 	var vo_ptr VoLoader = nil
-	if v_ent.Type() == md.ent_type {
+	t_ent := v_ent.Type()
+	if t_ent == md.ent_type {
 		mo_ptr = ent_ptr
 	} else if ptr, ok := ent_ptr.(VoLoader); ok {
 		vo_ptr = ptr
 		selectFieldsByVo(md, vo_ptr)
 	} else {
-		md.selectFieldsByEo(v_ent.Type())
+		md.selectFieldsByEo(t_ent)
 	}
 
 	has, err := md.Scan()
@@ -181,9 +182,9 @@ func (md *DbModel) Get(args ...interface{}) (bool, error) {
 		return has, err
 	}
 
-	//若数组成员与model不同，则调用相应的函数给ent_ptr赋值
-	//若数组成员是vo，则调用LoadFromModel给ent_ptr赋值
-	//若数组成员是struct，则调用CopyDataFromModel给ent_ptr赋值
+	//mo_ptr != nil，说明ent_ptr是一个Model类型, 则调用Value.Set给ent_ptr赋值
+	//vo_ptr != nil，说明ent_ptr是一个vo，则调用LoadFromModel给ent_ptr赋值
+	//mo_ptr == nil && vo_ptr == nil，说明ent_ptr是一个eo，则调用CopyDataFromModel给ent_ptr赋值
 	if mo_ptr != nil {
 		v_ent.Set(md.ent_value)
 	} else if vo_ptr != nil {
@@ -191,7 +192,6 @@ func (md *DbModel) Get(args ...interface{}) (bool, error) {
 	} else {
 		md.CopyModelData2Eo(v_ent)
 	}
-
 	return true, nil
 }
 
@@ -322,9 +322,7 @@ func (md *DbModel) Rows() (*ModelRows, error) {
 		return nil, err
 	}
 
-	rs := new(ModelRows)
-	rs.rows = rows
-	rs.model = md
+	rs := &ModelRows{rows, md, nil}
 	return rs, nil
 }
 
@@ -354,25 +352,23 @@ func (md *DbModel) Find(arr_ptr interface{}) error {
 		return errors.New("arr_ptr must be *Struct")
 	}
 
-	//若数组成员与model相同，则v_item指向md.ent_value
+	//若数组成员与model相同，则v_item指向md.ent_value（不用创建item对象，直接使用md.ent_value）
 	//若数组成员与model不同，则创建一个成员对象v_item_ptr, 并使v_item指向v_item_ptr
+	//将item_eo指向v_item_ptr, 若v_item_ptr是一个vo，则item_vo指向v_item_ptr
 	var item_vo VoLoader = nil
 	var item_eo interface{} = nil
 	v_item := md.ent_value
 	if t_item != md.ent_type {
 		v_item_ptr := reflect.New(t_item)
-		v_item = v_item_ptr.Elem()
-
 		item_eo = v_item_ptr.Interface()
-		vo_ptr, ok := item_eo.(VoLoader)
-		if ok {
+		v_item = v_item_ptr.Elem()
+		if vo_ptr, ok := item_eo.(VoLoader); ok {
 			item_vo = vo_ptr
 		}
 	}
 
-	//若数组成员与model不同，则调用相应的函数选择对应的字段
 	//若数组成员是vo，则调用selectFieldsByVo选择对应的字段
-	//若数组成员是struct，则调用selectFieldsByEo选择对应的字段
+	//若数组成员是eo，则调用selectFieldsByEo选择对应的字段
 	if item_vo != nil {
 		selectFieldsByVo(md, item_vo)
 	} else if item_eo != nil {
@@ -402,9 +398,10 @@ func (md *DbModel) Find(arr_ptr interface{}) error {
 			hook.AfterQuery(md.ctx)
 		}
 
-		//若数组成员与model不同，则调用相应的函数给v_item赋值
+		//若数组成员与model相同，不用进行赋值操作，直接将v_item添加到数组
+		//若数组成员与model不同，则调用相应的函数给v_item赋值，然后将v_item添加到数组
 		//若数组成员是vo，则调用LoadFromModel给v_item赋值
-		//若数组成员是eo，则调用CopyDataFromModel给v_item赋值
+		//若数组成员是eo，则调用CopyModelData2Eo给v_item赋值
 		if item_vo != nil {
 			item_vo.LoadFromModel(nil, md.ent_ptr)
 		} else if item_eo != nil {

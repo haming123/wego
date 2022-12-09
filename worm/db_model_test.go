@@ -191,7 +191,7 @@ func TestModelCount(t *testing.T) {
 func TestModelRows(t *testing.T) {
 	InitEngine4Test()
 
-	rows, err := Model(&User{}).Where("id>?", 0).Rows()
+	rows, err := Model(&User{}).Where("id>?", 0).Limit(10).Rows()
 	if err != nil {
 		t.Error(err)
 		return

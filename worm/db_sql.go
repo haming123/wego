@@ -129,16 +129,17 @@ func (tb *DbSQL) GetTime() (sql.NullTime, error) {
 }
 
 func (tb *DbSQL) GetModel(ent_ptr interface{}) (bool, error) {
+	if ent_ptr == nil {
+		return false, errors.New("ent_ptr must be Pointer")
+	}
 	v_ent := reflect.ValueOf(ent_ptr)
 	if v_ent.Kind() != reflect.Ptr {
 		return false, errors.New("ent_ptr must be Pointer")
 	}
-	if v_ent.IsNil() {
-		return false, errors.New("ent_ptr is nil")
-	}
-	t_ent_base := GetDirectType(v_ent.Type())
-	if t_ent_base.Kind() != reflect.Struct {
-		return false, errors.New("ent_ptr muse be Struct")
+	//ent_ptr必须是一个结构体指针
+	v_ent = reflect.Indirect(v_ent)
+	if v_ent.Kind() != reflect.Struct {
+		return false, errors.New("ent_ptr must be Pointer")
 	}
 
 	rows, err := tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)

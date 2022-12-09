@@ -27,35 +27,22 @@ func getEntFieldAddrs(fields []FieldInfo, v_ent reflect.Value, flag bool) []Fiel
 	return arr
 }
 
-/*
-//将values的地址替换为当前对象的字段地址
-func rebindEntAddrs(fields []FieldInfo, v_ent reflect.Value, values []FieldValue) {
-	f_num := len(fields)
-	v_ent = reflect.Indirect(v_ent)
-	for i := 0; i < f_num; i++ {
-		vv := v_ent.Field(fields[i].FieldIndex)
-		v_ptr := vv.Addr().Interface()
-		values[i].VAddr = v_ptr
-	}
-}
-*/
-
 //为数据库提供scan要求的变量地址(用于rows.Scan)
 //columns：数据库字段
 //返回：DbField以及new(interface{})组成的数组
 //说明：若没有数据库col对应的字段，则用new(interface{})代替
 func genScanAddr4Columns(columns []string, v_ent reflect.Value) []interface{} {
-	minfo := getModelInfoUseCache(v_ent)
-	ent_flds := getEntFieldAddrs(minfo.Fields, v_ent, true)
+	minfo := getModelInfo(v_ent.Type())
 	values := make([]interface{}, len(columns))
 	for i := 0; i < len(columns); i++ {
 		var ptr interface{} = nil
-		for j := 0; j < len(ent_flds); j++ {
-			if ent_flds[j].FName == columns[i] {
-				//ptr = ent_flds[j].VAddr
-				ptr = &ent_flds[j]
-				break
-			}
+		moindex := minfo.get_field_index_dbname(columns[i])
+		if moindex >= 0 {
+			vv := v_ent.Field(moindex)
+			var item FieldValue
+			item.FName = columns[i]
+			item.VAddr = vv.Addr().Interface()
+			ptr = &item
 		}
 		if ptr == nil {
 			ptr = new(interface{})

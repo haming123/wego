@@ -10,33 +10,39 @@ import (
 
 type DbModel struct {
 	SqlContex
-	db_ptr      *DbSession
-	ent_ptr     interface{}
-	ent_type    reflect.Type
-	ent_value   reflect.Value
+	db_ptr    *DbSession
+	ent_ptr   interface{}
+	ent_type  reflect.Type
+	ent_value reflect.Value
+
+	model_info  *ModelInfo
 	table_name  string
 	table_alias string
 	field_id    string
 	flds_info   []FieldInfo
-	flds_map    map[string]int
-	flds_map2   map[string]int
 	flds_addr   []FieldValue
-	db_where    DbWhere
-	group_by    string
-	order_by    string
-	db_limit    int64
-	db_offset   int64
-	join_type   int
-	join_on     string
-	md_pool     *ModelPool
-	auto_put    bool
+	name_map_db map[string]int
+	name_map_go map[string]int
+
+	db_where  DbWhere
+	group_by  string
+	order_by  string
+	db_limit  int64
+	db_offset int64
+
+	join_type int
+	join_on   string
+	Err       error
+
+	md_pool  *ModelPool
+	auto_put bool
+
 	//自动人工选择标志
 	flag_edit bool
 	//字段自动选择标志
 	flag_auto bool
 	//通过Vo选择的字段的缓存数据
 	VoFields *PublicFields
-	Err      error
 }
 
 func NewModel(dbs *DbSession, ent_ptr interface{}, flag bool) *DbModel {
@@ -52,23 +58,26 @@ func NewModel(dbs *DbSession, ent_ptr interface{}, flag bool) *DbModel {
 		panic("ent_ptr must be *Struct")
 	}
 
-	minfo := getModelInfoUseCache(v_ent)
 	md := &DbModel{}
 	md.db_ptr = dbs
 	md.ent_ptr = ent_ptr
 	md.ent_type = v_ent.Type()
 	md.ent_value = v_ent
+
+	minfo := getModelInfo(md.ent_type)
+	minfo.TableName = getTableName(md.ent_value, md.ent_type)
+	md.flds_addr = getEntFieldAddrs(minfo.Fields, v_ent, flag)
+	md.model_info = minfo
+	md.flds_info = minfo.Fields
 	md.table_name = minfo.TableName
 	md.field_id = minfo.FieldID
-	md.flds_info = minfo.Fields
-	md.flds_map = minfo.NameMap
-	md.flds_map2 = minfo.NameMap2
-	md.flds_addr = getEntFieldAddrs(minfo.Fields, v_ent, flag)
+	md.name_map_db = minfo.NameMapDb
+	md.name_map_go = minfo.NameMapGo
 	return md
 }
 
 //重置model状态，保留以下字段的内容：
-//ent_ptr、table_name、field_id、flds_info、flds_addr
+//ent_ptr、flds_info、flds_addr、table_name、field_id、name_map_db、name_map_go
 func (md *DbModel) Reset() {
 	md.db_ptr = nil
 	md.table_alias = ""
@@ -166,8 +175,8 @@ func (md *DbModel) TableAlias(alias string) *DbJoint {
 	return lk
 }
 
-func (md *DbModel) get_field_index(fname string) int {
-	return md.get_field_index_byname(fname)
+func (md *DbModel) get_field_index(dbname string) int {
+	return md.get_field_index_dbname(dbname)
 }
 
 func (md *DbModel) get_field_index_byindex(no int) int {
@@ -180,16 +189,16 @@ func (md *DbModel) get_field_index_byindex(no int) int {
 	}
 }
 
-func (md *DbModel) get_field_index_byname(fname string) int {
-	index, ok := md.flds_map[fname]
+func (md *DbModel) get_field_index_dbname(dbname string) int {
+	index, ok := md.name_map_db[dbname]
 	if ok == false {
 		return -1
 	}
 	return index
 }
 
-func (md *DbModel) get_field_index_byname2(fname string) int {
-	index, ok := md.flds_map2[fname]
+func (md *DbModel) get_field_index_goname(goname string) int {
+	index, ok := md.name_map_go[goname]
 	if ok == false {
 		return -1
 	}

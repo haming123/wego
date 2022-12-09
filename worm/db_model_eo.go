@@ -5,13 +5,6 @@ import (
 	"sync"
 )
 
-type FieldIndex2 struct {
-	FieldName string
-	PIndex    int
-	FIndex    int
-	MoIndex   int
-}
-
 //匿名字段嵌套的最大深度
 const MaxNestDeep int = 10
 
@@ -44,43 +37,8 @@ var g_pubfield_mutex sync.Mutex
 
 //生成vo与mo的字段交集信息
 //只有名称与类型相同的字段才属于字段交集
-func genPubField4VoMo(md *DbModel, pflds *PublicFields, t_vo reflect.Type, t_mo reflect.Type) {
-	//遍历vo的结构体，看看是否有Model类型的字段
-	//Model类型的字段，则获取字段索引，并退出（意味着选中全部Model的字段）
-	//只进行第一级字段的检查
-	f_num := t_vo.NumField()
-	for i := 0; i < f_num; i++ {
-		ft_vo := t_vo.Field(i)
-		if ft_vo.Type == t_mo {
-			pflds.ModelField = i
-			return
-		}
-	}
-
-	//获取vo结构体与Model共同的字段索引
-	f_num = t_mo.NumField()
-	for i := 0; i < f_num; i++ {
-		ft_mo := t_mo.Field(i)
-		ft_vo, ok := t_vo.FieldByName(ft_mo.Name)
-		if !ok {
-			continue
-		}
-		if ft_vo.Type != ft_mo.Type {
-			continue
-		}
-
-		var item FieldIndex
-		item.FieldName = ft_vo.Name
-		item.VoIndex = ft_vo.Index
-		item.MoIndex = i
-		pflds.Fields = append(pflds.Fields, item)
-	}
-}
-
-//生成vo与mo的字段交集信息
-//只有名称与类型相同的字段才属于字段交集
 //deep必须从0开始
-func (md *DbModel) genPubField4VoMoNest(pflds *PublicFields, t_vo reflect.Type, pos FieldPos, deep int) {
+func (pflds *PublicFields) genPubField4VoMoNest(moinfo *ModelInfo, t_mo reflect.Type, t_vo reflect.Type, pos FieldPos, deep int) {
 	//超过最大层次，则退出
 	if deep >= len(pos) {
 		return
@@ -93,7 +51,7 @@ func (md *DbModel) genPubField4VoMoNest(pflds *PublicFields, t_vo reflect.Type, 
 		//只有第1层(deep=0)字段才判断是否为Model类型
 		//若存在Model类型的字段, 则直接退出（意味着选中全部Model的字段）
 		if deep < 1 {
-			if ft_vo.Type == md.ent_type {
+			if ft_vo.Type == t_mo {
 				pflds.ModelField = ff
 				return
 			}
@@ -102,18 +60,17 @@ func (md *DbModel) genPubField4VoMoNest(pflds *PublicFields, t_vo reflect.Type, 
 		//若是匿名字段,则递归调用
 		if ft_vo.Anonymous {
 			pos[deep] = ff
-			md.genPubField4VoMoNest(pflds, ft_vo.Type, pos, deep+1)
+			pflds.genPubField4VoMoNest(moinfo, t_mo, ft_vo.Type, pos, deep+1)
 			continue
 		}
 
 		//通过eo字段名称查询model中字段的位置
-		mo_index := md.get_field_index_byname2(ft_vo.Name)
+		mo_index := moinfo.get_field_index_goname(ft_vo.Name)
 		if mo_index < 0 {
 			continue
 		}
-
 		//只有类型与名称一致才算匹配上
-		if md.flds_info[mo_index].FieldType != ft_vo.Type {
+		if moinfo.Fields[mo_index].FieldType != ft_vo.Type {
 			continue
 		}
 
@@ -127,22 +84,35 @@ func (md *DbModel) genPubField4VoMoNest(pflds *PublicFields, t_vo reflect.Type, 
 	}
 }
 
-//获取与Eo对象对应的mo的字段选中状态
+//获取与Eo对象对应的mo的字段交集
 //首先从缓存中获取字段交集
 //若缓存中不存在，则生成字段交集
-func (md *DbModel) selectFieldsByEo(t_vo reflect.Type) {
+func getPubField4VoMo(t_mo reflect.Type, t_vo reflect.Type) *PublicFields {
 	g_pubfield_mutex.Lock()
 	defer g_pubfield_mutex.Unlock()
 
 	//获取字段交集
-	cache_key := t_vo.String() + md.ent_type.String()
-	cache, ok := g_pubfield_cache[cache_key]
-	if !ok {
-		var pos FieldPos
-		cache = NewPublicFields(md.ent_type.NumField())
-		md.genPubField4VoMoNest(cache, t_vo, pos, 0)
-		g_pubfield_cache[cache_key] = cache
+	cache_key := t_vo.String() + t_mo.String()
+	pflds, ok := g_pubfield_cache[cache_key]
+	if ok {
+		return pflds
 	}
+
+	//获取model信息，创建字段交集对象，并生成字段交集
+	var pos FieldPos
+	moinfo := getModelInfo(t_mo)
+	pflds = NewPublicFields(len(moinfo.Fields))
+	pflds.genPubField4VoMoNest(moinfo, t_mo, t_vo, pos, 0)
+	g_pubfield_cache[cache_key] = pflds
+	return pflds
+}
+
+//获取与Eo对象对应的mo的字段选中状态
+//首先从缓存中获取字段交集
+//若缓存中不存在，则生成字段交集
+func (md *DbModel) selectFieldsByEo(t_vo reflect.Type) {
+	//获取字段交集
+	cache := getPubField4VoMo(md.ent_type, t_vo)
 	md.VoFields = cache
 
 	//若进行了字段的人工选择，则不需要进行字段的自动选择
@@ -161,16 +131,22 @@ func (md *DbModel) selectFieldsByEo(t_vo reflect.Type) {
 
 //把Model中地址的值赋值给vo对象
 func (md *DbModel) CopyModelData2Eo(v_vo reflect.Value) {
+	if md.VoFields == nil {
+		panic(" md.VoFields == nil")
+	}
+
 	//若vo中存在Model字段，只需要赋值Model对应的字段即可
-	if md.VoFields.ModelField >= 0 {
-		fv_vo := v_vo.Field(md.VoFields.ModelField)
+	pflds := md.VoFields
+	if pflds.ModelField >= 0 {
+		fv_vo := v_vo.Field(pflds.ModelField)
 		if fv_vo.CanSet() == true {
 			fv_vo.Set(md.ent_value)
 			return
 		}
 	}
 
-	for _, item := range md.VoFields.Fields {
+	//遍历字段交集，逐个给vo的对象赋值
+	for _, item := range pflds.Fields {
 		fv_vo := v_vo.FieldByIndex(item.VoIndex)
 		fv_mo := md.ent_value.Field(item.MoIndex)
 		if fv_vo.CanSet() == false {

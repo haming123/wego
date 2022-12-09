@@ -137,7 +137,7 @@ func BenchmarkModelFind(b *testing.B) {
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		var arr []User
-		err := Model(&User{}).Where("id>? and name is not null", 0).Select("id", "name", "age").Find(&arr)
+		err := Model(&User{}).Where("id>?", 0).Select("id", "name", "age").Limit(10).Find(&arr)
 		if err != nil {
 			b.Error(err)
 			return
@@ -157,11 +157,30 @@ func BenchmarkModelFindWithCache(b *testing.B) {
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		var arr []User
-		err := Model(&User{}).Where("id>? and name is not null", 0).Select("id", "name", "age").Find(&arr)
+		err := Model(&User{}).Where("id>?", 0).Select("id", "name", "age").Limit(10).Find(&arr)
 		if err != nil {
 			b.Error(err)
 			return
 		}
+	}
+	b.StopTimer()
+}
+
+func BenchmarkModelRows(b *testing.B) {
+	dbcnn, _ := OpenDb()
+	InitEngine(&dialectMysql{}, dbcnn)
+	ShowSqlLog(false)
+	UsePrepare(true)
+	b.StopTimer()
+
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		rows, _ := Model(&User{}).Where("id>?", 0).Select("id", "name", "age").Limit(10).Rows()
+		for rows.Next() {
+			var user User
+			rows.ScanModel(&user)
+		}
+		rows.Close()
 	}
 	b.StopTimer()
 }

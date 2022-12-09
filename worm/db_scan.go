@@ -23,26 +23,26 @@ func Scan(rows *sql.Rows, dest ...interface{}) error {
 
 //将行数据保存到stuct对象中
 func ScanModel(rows *sql.Rows, ent_ptr interface{}) error {
+	if ent_ptr == nil {
+		return errors.New("ent_ptr must be reflect.Ptr")
+	}
 	v_ent := reflect.ValueOf(ent_ptr)
 	if v_ent.Kind() != reflect.Ptr {
 		return errors.New("ent_ptr must be reflect.Ptr")
 	}
-	if v_ent.IsNil() {
-		return errors.New("ent_ptr is nil")
-	}
-	t_ent_base := GetDirectType(v_ent.Type())
-	if t_ent_base.Kind() != reflect.Struct {
-		return errors.New("ent base type muse be reflect.Struct")
-	}
-	columns, err := rows.Columns()
-	if err != nil {
-		return err
+	//ent_ptr必须是一个结构体指针
+	v_ent = reflect.Indirect(v_ent)
+	if v_ent.Kind() != reflect.Struct {
+		return errors.New("ent_ptr must be reflect.Ptr")
 	}
 
+	//获取返回的数据库的全部字段
+	columns, _ := rows.Columns()
 	//为行scan提供变量指针数组
 	values := genScanAddr4Columns(columns, v_ent)
+
 	//将行数据拷贝到变量中
-	err = rows.Scan(values...)
+	err := rows.Scan(values...)
 	if err != nil {
 		return err
 	}
@@ -76,7 +76,6 @@ func ScanModelArray(rows *sql.Rows, arr_ptr interface{}) error {
 		return err
 	}
 
-	num := 0
 	//创建数组成员对象
 	ent_ptr := reflect.New(t_item)
 	v_ent := reflect.Indirect(ent_ptr)
@@ -90,15 +89,11 @@ func ScanModelArray(rows *sql.Rows, arr_ptr interface{}) error {
 		if err != nil {
 			return err
 		}
-
 		if has_hook {
 			hook.AfterQuery(nil)
 		}
-
 		v_arr_base.Set(reflect.Append(v_arr_base, v_ent))
-		num++
 	}
-
 	return nil
 }
 

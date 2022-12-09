@@ -48,3 +48,46 @@ func TestModelJoinFindVo(t *testing.T) {
 		t.Log(item)
 	}
 }
+
+type UserBookVo2 struct {
+	User
+	BookName string
+}
+
+func (vo *UserBookVo2) LoadFromModel(md *DbModel, mo_ptr interface{}) {
+	if mo, ok := mo_ptr.(*User); ok {
+		CopyDataFromModel(md, vo, mo)
+	} else if mo, ok := mo_ptr.(*DB_Book); ok {
+		vo.BookName = GetString(md, &mo.DB_name)
+	}
+}
+
+func TestModelJoinGetVo2(t *testing.T) {
+	InitEngine4Test()
+
+	var vo UserBookVo2
+	tb := Model(&User{}).TableAlias("u")
+	tb.Join(&DB_Book{}, "b", "b.author=u.id")
+	_, err := tb.Where("u.id=?", 1).Get(&vo)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(vo)
+}
+
+func TestModelJoinFindVo2(t *testing.T) {
+	InitEngine4Test()
+
+	var datas []UserBookVo
+	tb := Model(&User{}).TableAlias("u")
+	tb.LeftJoin(&DB_Book{}, "b", "b.author=u.id")
+	err := tb.WhereIn("u.id", 1, 6).Find(&datas)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	for _, item := range datas {
+		t.Log(item)
+	}
+}
