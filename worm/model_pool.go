@@ -29,11 +29,14 @@ func NewModelPool(ent interface{}, size ...int) *ModelPool {
 	return p
 }
 
-func (p *ModelPool) createModel(dbs *DbSession) *DbModel {
+func (p *ModelPool) createModel(dbs ...*DbSession) *DbModel {
 	v_ent_ptr := reflect.New(p.ent_type)
 	ent_ptr := v_ent_ptr.Interface()
-	md := dbs.Model(ent_ptr)
-	return md
+	if len(dbs) != 1 {
+		return Model(ent_ptr)
+	} else {
+		return dbs[0].Model(ent_ptr)
+	}
 }
 
 var errPoolModel = errors.New("PoolModel")
@@ -64,17 +67,18 @@ func (p *ModelPool) Put(md *DbModel) {
 }
 
 //分配一个model
-func (p *ModelPool) Get(dbs *DbSession) *DbModel {
+func (p *ModelPool) Get(dbs ...*DbSession) *DbModel {
 	p.mutex.Lock()
 	num := len(p.pool)
 	if num < 1 {
 		p.mutex.Unlock()
-		return p.createModel(dbs)
+		return p.createModel(dbs...)
 	}
 
 	last := num - 1
 	md := p.pool[last]
 	p.pool = p.pool[:last]
 	p.mutex.Unlock()
+	md.Err = nil
 	return md
 }

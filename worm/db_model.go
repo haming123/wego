@@ -79,7 +79,6 @@ func NewModel(dbs *DbSession, ent_ptr interface{}, flag bool) *DbModel {
 //重置model状态，保留以下字段的内容：
 //ent_ptr、flds_info、flds_addr、table_name、field_id、name_map_db、name_map_go
 func (md *DbModel) Reset() {
-	md.db_ptr = nil
 	md.table_alias = ""
 	md.group_by = ""
 	md.order_by = ""

@@ -55,7 +55,7 @@ func open_db(cnnstr string) (*sql.DB, error) {
 		fmt.Println(err)
 		return nil, err
 	}
-	fmt.Println("******************open_db**********")
+	//fmt.Println("******************open_db**********")
 	return dbcnn, nil
 }
 

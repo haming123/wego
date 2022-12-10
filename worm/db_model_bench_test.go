@@ -107,6 +107,27 @@ func BenchmarkModelGet(b *testing.B) {
 	b.StopTimer()
 }
 
+//go test -v -run=none -bench="BenchmarkModelGet" -benchmem
+func BenchmarkModelGetWithPool(b *testing.B) {
+	dbcnn, _ := OpenDb()
+	InitEngine(&dialectMysql{}, dbcnn)
+	ShowSqlLog(false)
+	b.StopTimer()
+
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		var ent User
+		md := pool_user.Get()
+		_, err := md.Where("id=?", 1).Select("id", "name", "age").Get(&ent)
+		if err != nil {
+			b.Error(err)
+			return
+		}
+		pool_user.Put(md)
+	}
+	b.StopTimer()
+}
+
 //go test -v -run=none -bench="BenchmarkModelWithCache" -benchmem
 func BenchmarkModelGetWithCache(b *testing.B) {
 	dbcnn, _ := OpenDb()
@@ -142,6 +163,26 @@ func BenchmarkModelFind(b *testing.B) {
 			b.Error(err)
 			return
 		}
+	}
+	b.StopTimer()
+}
+
+func BenchmarkModelFindWithPool(b *testing.B) {
+	dbcnn, _ := OpenDb()
+	InitEngine(&dialectMysql{}, dbcnn)
+	ShowSqlLog(false)
+	b.StopTimer()
+
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		var arr []User
+		md := pool_user.Get()
+		err := md.Where("id>?", 0).Select("id", "name", "age").Limit(10).Find(&arr)
+		if err != nil {
+			b.Error(err)
+			return
+		}
+		pool_user.Put(md)
 	}
 	b.StopTimer()
 }
