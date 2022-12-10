@@ -175,10 +175,6 @@ func (md *DbModel) TableAlias(alias string) *DbJoint {
 	return lk
 }
 
-func (md *DbModel) get_field_index(dbname string) int {
-	return md.get_field_index_dbname(dbname)
-}
-
 func (md *DbModel) get_field_index_byindex(no int) int {
 	if no < 0 {
 		return -1
@@ -189,7 +185,19 @@ func (md *DbModel) get_field_index_byindex(no int) int {
 	}
 }
 
-func (md *DbModel) get_field_index_dbname(dbname string) int {
+func (md *DbModel) get_field_index_dbname1(dbname string) int {
+	index := -1
+	num := len(md.flds_info)
+	for i := 0; i < num; i++ {
+		if md.flds_info[i].DbName == dbname {
+			index = i
+			break
+		}
+	}
+	return index
+}
+
+func (md *DbModel) get_field_index_dbname2(dbname string) int {
 	index, ok := md.name_map_db[dbname]
 	if ok == false {
 		return -1
@@ -197,12 +205,44 @@ func (md *DbModel) get_field_index_dbname(dbname string) int {
 	return index
 }
 
-func (md *DbModel) get_field_index_goname(goname string) int {
+func (md *DbModel) get_field_index_dbname(dbname string) int {
+	if len(md.flds_info) < 20 {
+		return md.get_field_index_dbname1(dbname)
+	} else {
+		return md.get_field_index_dbname2(dbname)
+	}
+}
+
+func (md *DbModel) get_field_index(dbname string) int {
+	return md.get_field_index_dbname(dbname)
+}
+
+func (md *DbModel) get_field_index_goname1(goname string) int {
+	index := -1
+	num := len(md.flds_info)
+	for i := 0; i < num; i++ {
+		if md.flds_info[i].FieldName == goname {
+			index = i
+			break
+		}
+	}
+	return index
+}
+
+func (md *DbModel) get_field_index_goname2(goname string) int {
 	index, ok := md.name_map_go[goname]
 	if ok == false {
 		return -1
 	}
 	return index
+}
+
+func (md *DbModel) get_field_index_goname(goname string) int {
+	if len(md.flds_info) < 20 {
+		return md.get_field_index_goname1(goname)
+	} else {
+		return md.get_field_index_goname2(goname)
+	}
 }
 
 func (md *DbModel) get_field_index_byaddr(fldg_ptr interface{}) int {
@@ -219,15 +259,6 @@ func (md *DbModel) get_field_index_byaddr(fldg_ptr interface{}) int {
 
 func (md *DbModel) set_flag_by_index(no int, flag bool) bool {
 	index := md.get_field_index_byindex(no)
-	if index < 0 {
-		return false
-	}
-	md.flds_addr[index].Flag = flag
-	return true
-}
-
-func (md *DbModel) set_flag_by_name(field string, flag bool) bool {
-	index := md.get_field_index(field)
 	if index < 0 {
 		return false
 	}

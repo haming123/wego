@@ -45,7 +45,19 @@ type ModelInfo struct {
 	NameMapGo map[string]int
 }
 
-func (mi *ModelInfo) get_field_index_dbname(dbname string) int {
+func (mi *ModelInfo) get_field_index_dbname1(dbname string) int {
+	index := -1
+	num := len(mi.Fields)
+	for i := 0; i < num; i++ {
+		if mi.Fields[i].DbName == dbname {
+			index = i
+			break
+		}
+	}
+	return index
+}
+
+func (mi *ModelInfo) get_field_index_dbname2(dbname string) int {
 	index, ok := mi.NameMapDb[dbname]
 	if ok == false {
 		return -1
@@ -53,12 +65,40 @@ func (mi *ModelInfo) get_field_index_dbname(dbname string) int {
 	return index
 }
 
-func (mi *ModelInfo) get_field_index_goname(goname string) int {
+func (mi *ModelInfo) get_field_index_dbname(dbname string) int {
+	if len(mi.Fields) < 20 {
+		return mi.get_field_index_dbname1(dbname)
+	} else {
+		return mi.get_field_index_dbname2(dbname)
+	}
+}
+
+func (mi *ModelInfo) get_field_index_goname1(goname string) int {
+	index := -1
+	num := len(mi.Fields)
+	for i := 0; i < num; i++ {
+		if mi.Fields[i].FieldName == goname {
+			index = i
+			break
+		}
+	}
+	return index
+}
+
+func (mi *ModelInfo) get_field_index_goname2(goname string) int {
 	index, ok := mi.NameMapGo[goname]
 	if ok == false {
 		return -1
 	}
 	return index
+}
+
+func (mi *ModelInfo) get_field_index_goname(goname string) int {
+	if len(mi.Fields) < 20 {
+		return mi.get_field_index_goname1(goname)
+	} else {
+		return mi.get_field_index_goname2(goname)
+	}
 }
 
 //struct信息的缓存
