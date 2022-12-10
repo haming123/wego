@@ -42,7 +42,7 @@ func TestSQLBuilderGetModelRows(t *testing.T) {
 	}
 }
 
-func BenchmarkGetModelRows(b *testing.B) {
+func BenchmarkModelRows2(b *testing.B) {
 	dbcnn, _ := OpenDb()
 	InitEngine(&dialectMysql{}, dbcnn)
 	ShowSqlLog(false)

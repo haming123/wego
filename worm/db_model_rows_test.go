@@ -40,22 +40,3 @@ func BenchmarkModelRows(b *testing.B) {
 	}
 	b.StopTimer()
 }
-
-func BenchmarkModelRows2(b *testing.B) {
-	dbcnn, _ := OpenDb()
-	InitEngine(&dialectMysql{}, dbcnn)
-	ShowSqlLog(false)
-	UsePrepare(true)
-	b.StopTimer()
-
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		rows, _ := SQL("select * from user where id<?", 10).Rows()
-		for rows.Next() {
-			var user User
-			scanModel(rows, &user)
-		}
-		rows.Close()
-	}
-	b.StopTimer()
-}

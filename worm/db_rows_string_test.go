@@ -62,7 +62,7 @@ func TestSQLBuilderJoinRows(t *testing.T) {
 	}
 }
 
-func BenchmarkGetStringRows(b *testing.B) {
+func BenchmarkStringRows(b *testing.B) {
 	dbcnn, _ := OpenDb()
 	InitEngine(&dialectMysql{}, dbcnn)
 	ShowSqlLog(false)
