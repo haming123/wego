@@ -2,6 +2,7 @@ package worm
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -44,21 +45,34 @@ func init() {
 
 func open_db(cnnstr string) (*sql.DB, error) {
 	var err error
-	DbConn, err = sql.Open("mysql", cnnstr)
+	dbcnn, err := sql.Open("mysql", cnnstr)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
-	err = DbConn.Ping()
+	err = dbcnn.Ping()
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
-	return DbConn, nil
+	fmt.Println("******************open_db**********")
+	return dbcnn, nil
 }
 
 func OpenDb() (*sql.DB, error) {
-	return open_db(dsn_mysql)
+	if DbConn != nil {
+		return DbConn, nil
+	}
+	dbcnn, err := open_db(dsn_mysql)
+	DbConn = dbcnn
+	return DbConn, err
 }
 
 func OpenSalveDb() (*sql.DB, error) {
-	return open_db(dsn_slave)
+	if SlaveDb != nil {
+		return SlaveDb, nil
+	}
+	dbcnn, err := open_db(dsn_mysql)
+	SlaveDb = dbcnn
+	return SlaveDb, err
 }

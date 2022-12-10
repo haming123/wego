@@ -1,7 +1,6 @@
 package worm
 
 import (
-	"reflect"
 	"testing"
 )
 
@@ -150,26 +149,4 @@ func TestModelFindEo3(t *testing.T) {
 	for _, item := range arr {
 		t.Log(item)
 	}
-}
-
-//go test -v -run=none -bench="BenchmarkModelGet" -benchmem
-func BenchmarkGetPubField(b *testing.B) {
-	dbcnn, _ := OpenDb()
-	InitEngine(&dialectMysql{}, dbcnn)
-	ShowSqlLog(false)
-	b.StopTimer()
-
-	b.StartTimer()
-	var mo User
-	t_mo := reflect.TypeOf(mo)
-	var vo UserEo
-	t_vo := reflect.TypeOf(vo)
-	for i := 0; i < b.N; i++ {
-		//获取model信息，创建字段交集对象，并生成字段交集
-		var pos FieldPos
-		moinfo := getModelInfo(t_mo)
-		pflds := NewPublicFields(len(moinfo.Fields))
-		pflds.genPubField4VoMoNest(moinfo, t_mo, t_vo, pos, 0)
-	}
-	b.StopTimer()
 }
