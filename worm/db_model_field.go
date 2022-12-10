@@ -46,15 +46,9 @@ func (md *DbModel) auto_add_field_index(fields ...int) *DbModel {
 		md.OmitALL()
 		md.flag_auto = true
 	}
-
 	for _, index := range fields {
-		ret := md.set_flag_by_index(index, true)
-		if ret == false {
-			md.Err = errors.New("field not found")
-			return md
-		}
+		md.flds_addr[index].Flag = true
 	}
-
 	return md
 }
 
