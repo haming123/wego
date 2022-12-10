@@ -28,7 +28,7 @@ func (vo *UserVo) SaveToModel(md *DbModel, mo_ptr interface{}) {
 func TestModelInsertVo(t *testing.T) {
 	InitEngine4Test()
 
-	vo := UserVo{Age: 31, DB_name: "InsertVo2"}
+	vo := UserVo{Age: 31, DB_name: "InsertVo"}
 	id, err := Model(&User{}).Insert(&vo)
 	if err != nil {
 		t.Error(err)
@@ -36,7 +36,7 @@ func TestModelInsertVo(t *testing.T) {
 	}
 	t.Log(id)
 
-	vo = UserVo{Age: 31, DB_name: "UpdateVo2"}
+	vo = UserVo{Age: 31, DB_name: "UpdateVo"}
 	ret, err := Model(&User{}).ID(id).Update(&vo)
 	if err != nil {
 		t.Error(err)

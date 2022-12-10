@@ -319,15 +319,7 @@ func (tb *DbTable) Delete() (int64, error) {
 	return num, nil
 }
 
-func (tb *DbTable) Row() (*sql.Rows, error) {
-	sql_str := tb.db_ptr.engine.db_dialect.GenTableGetSql(tb)
-	vals := []interface{}{}
-	vals = append(vals, tb.db_where.Values...)
-	vals = append(vals, tb.db_having.Values...)
-	return tb.db_ptr.ExecQuery(&tb.SqlContex, sql_str, vals...)
-}
-
-func (tb *DbTable) Rows() (*sql.Rows, error) {
+func (tb *DbTable) getRows() (*sql.Rows, error) {
 	sql_str := tb.db_ptr.engine.db_dialect.GenTableFindSql(tb)
 	vals := []interface{}{}
 	vals = append(vals, tb.db_where.Values...)
@@ -335,8 +327,32 @@ func (tb *DbTable) Rows() (*sql.Rows, error) {
 	return tb.db_ptr.ExecQuery(&tb.SqlContex, sql_str, vals...)
 }
 
+func (tb *DbTable) Rows() (*sql.Rows, error) {
+	return tb.getRows()
+}
+
+func (tb *DbTable) ModelRows() (StructRows, error) {
+	var ret StructRows
+	rows, err := tb.getRows()
+	if err != nil {
+		return ret, err
+	}
+	ret.Rows = rows
+	return ret, nil
+}
+
+func (tb *DbTable) StringRows() (StringRows, error) {
+	var ret StringRows
+	rows, err := tb.getRows()
+	if err != nil {
+		return ret, err
+	}
+	ret.Rows = rows
+	return ret, nil
+}
+
 func (tb *DbTable) Exist() (bool, error) {
-	rows, err := tb.Row()
+	rows, err := tb.getRows()
 	if err != nil {
 		return false, err
 	}
@@ -351,7 +367,7 @@ func (tb *DbTable) Exist() (bool, error) {
 }
 
 func (tb *DbTable) Get(arg ...interface{}) (bool, error) {
-	rows, err := tb.Row()
+	rows, err := tb.getRows()
 	if err != nil {
 		return false, err
 	}
@@ -387,6 +403,10 @@ func (tb *DbTable) GetInt() (sql.NullInt64, error) {
 }
 
 func (tb *DbTable) GetFlaot() (sql.NullFloat64, error) {
+	return tb.GetFloat()
+}
+
+func (tb *DbTable) GetFloat() (sql.NullFloat64, error) {
 	var val sql.NullFloat64
 	fld := FieldValue{"", &val, false}
 	has, err := tb.Get(&fld)
@@ -420,7 +440,7 @@ func (tb *DbTable) GetTime() (sql.NullTime, error) {
 }
 
 func (tb *DbTable) GetModel(ent_ptr interface{}) (bool, error) {
-	rows, err := tb.Row()
+	rows, err := tb.getRows()
 	if err != nil {
 		return false, err
 	}
@@ -428,7 +448,7 @@ func (tb *DbTable) GetModel(ent_ptr interface{}) (bool, error) {
 		rows.Close()
 		return false, nil
 	}
-	err = ScanModel(rows, ent_ptr)
+	err = scanModel(rows, ent_ptr)
 	if err != nil {
 		rows.Close()
 		return false, err
@@ -438,7 +458,7 @@ func (tb *DbTable) GetModel(ent_ptr interface{}) (bool, error) {
 }
 
 func (tb *DbTable) GetRow() (StringRow, error) {
-	rows, err := tb.Row()
+	rows, err := tb.getRows()
 	if err != nil {
 		return nil, err
 	}
@@ -446,7 +466,7 @@ func (tb *DbTable) GetRow() (StringRow, error) {
 		rows.Close()
 		return nil, nil
 	}
-	ret, err := ScanStringRow(rows)
+	ret, err := scanStringRow(rows)
 	if err != nil {
 		rows.Close()
 		return nil, err
@@ -456,7 +476,7 @@ func (tb *DbTable) GetRow() (StringRow, error) {
 }
 
 func (tb *DbTable) FindValues(arr_ptr_arr ...interface{}) (int, error) {
-	rows, err := tb.Rows()
+	rows, err := tb.getRows()
 	if err != nil {
 		return 0, err
 	}
@@ -469,7 +489,7 @@ func (tb *DbTable) FindValues(arr_ptr_arr ...interface{}) (int, error) {
 }
 
 func (tb *DbTable) FindInt() ([]int64, error) {
-	rows, err := tb.Rows()
+	rows, err := tb.getRows()
 	if err != nil {
 		return nil, err
 	}
@@ -490,7 +510,7 @@ func (tb *DbTable) FindInt() ([]int64, error) {
 }
 
 func (tb *DbTable) FindFloat() ([]float64, error) {
-	rows, err := tb.Rows()
+	rows, err := tb.getRows()
 	if err != nil {
 		return nil, err
 	}
@@ -511,7 +531,7 @@ func (tb *DbTable) FindFloat() ([]float64, error) {
 }
 
 func (tb *DbTable) FindString() ([]string, error) {
-	rows, err := tb.Rows()
+	rows, err := tb.getRows()
 	if err != nil {
 		return nil, err
 	}
@@ -532,7 +552,7 @@ func (tb *DbTable) FindString() ([]string, error) {
 }
 
 func (tb *DbTable) FindTime() ([]time.Time, error) {
-	rows, err := tb.Rows()
+	rows, err := tb.getRows()
 	if err != nil {
 		return nil, err
 	}
@@ -553,7 +573,7 @@ func (tb *DbTable) FindTime() ([]time.Time, error) {
 }
 
 func (tb *DbTable) FindIntInt() ([]KeyVal4IntInt, error) {
-	rows, err := tb.Rows()
+	rows, err := tb.getRows()
 	if err != nil {
 		return nil, err
 	}
@@ -575,7 +595,7 @@ func (tb *DbTable) FindIntInt() ([]KeyVal4IntInt, error) {
 }
 
 func (tb *DbTable) FindIntFloat() ([]KeyVal4IntFloat, error) {
-	rows, err := tb.Rows()
+	rows, err := tb.getRows()
 	if err != nil {
 		return nil, err
 	}
@@ -597,7 +617,7 @@ func (tb *DbTable) FindIntFloat() ([]KeyVal4IntFloat, error) {
 }
 
 func (tb *DbTable) FindIntString() ([]KeyVal4IntString, error) {
-	rows, err := tb.Rows()
+	rows, err := tb.getRows()
 	if err != nil {
 		return nil, err
 	}
@@ -619,7 +639,7 @@ func (tb *DbTable) FindIntString() ([]KeyVal4IntString, error) {
 }
 
 func (tb *DbTable) FindIntTime() ([]KeyVal4IntTime, error) {
-	rows, err := tb.Rows()
+	rows, err := tb.getRows()
 	if err != nil {
 		return nil, err
 	}
@@ -641,7 +661,7 @@ func (tb *DbTable) FindIntTime() ([]KeyVal4IntTime, error) {
 }
 
 func (tb *DbTable) FindStringInt() ([]KeyVal4StringInt, error) {
-	rows, err := tb.Rows()
+	rows, err := tb.getRows()
 	if err != nil {
 		return nil, err
 	}
@@ -663,7 +683,7 @@ func (tb *DbTable) FindStringInt() ([]KeyVal4StringInt, error) {
 }
 
 func (tb *DbTable) FindStringFloat() ([]KeyVal4StringFloat, error) {
-	rows, err := tb.Rows()
+	rows, err := tb.getRows()
 	if err != nil {
 		return nil, err
 	}
@@ -685,7 +705,7 @@ func (tb *DbTable) FindStringFloat() ([]KeyVal4StringFloat, error) {
 }
 
 func (tb *DbTable) FindStringString() ([]KeyVal4StringString, error) {
-	rows, err := tb.Rows()
+	rows, err := tb.getRows()
 	if err != nil {
 		return nil, err
 	}
@@ -707,7 +727,7 @@ func (tb *DbTable) FindStringString() ([]KeyVal4StringString, error) {
 }
 
 func (tb *DbTable) FindStringTime() ([]KeyVal4StringTime, error) {
-	rows, err := tb.Rows()
+	rows, err := tb.getRows()
 	if err != nil {
 		return nil, err
 	}
@@ -729,21 +749,21 @@ func (tb *DbTable) FindStringTime() ([]KeyVal4StringTime, error) {
 }
 
 func (tb *DbTable) FindModel(arr_ptr interface{}) error {
-	rows, err := tb.Rows()
+	rows, err := tb.getRows()
 	if err != nil {
 		return err
 	}
-	err = ScanModelArray(rows, arr_ptr)
+	err = scanModelArray(rows, arr_ptr)
 	rows.Close()
 	return err
 }
 
 func (tb *DbTable) FindRow() (*StringTable, error) {
-	rows, err := tb.Rows()
+	rows, err := tb.getRows()
 	if err != nil {
 		return nil, err
 	}
-	ret, err := ScanStringTable(rows)
+	ret, err := scanStringTable(rows)
 	rows.Close()
 	return ret, err
 }

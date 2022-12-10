@@ -50,9 +50,10 @@ func (md *DbModel) BatchInsert(arr_ptr interface{}) (sql.Result, error) {
 	}
 
 	//若t_item与Model类型不一致，则获取第一个数组成员的指针：v_item_ptr，并通过v_item_ptr来选择字段
-	//若t_item是一个vo，item_ptr_vo指向：t_item，调用SaveToModel来给md.ent_value赋值，并选择字段
-	//若t_item是一个eo，item_ptr_eo指向：t_item，则调用copyDataToModel来给md.ent_value赋值，不并选择字段
+	//若t_item是一个vo，item_ptr_vo指向：t_item，调用SaveToModel来选择字段
+	//若t_item是一个eo，item_ptr_eo指向：t_item，则调用selectFieldsByEo来选择字段
 	var item_ptr_vo VoSaver = nil
+	var pflds *PublicFields = nil
 	if t_item != md.ent_type {
 		v_item_ptr := v_arr.Index(0).Addr()
 		item_ptr := v_item_ptr.Interface()
@@ -60,8 +61,7 @@ func (md *DbModel) BatchInsert(arr_ptr interface{}) (sql.Result, error) {
 			item_ptr_vo = vo_ptr
 			vo_ptr.SaveToModel(md, md.ent_ptr)
 		} else {
-			var v_item = v_item_ptr.Elem()
-			copyDataToModel(md, v_item, md.ent_value)
+			pflds = md.selectFieldsByEo(t_item)
 		}
 	}
 
@@ -96,13 +96,13 @@ func (md *DbModel) BatchInsert(arr_ptr interface{}) (sql.Result, error) {
 	defer stmt.Close()
 
 	for i := 0; i < arr_len; i++ {
-		item := v_arr.Index(i)
+		v_item := v_arr.Index(i)
 		if t_item == md.ent_type {
-			md.ent_value.Set(item)
+			md.ent_value.Set(v_item)
 		} else if item_ptr_vo != nil {
 			item_ptr_vo.SaveToModel(nil, md.ent_ptr)
 		} else {
-			copyDataToModel(md, item, md.ent_value)
+			md.copyEoData2Model(pflds, v_item)
 		}
 
 		_, err = stmt.Exec(vals...)

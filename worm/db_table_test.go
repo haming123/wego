@@ -115,7 +115,7 @@ func TestSQLBuilderGetModel(t *testing.T) {
 func TestSQLBuilderRows(t *testing.T) {
 	InitEngine4Test()
 
-	rows, err := Table("user").Select("*").Where("id>?", 0).OrderBy("name desc").Limit(5).Offset(2).Rows()
+	rows, err := Table("user").Select("name,age").Where("id>?", 0).Limit(10).Rows()
 	if err != nil {
 		t.Error(err)
 		return
@@ -123,12 +123,13 @@ func TestSQLBuilderRows(t *testing.T) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var user User
-		err = ScanModel(rows, &user)
+		var name string
+		var age int
+		err = Scan(rows, &name, &age)
 		if err != nil {
 			t.Error(err)
 		}
-		t.Log(user)
+		t.Log(name, age)
 	}
 }
 
@@ -252,25 +253,6 @@ func TestSQLBuilderFindModel(t *testing.T) {
 	}
 	for _, user := range users {
 		t.Log(user)
-	}
-}
-
-func TestSQLBuilderJoinRows(t *testing.T) {
-	InitEngine4Test()
-
-	rows, err := Table("user").Alias("u").Select("*").Where("u.id>?", 0).OrderBy("u.name desc").Join("book", "b", "b.author=u.id").Rows()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		data, err := ScanStringRow(rows)
-		if err != nil {
-			t.Error(err)
-		}
-		t.Log(data)
 	}
 }
 

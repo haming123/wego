@@ -8,29 +8,11 @@ import (
 
 type ModelRows struct {
 	*sql.Rows
-	model  *DbModel
-	values []interface{}
+	model     *DbModel
+	scan_vals []interface{}
 }
 
-func (rs *ModelRows) Next() bool {
-	if rs.Rows != nil {
-		return rs.Rows.Next()
-	}
-	return false
-}
-
-func (rs *ModelRows) Close() error {
-	if rs.Rows != nil {
-		err := rs.Rows.Close()
-		if err != nil {
-			return err
-		}
-		rs.Rows = nil
-	}
-	return nil
-}
-
-func (rs *ModelRows) ScanModel(ent_ptr interface{}) error {
+func (rows *ModelRows) Scan(ent_ptr interface{}) error {
 	if ent_ptr == nil {
 		return errors.New("ent_ptr must be reflect.Ptr")
 	}
@@ -45,11 +27,11 @@ func (rs *ModelRows) ScanModel(ent_ptr interface{}) error {
 		return errors.New("ent_ptr must be reflect.Ptr")
 	}
 
-	var md = rs.model
-	if rs.values == nil {
-		rs.values = md.get_scan_valus()
+	var md = rows.model
+	if rows.scan_vals == nil {
+		rows.scan_vals = md.get_scan_valus()
 	}
-	err := rs.Rows.Scan(rs.values...)
+	err := rows.Rows.Scan(rows.scan_vals...)
 	if err != nil {
 		return err
 	}

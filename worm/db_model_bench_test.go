@@ -166,25 +166,6 @@ func BenchmarkModelFindWithCache(b *testing.B) {
 	b.StopTimer()
 }
 
-func BenchmarkModelRows(b *testing.B) {
-	dbcnn, _ := OpenDb()
-	InitEngine(&dialectMysql{}, dbcnn)
-	ShowSqlLog(false)
-	UsePrepare(true)
-	b.StopTimer()
-
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		rows, _ := Model(&User{}).Where("id>?", 0).Select("id", "name", "age").Limit(10).Rows()
-		for rows.Next() {
-			var user User
-			rows.ScanModel(&user)
-		}
-		rows.Close()
-	}
-	b.StopTimer()
-}
-
 /*
 go test -v -run=none -bench="BenchmarkModelGet" -benchmem
 orm4go: windows

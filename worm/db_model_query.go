@@ -167,6 +167,7 @@ func (md *DbModel) Get(args ...interface{}) (bool, error) {
 	//若args是eo，则调用selectFieldsByEo选择对应的字段
 	var mo_ptr interface{} = nil
 	var vo_ptr VoLoader = nil
+	var pflds *PublicFields = nil
 	t_ent := v_ent.Type()
 	if t_ent == md.ent_type {
 		mo_ptr = ent_ptr
@@ -174,7 +175,7 @@ func (md *DbModel) Get(args ...interface{}) (bool, error) {
 		vo_ptr = ptr
 		selectFieldsByVo(md, vo_ptr)
 	} else {
-		md.selectFieldsByEo(t_ent)
+		pflds = md.selectFieldsByEo(t_ent)
 	}
 
 	has, err := md.Scan()
@@ -190,7 +191,7 @@ func (md *DbModel) Get(args ...interface{}) (bool, error) {
 	} else if vo_ptr != nil {
 		vo_ptr.LoadFromModel(nil, md.ent_ptr)
 	} else {
-		md.CopyModelData2Eo(v_ent)
+		md.copyModelData2Eo(pflds, v_ent)
 	}
 	return true, nil
 }
@@ -307,9 +308,12 @@ func (md *DbModel) DistinctCount(field string) (int64, error) {
 	return total, nil
 }
 
-func (md *DbModel) Rows() (*ModelRows, error) {
+func (md *DbModel) Rows() (ModelRows, error) {
+	var rs ModelRows
+	rs.model = md
+
 	if md.Err != nil {
-		return nil, md.Err
+		return rs, md.Err
 	}
 
 	if hook, isHook := md.ent_ptr.(BeforeQueryInterface); isHook {
@@ -319,10 +323,32 @@ func (md *DbModel) Rows() (*ModelRows, error) {
 	sql_str := md.db_ptr.engine.db_dialect.GenModelFindSql(md)
 	rows, err := md.db_ptr.ExecQuery(&md.SqlContex, sql_str, md.db_where.Values...)
 	if err != nil {
-		return nil, err
+		return rs, err
 	}
 
-	rs := &ModelRows{rows, md, nil}
+	rs.Rows = rows
+	return rs, nil
+}
+
+func (md *DbModel) Rows2() (*ModelRows, error) {
+	rs := &ModelRows{}
+	rs.model = md
+
+	if md.Err != nil {
+		return rs, md.Err
+	}
+
+	if hook, isHook := md.ent_ptr.(BeforeQueryInterface); isHook {
+		hook.BeforeQuery(md.ctx)
+	}
+
+	sql_str := md.db_ptr.engine.db_dialect.GenModelFindSql(md)
+	rows, err := md.db_ptr.ExecQuery(&md.SqlContex, sql_str, md.db_where.Values...)
+	if err != nil {
+		return rs, err
+	}
+
+	rs.Rows = rows
 	return rs, nil
 }
 
@@ -369,10 +395,11 @@ func (md *DbModel) Find(arr_ptr interface{}) error {
 
 	//若数组成员是vo，则调用selectFieldsByVo选择对应的字段
 	//若数组成员是eo，则调用selectFieldsByEo选择对应的字段
+	var pflds *PublicFields = nil
 	if item_vo != nil {
 		selectFieldsByVo(md, item_vo)
 	} else if item_eo != nil {
-		md.selectFieldsByEo(t_item)
+		pflds = md.selectFieldsByEo(t_item)
 	}
 
 	if hook, isHook := md.ent_ptr.(BeforeQueryInterface); isHook {
@@ -405,7 +432,8 @@ func (md *DbModel) Find(arr_ptr interface{}) error {
 		if item_vo != nil {
 			item_vo.LoadFromModel(nil, md.ent_ptr)
 		} else if item_eo != nil {
-			md.CopyModelData2Eo(v_item)
+			//md.CopyModelData2Eo(v_item)
+			md.copyModelData2Eo(pflds, v_item)
 		}
 		v_arr_base.Set(reflect.Append(v_arr_base, v_item))
 	}

@@ -108,35 +108,34 @@ func getPubField4VoMo(t_mo reflect.Type, t_vo reflect.Type) *PublicFields {
 }
 
 //获取与Eo对象对应的mo的字段选中状态
-//首先从缓存中获取字段交集
-//若缓存中不存在，则生成字段交集
-func (md *DbModel) selectFieldsByEo(t_vo reflect.Type) {
+//首先从缓存中获取字段交集, 若缓存中不存在，则生成字段交集
+func (md *DbModel) selectFieldsByEo(t_vo reflect.Type) *PublicFields {
 	//获取字段交集
-	cache := getPubField4VoMo(md.ent_type, t_vo)
-	md.VoFields = cache
+	pflds := getPubField4VoMo(md.ent_type, t_vo)
 
 	//若进行了字段的人工选择，则不需要进行字段的自动选择
 	if md.flag_edit == true {
-		return
+		return pflds
+	}
+	//若存在model类型一致的字段，不用额外选择字段（缺省选择全部）
+	if pflds.ModelField >= 0 {
+		return pflds
 	}
 
 	//将公共字段添加到选择集中
-	//若存在model类型一致的字段，不用额外选择字段（缺省选择全部）
-	if cache.ModelField < 0 {
-		for _, item := range cache.Fields {
-			md.auto_add_field_index(item.MoIndex)
-		}
+	for _, item := range pflds.Fields {
+		md.auto_add_field_index(item.MoIndex)
 	}
+	return pflds
 }
 
 //把Model中地址的值赋值给vo对象
-func (md *DbModel) CopyModelData2Eo(v_vo reflect.Value) {
-	if md.VoFields == nil {
-		panic(" md.VoFields == nil")
+func (md *DbModel) copyModelData2Eo(pflds *PublicFields, v_vo reflect.Value) {
+	if pflds == nil {
+		panic("pflds == nil")
 	}
 
 	//若vo中存在Model字段，只需要赋值Model对应的字段即可
-	pflds := md.VoFields
 	if pflds.ModelField >= 0 {
 		fv_vo := v_vo.Field(pflds.ModelField)
 		if fv_vo.CanSet() == true {
@@ -154,4 +153,38 @@ func (md *DbModel) CopyModelData2Eo(v_vo reflect.Value) {
 		}
 		fv_vo.Set(fv_mo)
 	}
+}
+
+//把vo的值赋值给Model对象
+func (md *DbModel) copyEoData2Model(pflds *PublicFields, v_vo reflect.Value) {
+	if pflds == nil {
+		panic("pflds == nil")
+	}
+
+	//若vo中存在Model字段，只需要赋值Model对应的字段即可
+	v_mo := md.ent_value
+	if pflds.ModelField >= 0 {
+		fv_vo := v_vo.Field(pflds.ModelField)
+		if v_mo.CanSet() == true {
+			v_mo.Set(fv_vo)
+			return
+		}
+	}
+
+	//遍历字段交集，逐个给vo的对象赋值
+	for _, item := range pflds.Fields {
+		fv_vo := v_vo.FieldByIndex(item.VoIndex)
+		fv_mo := v_mo.Field(item.MoIndex)
+		if fv_mo.CanSet() == false {
+			continue
+		}
+		fv_mo.Set(fv_vo)
+	}
+}
+
+//把vo的值赋值给Model对象, 并选中字段交集中的字段
+func (md *DbModel) copySelectEoData2Model(v_vo reflect.Value) {
+	t_vo := v_vo.Type()
+	pflds := md.selectFieldsByEo(t_vo)
+	md.copyEoData2Model(pflds, v_vo)
 }

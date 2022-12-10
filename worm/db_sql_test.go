@@ -67,21 +67,21 @@ func TestSqlRawGetModel(t *testing.T) {
 func TestSqlRawRows(t *testing.T) {
 	InitEngine4Test()
 
-	rows, err := SQL("select * from user where id>?", 0).Rows()
+	rows, err := SQL("select name,age from user where id<?", 10).Rows()
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	defer rows.Close()
-
 	for rows.Next() {
-		var user User
-		err = ScanModel(rows, &user)
+		var name string
+		var age int
+		err = Scan(rows, &name, &age)
 		if err != nil {
 			t.Error(err)
 		}
-		t.Log(user)
+		t.Log(name, age)
 	}
+	rows.Close()
 }
 
 func TestSqlRawFindValues(t *testing.T) {

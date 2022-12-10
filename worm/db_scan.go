@@ -7,6 +7,11 @@ import (
 	"reflect"
 )
 
+type ScanArray struct {
+	Val reflect.Value
+	Arr reflect.Value
+}
+
 //执行行数据的scan
 //将数据库查询的结果拷贝到desc对应的指针变量中
 //在scan前将变量的指针包装为&FieldValue
@@ -22,7 +27,7 @@ func Scan(rows *sql.Rows, dest ...interface{}) error {
 }
 
 //将行数据保存到stuct对象中
-func ScanModel(rows *sql.Rows, ent_ptr interface{}) error {
+func scanModel(rows *sql.Rows, ent_ptr interface{}) error {
 	if ent_ptr == nil {
 		return errors.New("ent_ptr must be reflect.Ptr")
 	}
@@ -56,7 +61,7 @@ func ScanModel(rows *sql.Rows, ent_ptr interface{}) error {
 
 //将数据库查询结构保存到struct数组中
 //arr_ptr是struct数组的地址
-func ScanModelArray(rows *sql.Rows, arr_ptr interface{}) error {
+func scanModelArray(rows *sql.Rows, arr_ptr interface{}) error {
 	v_arr := reflect.ValueOf(arr_ptr)
 	if v_arr.Kind() != reflect.Ptr {
 		return errors.New("arr_ptr must be *Slice")
@@ -95,11 +100,6 @@ func ScanModelArray(rows *sql.Rows, arr_ptr interface{}) error {
 		v_arr_base.Set(reflect.Append(v_arr_base, v_ent))
 	}
 	return nil
-}
-
-type ScanArray struct {
-	Val reflect.Value
-	Arr reflect.Value
 }
 
 //将数据库查询结果保存到数组中
@@ -156,7 +156,7 @@ func findValues(rows *sql.Rows, ptr_arrs ...interface{}) (int, error) {
 }
 
 //将行数据保存到StringMap(map[string]string)中
-func ScanStringRow(rows *sql.Rows) (StringRow, error) {
+func scanStringRow(rows *sql.Rows) (StringRow, error) {
 	row_data := make(StringRow)
 	col_names, err := rows.Columns()
 	if err != nil {
@@ -190,7 +190,7 @@ func ScanStringRow(rows *sql.Rows) (StringRow, error) {
 
 //将数据库查询结果保存到StringTable的表对象中
 //StringTable是一个一维字符串数组
-func ScanStringTable(rows *sql.Rows) (*StringTable, error) {
+func scanStringTable(rows *sql.Rows) (*StringTable, error) {
 	rdata := &StringTable{}
 	col_names, err := rows.Columns()
 	if err != nil {

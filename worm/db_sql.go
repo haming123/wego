@@ -55,8 +55,32 @@ func (tb *DbSQL) Exec() (sql.Result, error) {
 	return tb.db_ptr.ExecSQL(&tb.SqlContex, tb.sql_tpl, tb.values...)
 }
 
-func (tb *DbSQL) Rows() (*sql.Rows, error) {
+func (tb *DbSQL) getRows() (*sql.Rows, error) {
 	return tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
+}
+
+func (tb *DbSQL) Rows() (*sql.Rows, error) {
+	return tb.getRows()
+}
+
+func (tb *DbSQL) ModelRows() (StructRows, error) {
+	var ret StructRows
+	rows, err := tb.getRows()
+	if err != nil {
+		return ret, err
+	}
+	ret.Rows = rows
+	return ret, nil
+}
+
+func (tb *DbSQL) StringRows() (StringRows, error) {
+	var ret StringRows
+	rows, err := tb.getRows()
+	if err != nil {
+		return ret, err
+	}
+	ret.Rows = rows
+	return ret, nil
 }
 
 func (tb *DbSQL) Get(arg ...interface{}) (bool, error) {
@@ -151,7 +175,7 @@ func (tb *DbSQL) GetModel(ent_ptr interface{}) (bool, error) {
 		return false, nil
 	}
 
-	err = ScanModel(rows, ent_ptr)
+	err = scanModel(rows, ent_ptr)
 	if err != nil {
 		rows.Close()
 		return false, err
@@ -171,7 +195,7 @@ func (tb *DbSQL) GetRow() (StringRow, error) {
 		return nil, nil
 	}
 
-	ret, err := ScanStringRow(rows)
+	ret, err := scanStringRow(rows)
 	if err != nil {
 		rows.Close()
 		return nil, err
@@ -460,7 +484,7 @@ func (tb *DbSQL) FindModel(arr_ptr interface{}) error {
 		return err
 	}
 
-	err = ScanModelArray(rows, arr_ptr)
+	err = scanModelArray(rows, arr_ptr)
 	rows.Close()
 	return err
 }
@@ -471,7 +495,7 @@ func (tb *DbSQL) FindRow() (*StringTable, error) {
 		return nil, err
 	}
 
-	ret, err := ScanStringTable(rows)
+	ret, err := scanStringTable(rows)
 	rows.Close()
 	return ret, err
 }

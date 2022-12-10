@@ -65,7 +65,7 @@ func TestModelFindEo(t *testing.T) {
 	InitEngine4Test()
 
 	var arr []UserEo
-	err := Model(&User{}).Where("id>?", 0).Find(&arr)
+	err := Model(&User{}).Where("id>?", 0).Limit(10).Find(&arr)
 	if err != nil {
 		t.Error(err)
 		return

@@ -188,26 +188,6 @@ func TestModelCount(t *testing.T) {
 	t.Logf("count=%v\n", num)
 }
 
-func TestModelRows(t *testing.T) {
-	InitEngine4Test()
-
-	rows, err := Model(&User{}).Where("id>?", 0).Limit(10).Rows()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	for rows.Next() {
-		var user User
-		err = rows.ScanModel(&user)
-		if err != nil {
-			t.Error(err)
-		}
-		t.Log(user)
-	}
-	rows.Close()
-}
-
 func TestModelFindMo(t *testing.T) {
 	InitEngine4Test()
 
