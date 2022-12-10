@@ -80,11 +80,6 @@ func (md *DbModel) get_scan_valus() []interface{} {
 }
 
 func (md *DbModel) Scan() (bool, error) {
-	if md.auto_put && md.md_pool != nil {
-		pool := md.split_pool()
-		defer md.put_pool(pool)
-	}
-
 	if md.Err != nil {
 		return false, md.Err
 	}
@@ -129,11 +124,6 @@ func (md *DbModel) GetIf(flag bool, args ...interface{}) (bool, error) {
 }
 
 func (md *DbModel) Get(args ...interface{}) (bool, error) {
-	if md.auto_put && md.md_pool != nil {
-		pool := md.split_pool()
-		defer md.put_pool(pool)
-	}
-
 	if md.Err != nil {
 		return false, md.Err
 	}
@@ -197,11 +187,6 @@ func (md *DbModel) Get(args ...interface{}) (bool, error) {
 }
 
 func (md *DbModel) Exist() (bool, error) {
-	if md.auto_put && md.md_pool != nil {
-		pool := md.split_pool()
-		defer md.put_pool(pool)
-	}
-
 	if md.Err != nil {
 		return false, md.Err
 	}
@@ -226,11 +211,6 @@ func (md *DbModel) Exist() (bool, error) {
 }
 
 func (md *DbModel) Count(field ...string) (int64, error) {
-	if md.auto_put && md.md_pool != nil {
-		pool := md.split_pool()
-		defer md.put_pool(pool)
-	}
-
 	if md.Err != nil {
 		return 0, md.Err
 	}
@@ -271,11 +251,6 @@ func (md *DbModel) Count(field ...string) (int64, error) {
 }
 
 func (md *DbModel) DistinctCount(field string) (int64, error) {
-	if md.auto_put && md.md_pool != nil {
-		pool := md.split_pool()
-		defer md.put_pool(pool)
-	}
-
 	if md.Err != nil {
 		return 0, md.Err
 	}
@@ -353,11 +328,6 @@ func (md *DbModel) Rows2() (*ModelRows, error) {
 }
 
 func (md *DbModel) Find(arr_ptr interface{}) error {
-	if md.auto_put && md.md_pool != nil {
-		pool := md.split_pool()
-		defer md.put_pool(pool)
-	}
-
 	if md.Err != nil {
 		return md.Err
 	}

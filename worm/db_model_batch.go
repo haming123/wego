@@ -21,11 +21,6 @@ func (this *BatchResult) RowsAffected() (int64, error) {
 }
 
 func (md *DbModel) BatchInsert(arr_ptr interface{}) (sql.Result, error) {
-	if md.auto_put && md.md_pool != nil {
-		pool := md.split_pool()
-		defer md.put_pool(pool)
-	}
-
 	var result BatchResult
 	//获取变量arr_ptr的类型
 	v_arr_ptr := reflect.ValueOf(arr_ptr)

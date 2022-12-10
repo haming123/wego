@@ -31,16 +31,8 @@ func (ent *User) TableName() string {
 	return "user"
 }
 
-var pool_user = ModelPool{}
-
-func NewModel_user(dbs *DbSession, auto_put ...bool) *DbModel {
-	md := pool_user.Get()
-	if md == nil {
-		return dbs.Model(&User{}).WithModelPool(&pool_user, auto_put...)
-	} else {
-		return md.SetDbSession(dbs)
-	}
-}
+var g_user User
+var pool_user = NewModelPool(g_user)
 
 func (ent *User) BeforeInsert(ctx context.Context) {
 	//fmt.Println("User.BeforeInsert")

@@ -109,11 +109,6 @@ func (md *DbModel) exec_insert() (int64, error) {
 }
 
 func (md *DbModel) Insert(args ...interface{}) (int64, error) {
-	if md.auto_put && md.md_pool != nil {
-		pool := md.split_pool()
-		defer md.put_pool(pool)
-	}
-
 	if md.Err != nil {
 		return 0, md.Err
 	}
@@ -224,11 +219,6 @@ func (md *DbModel) exec_update() (int64, error) {
 }
 
 func (md *DbModel) Update(args ...interface{}) (int64, error) {
-	if md.auto_put && md.md_pool != nil {
-		pool := md.split_pool()
-		defer md.put_pool(pool)
-	}
-
 	if md.Err != nil {
 		return 0, md.Err
 	}
@@ -270,11 +260,6 @@ func (md *DbModel) Update(args ...interface{}) (int64, error) {
 }
 
 func (md *DbModel) Delete() (int64, error) {
-	if md.auto_put && md.md_pool != nil {
-		pool := md.split_pool()
-		defer md.put_pool(pool)
-	}
-
 	if md.Err != nil {
 		return 0, md.Err
 	}
@@ -306,11 +291,6 @@ func (md *DbModel) Delete() (int64, error) {
 
 //id>0调用Update, 否则调用Insert
 func (md *DbModel) UpdateOrInsert(id int64, args ...interface{}) (affected int64, entId int64, err error) {
-	if md.auto_put && md.md_pool != nil {
-		pool := md.split_pool()
-		defer md.put_pool(pool)
-	}
-
 	if md.Err != nil {
 		return 0, id, md.Err
 	}
@@ -326,11 +306,6 @@ func (md *DbModel) UpdateOrInsert(id int64, args ...interface{}) (affected int64
 
 //若存在记录，则调用Update，否则调用Insert
 func (md *DbModel) Save(args ...interface{}) (affected int64, insertId int64, err error) {
-	if md.auto_put && md.md_pool != nil {
-		pool := md.split_pool()
-		defer md.put_pool(pool)
-	}
-
 	if md.Err != nil {
 		return 0, 0, md.Err
 	}
@@ -351,11 +326,6 @@ func (md *DbModel) Save(args ...interface{}) (affected int64, insertId int64, er
 
 //若不存在记录，则调用Insert
 func (md *DbModel) InsertIfNotExist(args ...interface{}) (affected int64, insertId int64, err error) {
-	if md.auto_put && md.md_pool != nil {
-		pool := md.split_pool()
-		defer md.put_pool(pool)
-	}
-
 	if md.Err != nil {
 		return 0, 0, md.Err
 	}

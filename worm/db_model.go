@@ -34,15 +34,15 @@ type DbModel struct {
 	join_on   string
 	Err       error
 
-	md_pool  *ModelPool
-	auto_put bool
-
 	//自动人工选择标志
 	flag_edit bool
 	//字段自动选择标志
 	flag_auto bool
 	//通过Vo选择的字段的缓存数据
 	VoFields *PublicFields
+
+	//md_pool  *ModelPool
+	//auto_put bool
 }
 
 func NewModel(dbs *DbSession, ent_ptr interface{}, flag bool) *DbModel {
@@ -89,8 +89,6 @@ func (md *DbModel) Reset() {
 	md.join_on = ""
 	md.flag_edit = false
 	md.flag_auto = false
-	md.auto_put = false
-	md.md_pool = nil
 	md.Err = nil
 	md.SqlContex.Reset()
 	md.db_where.Reset()
@@ -100,33 +98,6 @@ func (md *DbModel) Reset() {
 func (md *DbModel) SetDbSession(dbs *DbSession) *DbModel {
 	md.db_ptr = dbs
 	return md
-}
-
-func (md *DbModel) WithModelPool(pool *ModelPool, auto_put ...bool) *DbModel {
-	md.md_pool = pool
-	if len(auto_put) > 0 {
-		md.auto_put = auto_put[0]
-	}
-	return md
-}
-
-func (md *DbModel) PutToPool() {
-	if md.md_pool != nil {
-		md.md_pool.Put(md)
-	}
-}
-
-func (md *DbModel) split_pool() *ModelPool {
-	pool := md.md_pool
-	md.md_pool = nil
-	return pool
-}
-
-func (md *DbModel) put_pool(pool *ModelPool) {
-	if pool != nil {
-		md.md_pool = pool
-		pool.Put(md)
-	}
 }
 
 func (md *DbModel) GetModelEnt() interface{} {
