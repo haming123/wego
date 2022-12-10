@@ -75,7 +75,7 @@ func TestSqlRawRows(t *testing.T) {
 	for rows.Next() {
 		var name string
 		var age int
-		err = Scan(rows, &name, &age)
+		err = rows.Scan(&name, &age)
 		if err != nil {
 			t.Error(err)
 		}

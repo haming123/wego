@@ -46,7 +46,7 @@ func TestSQLBuilderJoinRows(t *testing.T) {
 	InitEngine4Test()
 
 	tb := Table("user").Alias("u").Select("*").Where("u.id>?", 0).Limit(10)
-	rows, err := tb.Join("book", "b", "b.author=u.id").Rows()
+	rows, err := tb.Join("book", "b", "b.author=u.id").StringRows()
 	if err != nil {
 		t.Error(err)
 		return
@@ -54,7 +54,8 @@ func TestSQLBuilderJoinRows(t *testing.T) {
 	defer rows.Close()
 
 	for rows.Next() {
-		data, err := scanStringRow(rows)
+		data := make(StringRow)
+		err := rows.Scan(&data)
 		if err != nil {
 			t.Error(err)
 		}

@@ -244,7 +244,7 @@ func (md *DbModel) Count(field ...string) (int64, error) {
 	}
 
 	var total int64
-	err = Scan(rows, &total)
+	err = rows_scan(rows, &total)
 	rows.Close()
 
 	return total, nil
@@ -277,7 +277,7 @@ func (md *DbModel) DistinctCount(field string) (int64, error) {
 	}
 
 	var total int64
-	err = Scan(rows, &total)
+	err = rows_scan(rows, &total)
 	rows.Close()
 
 	return total, nil

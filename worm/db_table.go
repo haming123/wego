@@ -327,8 +327,18 @@ func (tb *DbTable) getRows() (*sql.Rows, error) {
 	return tb.db_ptr.ExecQuery(&tb.SqlContex, sql_str, vals...)
 }
 
-func (tb *DbTable) Rows() (*sql.Rows, error) {
+func (tb *DbTable) SqlRows() (*sql.Rows, error) {
 	return tb.getRows()
+}
+
+func (tb *DbTable) Rows() (DbRows, error) {
+	var ret DbRows
+	rows, err := tb.getRows()
+	if err != nil {
+		return ret, err
+	}
+	ret.Rows = rows
+	return ret, nil
 }
 
 func (tb *DbTable) ModelRows() (StructRows, error) {
@@ -377,7 +387,7 @@ func (tb *DbTable) Get(arg ...interface{}) (bool, error) {
 	}
 
 	//err = rows.Scan(arg...)
-	err = Scan(rows, arg...)
+	err = rows_scan(rows, arg...)
 	if err != nil {
 		rows.Close()
 		return false, err
@@ -823,7 +833,7 @@ func (tb *DbTable) Count(field ...string) (int64, error) {
 	}
 
 	var total int64
-	err = Scan(rows, &total)
+	err = rows_scan(rows, &total)
 	rows.Close()
 	return total, nil
 }
@@ -846,7 +856,7 @@ func (tb *DbTable) DistinctCount(field string) (int64, error) {
 	}
 
 	var total int64
-	err = Scan(rows, &total)
+	err = rows_scan(rows, &total)
 	rows.Close()
 	return total, nil
 }

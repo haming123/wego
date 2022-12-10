@@ -59,8 +59,18 @@ func (tb *DbSQL) getRows() (*sql.Rows, error) {
 	return tb.db_ptr.ExecQuery(&tb.SqlContex, tb.sql_tpl, tb.values...)
 }
 
-func (tb *DbSQL) Rows() (*sql.Rows, error) {
+func (tb *DbSQL) SqlRows() (*sql.Rows, error) {
 	return tb.getRows()
+}
+
+func (tb *DbSQL) Rows() (DbRows, error) {
+	var ret DbRows
+	rows, err := tb.getRows()
+	if err != nil {
+		return ret, err
+	}
+	ret.Rows = rows
+	return ret, nil
 }
 
 func (tb *DbSQL) ModelRows() (StructRows, error) {
@@ -94,7 +104,7 @@ func (tb *DbSQL) Get(arg ...interface{}) (bool, error) {
 	}
 
 	//err = rows.Scan(arg...)
-	err = Scan(rows, arg...)
+	err = rows_scan(rows, arg...)
 	if err != nil {
 		rows.Close()
 		return false, err
