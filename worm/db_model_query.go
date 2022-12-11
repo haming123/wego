@@ -33,10 +33,10 @@ func (md *DbModel) gen_select_fields() string {
 			buffer.WriteString(md.table_alias)
 			buffer.WriteString(".")
 			buffer.WriteString(item.FName)
-			buffer.WriteString(" as ")
-			buffer.WriteString(md.table_alias)
-			buffer.WriteString("_")
-			buffer.WriteString(item.FName)
+			//buffer.WriteString(" as ")
+			//buffer.WriteString(md.table_alias)
+			//buffer.WriteString("_")
+			//buffer.WriteString(item.FName)
 		} else {
 			buffer.WriteString(item.FName)
 		}

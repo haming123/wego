@@ -45,3 +45,7 @@ func (rows *ModelRows) Scan(ent_ptr interface{}) error {
 	}
 	return nil
 }
+
+func (rows *ModelRows) ScanModel(ent_ptr interface{}) error {
+	return rows.Scan(ent_ptr)
+}
