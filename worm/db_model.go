@@ -30,19 +30,11 @@ type DbModel struct {
 	db_limit  int64
 	db_offset int64
 
+	flag_edit bool
+	flag_auto bool
 	join_type int
 	join_on   string
 	Err       error
-
-	//自动人工选择标志
-	flag_edit bool
-	//字段自动选择标志
-	flag_auto bool
-	//通过Vo选择的字段的缓存数据
-	VoFields *PublicFields
-
-	//md_pool  *ModelPool
-	//auto_put bool
 }
 
 func NewModel(dbs *DbSession, ent_ptr interface{}, flag bool) *DbModel {
@@ -79,6 +71,9 @@ func NewModel(dbs *DbSession, ent_ptr interface{}, flag bool) *DbModel {
 //重置model状态，保留以下字段的内容：
 //ent_ptr、flds_info、flds_addr、table_name、field_id、name_map_db、name_map_go
 func (md *DbModel) Reset() {
+	md.SqlContex.Reset()
+	md.db_where.Reset()
+	md.SelectALL()
 	md.table_alias = ""
 	md.group_by = ""
 	md.order_by = ""
@@ -89,9 +84,6 @@ func (md *DbModel) Reset() {
 	md.flag_edit = false
 	md.flag_auto = false
 	md.Err = nil
-	md.SqlContex.Reset()
-	md.db_where.Reset()
-	md.SelectALL()
 }
 
 func (md *DbModel) SetDbSession(dbs *DbSession) *DbModel {
@@ -219,6 +211,9 @@ func (md *DbModel) get_field_index_byaddr(fldg_ptr interface{}) int {
 	index := -1
 	num := len(md.flds_addr)
 	for i := 0; i < num; i++ {
+		if md.flds_addr[i].VAddr == nil {
+			continue
+		}
 		if md.flds_addr[i].VAddr == fldg_ptr {
 			index = i
 			break

@@ -346,7 +346,7 @@ func (lk *DbJoint) genPubField4VoMoNest(cache *JointEoFieldCache, t_vo reflect.T
 //通过eo(struct)对象来选择需要查询的字段
 //首先从缓存中获取字段交集
 //若缓存中不存在，则生成字段交集
-func (lk *DbJoint) select_field_by_eo(t_vo reflect.Type) {
+func (lk *DbJoint) select_field_by_eo(t_vo reflect.Type) *JointEoFieldCache {
 	g_joint_field_mutex.Lock()
 	defer g_joint_field_mutex.Unlock()
 
@@ -370,7 +370,7 @@ func (lk *DbJoint) select_field_by_eo(t_vo reflect.Type) {
 	//将公共字段添加到选择集中
 	for mm := 0; mm < len(lk.tables) && mm < len(cache.models); mm++ {
 		md := lk.tables[mm]
-		md.VoFields = &cache.models[mm]
+		pflds := &cache.models[mm]
 
 		//若进行了字段的人工选择，则不需要进行字段的自动选择
 		if md.flag_edit {
@@ -378,20 +378,21 @@ func (lk *DbJoint) select_field_by_eo(t_vo reflect.Type) {
 		}
 
 		//若存在model类型一致的字段，不用额外选择字段（缺省选择全部）
-		pflds := &cache.models[mm]
 		if pflds.ModelField < 0 {
 			for _, item := range pflds.Fields {
 				md.auto_add_field_index(item.MoIndex)
 			}
 		}
 	}
+
+	return cache
 }
 
 //把Model中地址的值赋值给vo对象
-func (lk *DbJoint) CopyModelData2Eo(v_vo reflect.Value) {
-	for mm := 0; mm < len(lk.tables); mm++ {
+func (lk *DbJoint) CopyModelData2Eo(cache *JointEoFieldCache, v_vo reflect.Value) {
+	for mm := 0; mm < len(lk.tables) && mm < len(cache.models); mm++ {
 		md := lk.tables[mm]
-		pflds := md.VoFields
+		pflds := &cache.models[mm]
 
 		//若vo中存在Model字段，只需要赋值Model对应的字段即可
 		if pflds.ModelField >= 0 {
@@ -489,11 +490,12 @@ func (lk *DbJoint) Get(args ...interface{}) (bool, error) {
 	//若目标对象是一个vo，则通过vo来选择字段
 	//若目标对象不是一个vo，则通过与eo的字段交集来选择字段
 	t_ent := v_ent.Type()
+	var cache *JointEoFieldCache = nil
 	vo_ptr, isvo := ent_ptr.(VoLoader)
 	if isvo {
 		lk.select_field_by_vo(vo_ptr)
 	} else {
-		lk.select_field_by_eo(t_ent)
+		cache = lk.select_field_by_eo(t_ent)
 	}
 
 	sql_str := lk.db_ptr.engine.db_dialect.GenJointGetSql(lk)
@@ -521,7 +523,7 @@ func (lk *DbJoint) Get(args ...interface{}) (bool, error) {
 	if isvo {
 		lk.CopyModelData2Vo(vo_ptr)
 	} else {
-		lk.CopyModelData2Eo(v_ent)
+		lk.CopyModelData2Eo(cache, v_ent)
 	}
 
 	rows.Close()
@@ -549,13 +551,14 @@ func (lk *DbJoint) Find(arr_ptr interface{}) error {
 
 	//若目标对象是一个vo，则通过vo来选择字段
 	//若目标对象不是一个vo，则通过与eo的字段交集来选择字段
+	var cache *JointEoFieldCache = nil
 	v_item_ptr := reflect.New(t_item)
 	v_item := v_item_ptr.Elem()
 	vo_ptr, isvo := v_item_ptr.Interface().(VoLoader)
 	if isvo {
 		lk.select_field_by_vo(vo_ptr)
 	} else {
-		lk.select_field_by_eo(t_item)
+		cache = lk.select_field_by_eo(t_item)
 	}
 
 	sql_str := lk.db_ptr.engine.db_dialect.GenJointFindSql(lk)
@@ -582,7 +585,7 @@ func (lk *DbJoint) Find(arr_ptr interface{}) error {
 		if isvo {
 			lk.CopyModelData2Vo(vo_ptr)
 		} else {
-			lk.CopyModelData2Eo(v_item)
+			lk.CopyModelData2Eo(cache, v_item)
 		}
 		v_arr_base.Set(reflect.Append(v_arr_base, v_item))
 	}

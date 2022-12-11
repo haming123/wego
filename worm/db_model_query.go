@@ -305,28 +305,6 @@ func (md *DbModel) Rows() (ModelRows, error) {
 	return rs, nil
 }
 
-func (md *DbModel) Rows2() (*ModelRows, error) {
-	rs := &ModelRows{}
-	rs.model = md
-
-	if md.Err != nil {
-		return rs, md.Err
-	}
-
-	if hook, isHook := md.ent_ptr.(BeforeQueryInterface); isHook {
-		hook.BeforeQuery(md.ctx)
-	}
-
-	sql_str := md.db_ptr.engine.db_dialect.GenModelFindSql(md)
-	rows, err := md.db_ptr.ExecQuery(&md.SqlContex, sql_str, md.db_where.Values...)
-	if err != nil {
-		return rs, err
-	}
-
-	rs.Rows = rows
-	return rs, nil
-}
-
 func (md *DbModel) Find(arr_ptr interface{}) error {
 	if md.Err != nil {
 		return md.Err

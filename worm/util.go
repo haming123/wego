@@ -13,6 +13,11 @@ func GetDirectType(t reflect.Type) reflect.Type {
 	return t
 }
 
+func pointer2Int64(ptr interface{}) uintptr {
+	v_ptr := reflect.ValueOf(ptr)
+	return v_ptr.Pointer()
+}
+
 //从对象数组中获取整形字段的值
 func CreateIntArray(arr_ptr interface{}, field string, def_val ...int64) ([]int64, error) {
 	v_arr := reflect.Indirect(reflect.ValueOf(arr_ptr))
