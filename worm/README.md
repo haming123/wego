@@ -268,8 +268,8 @@ func (ent *Book) TableName() string {
 在book表中，通过author字段与user表的id字段相关联。若要查询一个用户购买的书，在worm中可以通过Join来查询：
 ```Go
 type UserBook struct {
-    User	User
-    Book	Book
+    User
+    Book
 }
 var datas []UserBook
 md := worm.Model(&User{}).Select("id","name","age").TableAlias("u")

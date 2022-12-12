@@ -80,7 +80,8 @@ func TestModelJoinFind2(t *testing.T) {
 
 type UserBookEo3 struct {
 	User
-	DB_author int64
+	AuthorId int64  `db:"book.author"`
+	BookName string `db:"book.name"`
 }
 
 func TestModelJoinGet3(t *testing.T) {
