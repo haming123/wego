@@ -132,6 +132,7 @@ func (lk *DbJoint) genPubField4VoMoNest(cache *JointEoFieldCache, t_vo reflect.T
 
 		//若是匿名字段，并且没有tag字段名称,则递归调用
 		if i_field.Anonymous && field_db == "" {
+			pos[deep] = ff
 			lk.genPubField4VoMoNest(cache, t_field, pos, deep+1, table_inedex)
 			continue
 		}
