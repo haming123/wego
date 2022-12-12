@@ -79,8 +79,9 @@ func TestModelJoinFind2(t *testing.T) {
 }
 
 type UserBookEo3 struct {
-	User
-	AuthorId int64  `db:"book.author"`
+	//User
+	UserEo   `db:"user.*"`
+	UserName string `db:"user.name"`
 	BookName string `db:"book.name"`
 }
 

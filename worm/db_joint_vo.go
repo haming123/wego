@@ -23,7 +23,7 @@ func (lk *DbJoint) getVoFieldTagInfo(i_field reflect.StructField) (string, strin
 func (lk *DbJoint) getModelIndexByDbTable(table_db string) int {
 	for mm := 0; mm < len(lk.tables); mm++ {
 		md := lk.tables[mm]
-		if md.table_name != table_db {
+		if md.table_name == table_db {
 			return mm
 		}
 	}
@@ -124,6 +124,7 @@ func (lk *DbJoint) genPubField4VoMoNest(cache *JointEoFieldCache, t_vo reflect.T
 			if field_db == "*" {
 				field_db = ""
 			}
+			table_inedex = -1
 			if table_db != "" {
 				table_inedex = lk.getModelIndexByDbTable(table_db)
 			}
