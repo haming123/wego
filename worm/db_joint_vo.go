@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-//获取字段的tag信息, tag的结构为：table.field，或者是：table.*
+//获取字段的tag信息, tag的结构为：`db:"table.field"`, 或者是：`db:"table.*"`
 func (lk *DbJoint) getVoFieldTagInfo(i_field reflect.StructField) (string, string) {
 	table_db := ""
 	field_db := ""
