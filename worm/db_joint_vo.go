@@ -39,9 +39,6 @@ func (lk *DbJoint) getModelFieldIndexByDbField(cache *JointEoFieldCache, table_i
 		if table_inedex >= 0 && mm != table_inedex {
 			continue
 		}
-		if cache.models[mm].ModelField >= 0 {
-			continue
-		}
 		//通过数据库字段名称查询model中字段的位置
 		mo_index := md.get_field_index_dbname(field_db)
 		if mo_index < 0 {
@@ -66,9 +63,6 @@ func (lk *DbJoint) getModelFieldIndexByGoField(cache *JointEoFieldCache, table_i
 	for mm := 0; mm < len(lk.tables); mm++ {
 		md := lk.tables[mm]
 		if table_inedex >= 0 && mm != table_inedex {
-			continue
-		}
-		if cache.models[mm].ModelField >= 0 {
 			continue
 		}
 		//通过eo字段名称查询model中字段的位置
@@ -128,6 +122,10 @@ func (lk *DbJoint) genPubField4VoMoNest(cache *JointEoFieldCache, t_vo reflect.T
 			if table_db != "" {
 				table_inedex = lk.getModelIndexByDbTable(table_db)
 			}
+		}
+		//每个字段，必须有对应的表名称
+		if table_inedex < 0 {
+			continue
 		}
 
 		//若是匿名字段，并且没有tag字段名称,则递归调用
@@ -217,7 +215,6 @@ func (lk *DbJoint) CopyModelData2Eo(cache *JointEoFieldCache, v_vo reflect.Value
 			if fv_vo.CanSet() == true {
 				fv_vo.Set(md.ent_value)
 			}
-			continue
 		}
 
 		for _, item := range pflds.Fields {

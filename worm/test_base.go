@@ -44,6 +44,7 @@ func init() {
 }
 
 func open_db(cnnstr string) (*sql.DB, error) {
+	fmt.Println(cnnstr)
 	var err error
 	dbcnn, err := sql.Open("mysql", cnnstr)
 	if err != nil {

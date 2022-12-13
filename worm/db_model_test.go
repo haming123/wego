@@ -69,6 +69,17 @@ func (ent *User) AfterQuery(ctx context.Context) {
 	//fmt.Println("User.AfterQuery")
 }
 
+/*
+CREATE TABLE book (
+name varchar(255) DEFAULT NULL,
+author bigint(20) DEFAULT NULL,
+remark varchar(200) DEFAULT NULL,
+price decimal(11,2) DEFAULT '0.00',
+id bigint(20) NOT NULL AUTO_INCREMENT,
+PRIMARY KEY (id)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
+*/
+
 type DB_Book struct {
 	DB_id     int64
 	DB_author int64
