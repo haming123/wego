@@ -44,7 +44,7 @@ func BenchmarkDbQueryRows(b *testing.B) {
 	var arr []User
 	for i := 0; i < b.N; i++ {
 		var ent User
-		rows, err := dbcnn.Query("select id,name,age from user where id>? limit 10", 0)
+		rows, err := dbcnn.Query("select id,name,age from user where id>? and name is not null limit 10", 0)
 		if err != nil {
 			b.Error(err)
 			return
@@ -158,7 +158,7 @@ func BenchmarkModelFind(b *testing.B) {
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		var arr []User
-		err := Model(&User{}).Where("id>?", 0).Select("id", "name", "age").Limit(10).Find(&arr)
+		err := Model(&User{}).Where("id>? and name is not null", 0).Select("id", "name", "age").Limit(10).Find(&arr)
 		if err != nil {
 			b.Error(err)
 			return
@@ -177,7 +177,7 @@ func BenchmarkModelFindWithPool(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		var arr []User
 		md := pool_user.Get()
-		err := md.Where("id>?", 0).Select("id", "name", "age").Limit(10).Find(&arr)
+		err := md.Where("id>? and name is not null", 0).Select("id", "name", "age").Limit(10).Find(&arr)
 		if err != nil {
 			b.Error(err)
 			return
@@ -198,7 +198,7 @@ func BenchmarkModelFindWithCache(b *testing.B) {
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		var arr []User
-		err := Model(&User{}).Where("id>?", 0).Select("id", "name", "age").Limit(10).Find(&arr)
+		err := Model(&User{}).Where("id>? and name is not null", 0).Select("id", "name", "age").Limit(10).Find(&arr)
 		if err != nil {
 			b.Error(err)
 			return
