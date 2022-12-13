@@ -44,7 +44,7 @@ func BenchmarkDbQueryRows(b *testing.B) {
 	var arr []User
 	for i := 0; i < b.N; i++ {
 		var ent User
-		rows, err := dbcnn.Query("select id,name,age from user where id>? and name is not null", 0)
+		rows, err := dbcnn.Query("select id,name,age from user where id>? limit 10", 0)
 		if err != nil {
 			b.Error(err)
 			return
