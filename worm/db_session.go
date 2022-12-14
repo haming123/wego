@@ -6,7 +6,7 @@ import (
 )
 
 type DbSession struct {
-	engine	*DbEngine
+	engine *DbEngine
 	//事务会话
 	tx_raw *sql.Tx
 	//是否显示日志
@@ -15,7 +15,7 @@ type DbSession struct {
 	use_prepare bool
 }
 
- func NewDbSession(engine *DbEngine) *DbSession {
+func NewDbSession(engine *DbEngine) *DbSession {
 	session := &DbSession{}
 	session.engine = engine
 	session.tx_raw = nil
@@ -25,31 +25,31 @@ type DbSession struct {
 }
 
 //是否显示日志
-func (dbs *DbSession)ShowLog(flag bool)  {
+func (dbs *DbSession) ShowLog(flag bool) {
 	dbs.show_sql_log = flag
 }
 
 //是否启用预处理
-func (dbs *DbSession)UsePrepare(flag bool)  {
+func (dbs *DbSession) UsePrepare(flag bool) {
 	dbs.use_prepare = flag
 }
 
-func (dbs *DbSession)DB() *sql.DB {
+func (dbs *DbSession) DB() *sql.DB {
 	return dbs.engine.db_raw
 }
 
-func (dbs *DbSession)Tx() *sql.Tx {
+func (dbs *DbSession) Tx() *sql.Tx {
 	return dbs.tx_raw
 }
 
-func (dbs *DbSession)need_print_sql_log(ctx *SqlContex) bool {
+func (dbs *DbSession) need_print_sql_log(ctx *SqlContex) bool {
 	if ctx.show_log.Valid {
 		return ctx.show_log.Bool
 	}
 	return dbs.show_sql_log
 }
 
-func (dbs *DbSession)need_prepare(ctx *SqlContex) bool {
+func (dbs *DbSession) need_prepare(ctx *SqlContex) bool {
 	if ctx.use_prepare.Valid {
 		return ctx.use_prepare.Bool
 	}
@@ -57,9 +57,9 @@ func (dbs *DbSession)need_prepare(ctx *SqlContex) bool {
 }
 
 //开启数据库事务
-func (dbs *DbSession)TxBegin() error {
+func (dbs *DbSession) TxBegin() error {
 	if dbs.tx_raw != nil {
-		return nil
+		panic("transaction has begun")
 	}
 
 	tx, err := dbs.engine.db_raw.Begin()
@@ -73,10 +73,10 @@ func (dbs *DbSession)TxBegin() error {
 }
 
 //执行事务回滚
-func (dbs *DbSession)TxRollback() error {
+func (dbs *DbSession) TxRollback() error {
 	if dbs.tx_raw != nil {
 		err := dbs.tx_raw.Rollback()
-		if err != nil{
+		if err != nil {
 			return err
 		}
 		dbs.tx_raw = nil
@@ -87,10 +87,10 @@ func (dbs *DbSession)TxRollback() error {
 }
 
 //执行事务提交
-func (dbs *DbSession)TxCommit() error {
+func (dbs *DbSession) TxCommit() error {
 	if dbs.tx_raw != nil {
 		err := dbs.tx_raw.Commit()
-		if err != sql.ErrTxDone && err != nil{
+		if err != sql.ErrTxDone && err != nil {
 			return err
 		}
 		dbs.tx_raw = nil
@@ -103,9 +103,9 @@ func (dbs *DbSession)TxCommit() error {
 //提交一个sql预处理
 //如果是事务会话，则使用tx_raw.Prepare
 //否则使用db_raw.Prepare提交预处理
-func (dbs *DbSession)Prepare(sql_tpl string) (*sql.Stmt, error) {
+func (dbs *DbSession) Prepare(sql_tpl string) (*sql.Stmt, error) {
 	sql_str := dbs.engine.db_dialect.ParsePlaceholder(sql_tpl)
-	if dbs.tx_raw != nil{
+	if dbs.tx_raw != nil {
 		return dbs.tx_raw.Prepare(sql_str)
 	} else {
 		return dbs.engine.db_raw.Prepare(sql_str)
@@ -113,7 +113,7 @@ func (dbs *DbSession)Prepare(sql_tpl string) (*sql.Stmt, error) {
 }
 
 //执行一个sql命令
-func (dbs *DbSession)ExecSQL(ctx *SqlContex, sql_tpl string, args ...interface{}) (res sql.Result, err error) {
+func (dbs *DbSession) ExecSQL(ctx *SqlContex, sql_tpl string, args ...interface{}) (res sql.Result, err error) {
 	log_info := &LogContex{}
 	log_info.Session = dbs
 	log_info.Start = time.Now()
@@ -157,7 +157,7 @@ func (dbs *DbSession)ExecSQL(ctx *SqlContex, sql_tpl string, args ...interface{}
 }
 
 //执行数据库查询
-func (dbs *DbSession)ExecQuery(ctx *SqlContex, sql_tpl string, args ...interface{}) (res *sql.Rows, err error) {
+func (dbs *DbSession) ExecQuery(ctx *SqlContex, sql_tpl string, args ...interface{}) (res *sql.Rows, err error) {
 	log_info := &LogContex{}
 	log_info.Start = time.Now()
 	log_info.Session = dbs
@@ -217,22 +217,22 @@ func (dbs *DbSession)ExecQuery(ctx *SqlContex, sql_tpl string, args ...interface
 	return res, err
 }
 
-func (dbs *DbSession)NewModel(ent_ptr interface{}, flag bool) *DbModel {
+func (dbs *DbSession) NewModel(ent_ptr interface{}, flag bool) *DbModel {
 	return NewModel(dbs, ent_ptr, flag)
 }
 
-func (dbs *DbSession)Model(ent_ptr interface{}) *DbModel {
+func (dbs *DbSession) Model(ent_ptr interface{}) *DbModel {
 	return NewModel(dbs, ent_ptr, true)
 }
 
-func (dbs *DbSession)Joint(ent_ptr interface{}, alias string, fields ...string) *DbJoint {
+func (dbs *DbSession) Joint(ent_ptr interface{}, alias string, fields ...string) *DbJoint {
 	return NewJoint(dbs, ent_ptr, alias, fields...)
 }
 
-func (dbs *DbSession)SQL(sql_str string, args ...interface{}) *DbSQL {
+func (dbs *DbSession) SQL(sql_str string, args ...interface{}) *DbSQL {
 	return NewDbSQL(dbs, sql_str, args...)
 }
 
-func (dbs *DbSession)Table(table_name string) *DbTable {
+func (dbs *DbSession) Table(table_name string) *DbTable {
 	return NewDbTable(dbs, table_name)
 }
