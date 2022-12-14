@@ -45,7 +45,7 @@ func AddSlave(db *sql.DB, db_name string, weight int) error {
 	return engine.AddSlave(db, db_name, weight)
 }
 
-func UsePrepare(flag bool)  {
+func UsePrepare(flag bool) {
 	engine := db_default
 	if engine == nil {
 		return
@@ -56,7 +56,7 @@ func UsePrepare(flag bool)  {
 	}
 }
 
-func ShowSqlLog(flag bool)  {
+func ShowSqlLog(flag bool) {
 	engine := db_default
 	if engine == nil {
 		return
@@ -67,7 +67,7 @@ func ShowSqlLog(flag bool)  {
 	}
 }
 
-func SetSqlLogCB(cb SqlPrintCB)  {
+func SetSqlLogCB(cb SqlPrintCB) {
 	engine := db_default
 	if engine == nil {
 		return
@@ -75,7 +75,7 @@ func SetSqlLogCB(cb SqlPrintCB)  {
 	engine.SetSqlLogCB(cb)
 }
 
-func SetMaxStmtCacheNum(max_len int)  {
+func SetMaxStmtCacheNum(max_len int) {
 	engine := db_default
 	if engine == nil {
 		return
@@ -93,6 +93,20 @@ func NewSession() *DbSession {
 		return nil
 	}
 	return engine.NewSession()
+}
+
+func Session() *DbSession {
+	engine := db_default
+	if engine == nil {
+		return nil
+	}
+	return engine.def_session
+}
+
+func TxBegin() (*DbSession, error) {
+	dbs := NewSession()
+	err := dbs.TxBegin()
+	return dbs, err
 }
 
 func Model(ent_ptr interface{}) *DbModel {
