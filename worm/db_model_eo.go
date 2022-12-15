@@ -1,6 +1,7 @@
 package worm
 
 import (
+	"fmt"
 	"reflect"
 	"sync"
 )
@@ -93,6 +94,10 @@ func getPubField4VoMo(t_mo reflect.Type, t_vo reflect.Type) *PublicFields {
 
 	//获取字段交集
 	cache_key := t_vo.String() + t_mo.String()
+	fmt.Println(t_vo.Name())
+	fmt.Println(t_vo.String())
+	fmt.Println(t_vo.PkgPath())
+
 	pflds, ok := g_pubfield_cache[cache_key]
 	if ok {
 		return pflds
