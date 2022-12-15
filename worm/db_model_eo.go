@@ -1,7 +1,6 @@
 package worm
 
 import (
-	"fmt"
 	"reflect"
 	"sync"
 )
@@ -32,8 +31,13 @@ func NewPublicFields(num int) *PublicFields {
 	return &flds
 }
 
+type fieldCacheKey struct {
+	t_mo reflect.Type
+	t_vo reflect.Type
+}
+
 //vo、mo字段交集缓存
-var g_pubfield_cache map[string]*PublicFields = make(map[string]*PublicFields)
+var g_pubfield_cache map[fieldCacheKey]*PublicFields = make(map[fieldCacheKey]*PublicFields)
 var g_pubfield_mutex sync.Mutex
 
 //生成vo与mo的字段交集信息
@@ -93,11 +97,7 @@ func getPubField4VoMo(t_mo reflect.Type, t_vo reflect.Type) *PublicFields {
 	defer g_pubfield_mutex.Unlock()
 
 	//获取字段交集
-	cache_key := t_vo.String() + t_mo.String()
-	fmt.Println(t_vo.Name())
-	fmt.Println(t_vo.String())
-	fmt.Println(t_vo.PkgPath())
-
+	cache_key := fieldCacheKey{t_mo, t_vo}
 	pflds, ok := g_pubfield_cache[cache_key]
 	if ok {
 		return pflds
