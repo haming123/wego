@@ -149,12 +149,12 @@ func genModelInfo(t_ent reflect.Type) *ModelInfo {
 		finfo.DbName = db_name
 
 		//获取字段的tag属性
+		parselFeildTag(&finfo, ff)
 		if strings.ToLower(db_name) == "id" {
 			minfo.FieldID = db_name
-			finfo.AutoIncr = true
+			//finfo.AutoIncr = true
 			finfo.NotUpdate = true
 		}
-		parselFeildTag(&finfo, ff)
 
 		minfo.Fields[i] = finfo
 		minfo.NameMapDb[db_name] = i
