@@ -16,11 +16,12 @@ type DB_User struct {
 */
 
 const (
-	STR_AUTOINCR     string = "autoincr"
-	STR_NOT_AUTOINCR string = "n_autoincr"
-	STR_NOT_INSERT   string = "n_insert"
-	STR_NOT_UPDATE   string = "n_update"
-	STR_NOT_SELECT   string = "n_select"
+	STR_AUTOINCR   string = "autoincr" //自增int
+	STR_AUTOID     string = "autoid"   //自增型单主键
+	STR_PKID       string = "pkid"     //id型主键(int型单主键)
+	STR_NOT_INSERT string = "n_insert" //构造insert语句时忽略
+	STR_NOT_UPDATE string = "n_update" //构造update语句时忽略
+	STR_NOT_SELECT string = "n_select" //构造select语句时忽略
 )
 
 type TableName interface {
@@ -33,6 +34,8 @@ type FieldInfo struct {
 	FieldType  reflect.Type
 	DbName     string
 	AutoIncr   bool
+	AutoId     bool
+	PkId       bool
 	NotInsert  bool
 	NotUpdate  bool
 	NotSelect  bool
@@ -152,8 +155,13 @@ func genModelInfo(t_ent reflect.Type) *ModelInfo {
 		parselFeildTag(&finfo, ff)
 		if strings.ToLower(db_name) == "id" {
 			minfo.FieldID = db_name
-			//finfo.AutoIncr = true
-			//finfo.NotUpdate = true
+		}
+		if finfo.PkId == true {
+			minfo.FieldID = db_name
+		}
+		if finfo.AutoId == true {
+			minfo.FieldID = db_name
+			finfo.AutoIncr = true
 		}
 
 		minfo.Fields[i] = finfo
@@ -233,8 +241,10 @@ func parselFeildTag(finfo *FieldInfo, ff reflect.StructField) {
 		item = strings.Trim(item, " ")
 		if item == STR_AUTOINCR {
 			finfo.AutoIncr = true
-		} else if item == STR_NOT_AUTOINCR {
-			finfo.AutoIncr = false
+		} else if item == STR_AUTOID {
+			finfo.AutoId = true
+		} else if item == STR_PKID {
+			finfo.PkId = true
 		} else if item == STR_NOT_INSERT {
 			finfo.NotInsert = true
 		} else if item == STR_NOT_UPDATE {

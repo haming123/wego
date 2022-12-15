@@ -122,6 +122,11 @@ func (md *DbModel) UseMaster(val bool) *DbModel {
 	return md
 }
 
+func (md *DbModel) Table(val string) *DbModel {
+	md.table_name = val
+	return md
+}
+
 func (md *DbModel) TableName(val string) *DbModel {
 	md.table_name = val
 	return md

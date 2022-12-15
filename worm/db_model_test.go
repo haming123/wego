@@ -8,14 +8,36 @@ import (
 )
 
 /*
-drop table user
+drop table user;
 CREATE TABLE user (
   id bigint(20) NOT NULL AUTO_INCREMENT,
   name varchar(255) DEFAULT NULL,
   age int(11) DEFAULT NULL,
   created datetime DEFAULT NULL,
-  PRIMARY KEY (id)
+  PRIMARY KEY (id);
 )
+
+drop table user1;
+CREATE TABLE user1 (
+  uid bigint(20) NOT NULL AUTO_INCREMENT,
+  name varchar(32) DEFAULT NULL,
+  passwd varchar(32) DEFAULT NULL,
+  sex int(11) DEFAULT NULL,
+  age int(11) DEFAULT NULL,
+  created datetime DEFAULT NULL,
+  PRIMARY KEY (uid)
+);
+
+drop table user2;
+CREATE TABLE user2 (
+  uid bigint(20) NOT NULL,
+  name varchar(32) DEFAULT NULL,
+  passwd varchar(32) DEFAULT NULL,
+  sex int(11) DEFAULT NULL,
+  age int(11) DEFAULT NULL,
+  created datetime DEFAULT NULL,
+  PRIMARY KEY (uid)
+);
 */
 
 type User struct {
@@ -24,7 +46,7 @@ type User struct {
 	DB_Salt string `db:"-"`
 	Passwd  string
 	Age     int       `db:"age"`
-	Created time.Time `db:"created;insert_only"`
+	Created time.Time `db:"created;n_update"`
 }
 
 func (ent *User) TableName() string {
