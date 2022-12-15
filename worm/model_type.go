@@ -16,10 +16,11 @@ type DB_User struct {
 */
 
 const (
-	STR_AUTOINCR   string = "autoincr"
-	STR_NOT_INSERT string = "n_insert"
-	STR_NOT_UPDATE string = "n_update"
-	STR_NOT_SELECT string = "n_select"
+	STR_AUTOINCR     string = "autoincr"
+	STR_NOT_AUTOINCR string = "n_autoincr"
+	STR_NOT_INSERT   string = "n_insert"
+	STR_NOT_UPDATE   string = "n_update"
+	STR_NOT_SELECT   string = "n_select"
 )
 
 type TableName interface {
@@ -129,10 +130,12 @@ func genModelInfo(t_ent reflect.Type) *ModelInfo {
 	minfo.NameMapDb = make(map[string]int)
 	minfo.NameMapGo = make(map[string]int)
 	for i := 0; i < t_ent.NumField(); i++ {
+		ff := t_ent.Field(i)
+
 		finfo := FieldInfo{}
 		finfo.FieldIndex = -1
 
-		ff := t_ent.Field(i)
+		//获取字段的数据库名称
 		field_name := ff.Name
 		db_name := getFieldName(ff)
 		if len(db_name) < 1 {
@@ -144,11 +147,14 @@ func genModelInfo(t_ent reflect.Type) *ModelInfo {
 		finfo.FieldName = field_name
 		finfo.FieldType = ff.Type
 		finfo.DbName = db_name
-		parselFeildTag(&finfo, ff)
+
+		//获取字段的tag属性
 		if strings.ToLower(db_name) == "id" {
 			minfo.FieldID = db_name
 			finfo.AutoIncr = true
+			finfo.NotUpdate = true
 		}
+		parselFeildTag(&finfo, ff)
 
 		minfo.Fields[i] = finfo
 		minfo.NameMapDb[db_name] = i
@@ -227,6 +233,8 @@ func parselFeildTag(finfo *FieldInfo, ff reflect.StructField) {
 		item = strings.Trim(item, " ")
 		if item == STR_AUTOINCR {
 			finfo.AutoIncr = true
+		} else if item == STR_NOT_AUTOINCR {
+			finfo.AutoIncr = false
 		} else if item == STR_NOT_INSERT {
 			finfo.NotInsert = true
 		} else if item == STR_NOT_UPDATE {
