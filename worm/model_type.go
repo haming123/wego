@@ -153,7 +153,7 @@ func genModelInfo(t_ent reflect.Type) *ModelInfo {
 		if strings.ToLower(db_name) == "id" {
 			minfo.FieldID = db_name
 			//finfo.AutoIncr = true
-			finfo.NotUpdate = true
+			//finfo.NotUpdate = true
 		}
 
 		minfo.Fields[i] = finfo
