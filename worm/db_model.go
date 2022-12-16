@@ -416,7 +416,7 @@ func (md *DbModel) WhereNotIn(sql string, vals ...interface{}) *DbModel {
 	return md
 }
 func (md *DbModel) ID(val int64) *DbModel {
-	md.db_where.Init("id=?", val)
+	md.db_where.Init(md.field_id+"=?", val)
 	return md
 }
 func (md *DbModel) And(sql string, vals ...interface{}) *DbModel {

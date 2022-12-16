@@ -165,21 +165,35 @@ func (lk *DbJoint) select_field_by_eo(t_vo reflect.Type) *JointEoFieldCache {
 	g_joint_field_mutex.Lock()
 	defer g_joint_field_mutex.Unlock()
 
-	//生成缓存的key
-	cache_key := t_vo.String()
-	for mm := 0; mm < len(lk.tables); mm++ {
-		md := lk.tables[mm]
-		cache_key += md.ent_type.String()
-	}
-
 	//从缓存中获取字段交集
 	//若没有字段交集的缓存，调用genPubField4VoMoNest生成字段交集
-	cache, ok := g_joint_field_cache[cache_key]
-	if !ok {
+	var cache *JointEoFieldCache = nil
+	md_num := len(lk.tables)
+	if md_num <= 3 {
+		cache_key := fieldCacheKey4Join{}
+		cache_key.t_vo = t_vo
+		if md_num >= 1 {
+			cache_key.t_mo0 = lk.tables[0].ent_type
+		}
+		if md_num >= 2 {
+			cache_key.t_mo1 = lk.tables[1].ent_type
+		}
+		if md_num >= 3 {
+			cache_key.t_mo2 = lk.tables[2].ent_type
+		}
+		cache, _ = g_joint_field_cache[cache_key]
+		if cache == nil {
+			var pos FieldPos
+			cache = newJointEoFieldCache(lk.tables)
+			lk.genPubField4VoMoNest(cache, t_vo, pos, 0, -1)
+			g_joint_field_cache[cache_key] = cache
+		}
+	}
+
+	if cache == nil {
 		var pos FieldPos
 		cache = newJointEoFieldCache(lk.tables)
 		lk.genPubField4VoMoNest(cache, t_vo, pos, 0, -1)
-		g_joint_field_cache[cache_key] = cache
 	}
 
 	//将公共字段添加到选择集中

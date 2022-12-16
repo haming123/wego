@@ -65,7 +65,7 @@ func TestModelUser1(t *testing.T) {
 }
 
 type User2 struct {
-	UserId  int64     `db:"uid;pkid"`
+	UserId  int64     `db:"uid;intid"`
 	Name    string    `db:"name"`
 	Passwd  string    `db:"passwd"`
 	Age     int       `db:"age"`
@@ -91,14 +91,14 @@ func TestModelUser2(t *testing.T) {
 	t.Logf("insert id=%d", id)
 
 	user = User2{UserId: 22, Name: "model2", Age: 23}
-	num, err := Model(&User2{}).Table("user2").Where("uid=?", 22).Update(&user)
+	num, err := Model(&User2{}).Table("user2").ID(22).Update(&user)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	t.Logf("update num=%d", num)
 
-	num, err = Model(&User2{}).Table("user2").Where("uid=?", 22).Delete()
+	num, err = Model(&User2{}).Table("user2").ID(22).Delete()
 	if err != nil {
 		t.Error(err)
 		return

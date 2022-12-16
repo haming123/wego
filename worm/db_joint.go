@@ -39,8 +39,15 @@ func newJointEoFieldCache(md_arr []*DbModel) *JointEoFieldCache {
 	return &cache
 }
 
+type fieldCacheKey4Join struct {
+	t_vo  reflect.Type
+	t_mo0 reflect.Type
+	t_mo1 reflect.Type
+	t_mo2 reflect.Type
+}
+
 //vo、mo字段交集缓存
-var g_joint_field_cache map[string]*JointEoFieldCache = make(map[string]*JointEoFieldCache)
+var g_joint_field_cache map[fieldCacheKey4Join]*JointEoFieldCache = make(map[fieldCacheKey4Join]*JointEoFieldCache)
 var g_joint_field_mutex sync.Mutex
 
 type DbJoint struct {
