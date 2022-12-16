@@ -36,7 +36,7 @@ CREATE TABLE `user` (
 数据库表user对应的实体类的定义如下：
 ```Go
 type User struct {
-	Id          int64   	`db:"id;autoincr"`
+	Id          int64   	`db:"id;autoid"`
 	Name        string  	`db:"name"`
 	Age         int64   	`db:"age"`
 	Passwd      string  	`db:"passwd"`
@@ -46,7 +46,7 @@ func (ent *User) TableName() string {
 	return "user"
 }
 ```
-worm使用名称为"db"的Tag映射数据库字段，"db"后面是字段的名称，autoincr用于说明该字段是自增ID，n_update用于说明该字段不可用于update语句中。
+worm使用名称为"db"的Tag映射数据库字段，"db"后面是字段的名称，autoid用于说明该字段是自增型单主键，n_update用于说明该字段不可用于update语句中。
 
 ### 创建DbEngine
 本文中的例子使用的都是mysql数据库。若要创建一个mysql数据库的DbEngine，您可调用worm.NewMysql()函数或者调用worm.InitMysql()函数。
