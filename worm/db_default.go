@@ -7,6 +7,10 @@ import (
 
 var db_default *DbEngine
 
+func GetDefaultDbEngine() *DbEngine {
+	return db_default
+}
+
 func InitEngine(dialect Dialect, db *sql.DB) error {
 	var err error
 	db_default, err = NewEngine(dialect, db)
