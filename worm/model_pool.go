@@ -79,6 +79,11 @@ func (p *ModelPool) Get(dbs ...*DbSession) *DbModel {
 	md := p.pool[last]
 	p.pool = p.pool[:last]
 	p.mutex.Unlock()
+	if len(dbs) == 1 {
+		md.db_ptr = dbs[0]
+	} else {
+		md.db_ptr = db_default.def_session
+	}
 	md.Err = nil
 	return md
 }
