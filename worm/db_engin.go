@@ -62,6 +62,10 @@ func (engine *DbEngine) CleanStmtCache() {
 	engine.stmt_cache.Close()
 }
 
+func (engine *DbEngine) DefaultSession() *DbSession {
+	return engine.def_session
+}
+
 func NewMysql(db *sql.DB) (*DbEngine, error) {
 	return NewEngine(&dialectMysql{}, db)
 }
