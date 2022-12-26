@@ -11,10 +11,6 @@ func GetDefaultDbEngine() *DbEngine {
 	return db_default
 }
 
-func SetDefaultDbEngine(engine *DbEngine) {
-	db_default = engine
-}
-
 func InitEngine(dialect Dialect, db *sql.DB) error {
 	var err error
 	db_default, err = NewEngine(dialect, db)
