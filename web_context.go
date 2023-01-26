@@ -25,13 +25,13 @@ const ContentTypeXML = "application/xml; charset=utf-8"
 type WebStatus int
 
 const (
-	STATUS_BEG 	WebStatus = iota
+	STATUS_BEG WebStatus = iota
 	STATUS_END
 )
 
 type WebState struct {
-	Status 		int
-	Error  		error
+	Status int
+	Error  error
 }
 
 func (this *WebState) Reset() {
@@ -45,21 +45,21 @@ func (this *WebState) Set(code int, err error) {
 }
 
 type WebContext struct {
-	Config     	*WebConfig
-	engine     	*WebEngine
-	Input      	WebRequest
-	Output     	WebResponse
-	Route      	*RouteInfo
-	Path       	string
-	Param      	WebParam
-	RouteParam 	PathParam
-	QueryParam 	FormParam
-	FormParam  	FormParam
-	Data       	ContextData
-	Session    	SessionInfo
-	Start      	time.Time
-	filters    	[]FilterInfo
-	state 		WebState
+	Config     *WebConfig
+	engine     *WebEngine
+	Input      WebRequest
+	Output     WebResponse
+	Route      *RouteInfo
+	Path       string
+	Param      WebParam
+	RouteParam PathParam
+	QueryParam FormParam
+	FormParam  FormParam
+	Data       ContextData
+	Session    SessionInfo
+	Start      time.Time
+	filters    []FilterInfo
+	state      WebState
 }
 
 func (c *WebContext) reset() {
@@ -77,7 +77,7 @@ func (c *WebContext) reset() {
 }
 
 func newContext() *WebContext {
-	ctx := &WebContext{ }
+	ctx := &WebContext{}
 	ctx.Input.ctx = ctx
 	ctx.Param.ctx = ctx
 	ctx.Session.ctx = ctx
@@ -85,6 +85,10 @@ func newContext() *WebContext {
 	ctx.QueryParam.Init(ctx)
 	ctx.FormParam.Init(ctx)
 	return ctx
+}
+
+func NewWebContext() *WebContext {
+	return newContext()
 }
 
 func (c *WebContext) UseGzip(flag bool, min_size ...int64) *WebContext {
@@ -235,10 +239,11 @@ Max-Age：收到报文后多久的过期时间，单位是秒。设置为0时立
 HttpOnly：如设为True，JavaScript这些脚本无法访问，即有效减少 XSS 攻击
 Secure：如设置secure为true，浏览器只会在HTTPS和SSL等安全协议中传输Cookie。
 SameSite：可以防范 CSRF 攻击。
+
 	SameSite=None：无论是否跨站都会发送 Cookie，
 	SameSite=Lax：允许部分第三方请求携带 Cookie，
 	SameSite=Strict：仅允许同站请求携带 Cookie，即当前网页 URL 与请求目标 URL 完全一致
- */
+*/
 func (c *WebContext) SetCookie(ck *http.Cookie) {
 	http.SetCookie(&c.Output, ck)
 }
@@ -266,7 +271,7 @@ func (c *WebContext) Write(code int, contentType string, data []byte) {
 	c.Output.Write(data)
 }
 
-func (c *WebContext) WriteNoContent(code int, contentType string)  {
+func (c *WebContext) WriteNoContent(code int, contentType string) {
 	if len(contentType) > 0 {
 		c.SetHeader("Content-Type", contentType)
 	}
@@ -309,7 +314,7 @@ func (c *WebContext) WriteJSON(code int, obj interface{}) {
 	}
 }
 
-//美化JSON的输出，可以使用json.MarshalIndent方法对obj进行编码
+// 美化JSON的输出，可以使用json.MarshalIndent方法对obj进行编码
 func (c *WebContext) WriteIndentedJSON(code int, obj interface{}) {
 	data, err := json.MarshalIndent(obj, "", "    ")
 	if err != nil {
@@ -318,7 +323,7 @@ func (c *WebContext) WriteIndentedJSON(code int, obj interface{}) {
 	c.Write(code, ContentTypeJSON, data)
 }
 
-//输出JSONP，使用callback参数名作为接收回调函数的名称
+// 输出JSONP，使用callback参数名作为接收回调函数的名称
 func (c *WebContext) WriteJSONP(code int, obj interface{}) {
 	callback := c.QueryParam.GetString("callback").Value
 	if callback == "" {
@@ -341,7 +346,7 @@ func (c *WebContext) WriteJSONP(code int, obj interface{}) {
 	c.Write(code, ContentTypeJSON, data)
 }
 
-//防JSON劫持缺省的前缀是while(1);
+// 防JSON劫持缺省的前缀是while(1);
 func (c *WebContext) WriteSecureJSON(code int, obj interface{}) {
 	data, err := json.Marshal(obj)
 	if err != nil {
@@ -349,12 +354,12 @@ func (c *WebContext) WriteSecureJSON(code int, obj interface{}) {
 	}
 
 	if bytes.HasPrefix(data, []byte("[")) == false {
-		c.Write(code, ContentTypeJSON,  data)
+		c.Write(code, ContentTypeJSON, data)
 		return
 	}
 
 	if bytes.HasSuffix(data, []byte("]")) == false {
-		c.Write(code, ContentTypeJSON,  data)
+		c.Write(code, ContentTypeJSON, data)
 		return
 	}
 
