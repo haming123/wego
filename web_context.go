@@ -87,10 +87,6 @@ func newContext() *WebContext {
 	return ctx
 }
 
-func NewWebContext() *WebContext {
-	return newContext()
-}
-
 func (c *WebContext) UseGzip(flag bool, min_size ...int64) *WebContext {
 	c.Output.gzip_flag = flag
 	if len(min_size) > 0 {
