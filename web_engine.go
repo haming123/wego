@@ -187,6 +187,10 @@ func (web *WebEngine) initModule() error {
 	return nil
 }
 
+func (web *WebEngine) InitModule() error {
+	return web.initModule()
+}
+
 func (web *WebEngine) cleanModule() {
 	if web.onShutdown != nil {
 		debug_log.Info("call closeHook")
@@ -330,14 +334,6 @@ func (web *WebEngine) shouldCompress(req *http.Request) bool {
 		return false
 	}
 	return true
-}
-
-func (web *WebEngine) NewWebContext() *WebContext {
-	c := web.ctxPool.Get().(*WebContext)
-	c.reset()
-	c.Config = &web.Config
-	c.engine = web
-	return c
 }
 
 func (web *WebEngine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
