@@ -64,11 +64,11 @@ func (web *WebEngine) SetHandler500(handler HandlerFunc) {
 	web.hanlder_500 = handler
 }
 
-//空handler
+// 空handler
 func HandlerNull(c *WebContext) {
 }
 
-//缺省404handler
+// 缺省404handler
 func default_not_fund(c *WebContext) {
 	c.WriteText(http.StatusNotFound, "404 NOT FOUND: "+c.Input.Request.URL.Path)
 }
@@ -206,10 +206,10 @@ func (web *WebEngine) cleanModule() {
 	}
 }
 
-//首先关闭所有开启的监听器，然后关闭所有闲置连接，最后等待活跃的连接均闲置了才终止服务。
-//若传入的context在服务完成终止前已超时，则Shutdown方法返回context的错误，否则返回任何由关闭服务监听器所引起的错误。
-//当Shutdown方法被调用时，Serve、ListenAndServe及ListenAndServeTLS方法会立刻返回ErrServerClosed错误。
-//用户的退出指令一般是SIGTERM或SIGINT（常常对应bash的Ctrl + C）
+// 首先关闭所有开启的监听器，然后关闭所有闲置连接，最后等待活跃的连接均闲置了才终止服务。
+// 若传入的context在服务完成终止前已超时，则Shutdown方法返回context的错误，否则返回任何由关闭服务监听器所引起的错误。
+// 当Shutdown方法被调用时，Serve、ListenAndServe及ListenAndServeTLS方法会立刻返回ErrServerClosed错误。
+// 用户的退出指令一般是SIGTERM或SIGINT（常常对应bash的Ctrl + C）
 func gracefullShutdown(server *http.Server, quit chan<- bool) {
 	waiter := make(chan os.Signal, 1)
 	signal.Notify(waiter, syscall.SIGTERM, syscall.SIGINT)
@@ -298,8 +298,8 @@ func (web *WebEngine) Run(addr ...string) (err error) {
 	}
 }
 
-//修正path，并重新获取路由，若获取到则跳转的修正的路由
-//返回：是否跳转
+// 修正path，并重新获取路由，若获取到则跳转的修正的路由
+// 返回：是否跳转
 func (web *WebEngine) cleanAndRedirect(c *WebContext) bool {
 	req := c.Input.Request
 	method := c.Input.Request.Method
@@ -330,6 +330,14 @@ func (web *WebEngine) shouldCompress(req *http.Request) bool {
 		return false
 	}
 	return true
+}
+
+func (web *WebEngine) NewWebContext() *WebContext {
+	c := web.ctxPool.Get().(*WebContext)
+	c.reset()
+	c.Config = &web.Config
+	c.engine = web
+	return c
 }
 
 func (web *WebEngine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
