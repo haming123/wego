@@ -187,10 +187,6 @@ func (web *WebEngine) initModule() error {
 	return nil
 }
 
-func (web *WebEngine) InitModule() error {
-	return web.initModule()
-}
-
 func (web *WebEngine) cleanModule() {
 	if web.onShutdown != nil {
 		debug_log.Info("call closeHook")
