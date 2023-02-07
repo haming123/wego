@@ -15,7 +15,7 @@ func (db *dialectMssql) GetName() string {
 	return "mssql"
 }
 
-func (db *dialectMssql) LimitSql(offset int64, limit int64) string  {
+func (db *dialectMssql) LimitSql(offset int64, limit int64) string {
 	return ""
 }
 
@@ -64,22 +64,22 @@ func (db *dialectMssql) GetColumns(db_raw *sql.DB, table_name string) ([]ColumnI
 
 		cols = append(cols, col)
 	}
-	return  cols, nil
+	return cols, nil
 }
 
-func (db *dialectMssql)ModelInsertHasOutput(md *DbModel) bool {
+func (db *dialectMssql) ModelInsertHasOutput(md *DbModel) bool {
 	return true
 }
 
-func (db *dialectMssql)GenModelInsertSql(md *DbModel) string {
+func (db *dialectMssql) GenModelInsertSql(md *DbModel) string {
 	var buffer bytes.Buffer
-	index := 0;
+	index := 0
 	buffer.WriteString(fmt.Sprintf("insert into %s (", md.table_name))
 	for i, item := range md.flds_addr {
 		if md.GetFieldFlag4Insert(i) == false {
 			continue
 		}
-		if index > 0{
+		if index > 0 {
 			buffer.WriteString(",")
 		}
 		buffer.WriteString(item.FName)
@@ -97,7 +97,7 @@ func (db *dialectMssql)GenModelInsertSql(md *DbModel) string {
 		buffer.WriteString(" OUTPUT 0 ")
 	}
 
-	index = 0;
+	index = 0
 	buffer.WriteString(" values (")
 	for i, _ := range md.flds_addr {
 		if md.GetFieldFlag4Insert(i) == false {
@@ -114,7 +114,7 @@ func (db *dialectMssql)GenModelInsertSql(md *DbModel) string {
 	return buffer.String()
 }
 
-func (db *dialectMssql)GenModelGetSql(md *DbModel) string {
+func (db *dialectMssql) GenModelGetSql(md *DbModel) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("select top 1 ")
@@ -126,7 +126,7 @@ func (db *dialectMssql)GenModelGetSql(md *DbModel) string {
 		buffer.WriteString(md.table_alias)
 	}
 
-	if len(md.db_where.Tpl_sql)>0 {
+	if len(md.db_where.Tpl_sql) > 0 {
 		buffer.WriteString(" where ")
 		buffer.WriteString(md.db_where.Tpl_sql)
 	}
@@ -144,11 +144,11 @@ func (db *dialectMssql)GenModelGetSql(md *DbModel) string {
 	return buffer.String()
 }
 
-//select top @pageSize id from tablename
-//where id not in (
-//select top @offset id from tablename
-//)
-func (db *dialectMssql)GenModelFindSql(md *DbModel) string {
+// select top @pageSize id from tablename
+// where id not in (
+// select top @offset id from tablename
+// )
+func (db *dialectMssql) GenModelFindSql(md *DbModel) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("select ")
@@ -163,7 +163,7 @@ func (db *dialectMssql)GenModelFindSql(md *DbModel) string {
 		buffer.WriteString(md.table_alias)
 	}
 
-	if len(md.db_where.Tpl_sql)>0 {
+	if len(md.db_where.Tpl_sql) > 0 {
 		buffer.WriteString(" where ")
 		buffer.WriteString(md.db_where.Tpl_sql)
 	}
@@ -181,36 +181,36 @@ func (db *dialectMssql)GenModelFindSql(md *DbModel) string {
 	return buffer.String()
 }
 
-func (db *dialectMssql)TableInsertHasOutput(tb *DbTable) bool {
+func (db *dialectMssql) TableInsertHasOutput(tb *DbTable) bool {
 	return len(tb.output_str) > 0
 }
 
-func (db *dialectMssql)GenTableInsertSql(tb *DbTable) (string, []interface{}) {
-	index := 0;
-	vals:= []interface{}{}
+func (db *dialectMssql) GenTableInsertSql(tb *DbTable) (string, []interface{}) {
+	index := 0
+	vals := []interface{}{}
 
 	var buffer1 bytes.Buffer
 	buffer1.WriteString(fmt.Sprintf("insert into %s (", tb.table_name))
 
 	var buffer2 bytes.Buffer
 	buffer2.WriteString(" values (")
-	for name, val := range tb.fld_values {
+	for _, fld := range tb.fld_values {
 		if index > 0 {
 			buffer1.WriteString(",")
 			buffer2.WriteString(",")
 		}
 
-		buffer1.WriteString(name)
-		if val == nil {
+		buffer1.WriteString(fld.Key)
+		if fld.Val == nil {
 			buffer2.WriteString("null")
-		} else if exp, ok := val.(SqlExp); ok {
+		} else if exp, ok := fld.Val.(SqlExp); ok {
 			buffer2.WriteString(exp.Tpl_sql)
 			if exp.Values != nil {
 				vals = append(vals, exp.Values...)
 			}
 		} else {
 			buffer2.WriteString("?")
-			vals = append(vals, val)
+			vals = append(vals, fld.Val)
 		}
 
 		index += 1
@@ -232,7 +232,7 @@ func (db *dialectMssql)GenTableInsertSql(tb *DbTable) (string, []interface{}) {
 	return buffer1.String(), vals
 }
 
-func (db *dialectMssql)GenTableGetSql(tb *DbTable) string {
+func (db *dialectMssql) GenTableGetSql(tb *DbTable) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("select top 1  ")
@@ -244,11 +244,11 @@ func (db *dialectMssql)GenTableGetSql(tb *DbTable) string {
 		buffer.WriteString(tb.table_alias)
 	}
 
-	if len(tb.join_str)>0 {
+	if len(tb.join_str) > 0 {
 		buffer.WriteString(tb.join_str)
 	}
 
-	if len(tb.db_where.Tpl_sql)>0 {
+	if len(tb.db_where.Tpl_sql) > 0 {
 		buffer.WriteString(" where ")
 		buffer.WriteString(tb.db_where.Tpl_sql)
 	}
@@ -258,7 +258,7 @@ func (db *dialectMssql)GenTableGetSql(tb *DbTable) string {
 		buffer.WriteString(tb.group_by)
 	}
 
-	if len(tb.db_having.Tpl_sql)>0 {
+	if len(tb.db_having.Tpl_sql) > 0 {
 		buffer.WriteString(" having ")
 		buffer.WriteString(tb.db_having.Tpl_sql)
 	}
@@ -271,7 +271,7 @@ func (db *dialectMssql)GenTableGetSql(tb *DbTable) string {
 	return buffer.String()
 }
 
-func (db *dialectMssql)GenTableFindSql(tb *DbTable) string {
+func (db *dialectMssql) GenTableFindSql(tb *DbTable) string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("select ")
@@ -286,11 +286,11 @@ func (db *dialectMssql)GenTableFindSql(tb *DbTable) string {
 		buffer.WriteString(tb.table_alias)
 	}
 
-	if len(tb.join_str)>0 {
+	if len(tb.join_str) > 0 {
 		buffer.WriteString(tb.join_str)
 	}
 
-	if len(tb.db_where.Tpl_sql)>0 {
+	if len(tb.db_where.Tpl_sql) > 0 {
 		buffer.WriteString(" where ")
 		buffer.WriteString(tb.db_where.Tpl_sql)
 	}
@@ -300,7 +300,7 @@ func (db *dialectMssql)GenTableFindSql(tb *DbTable) string {
 		buffer.WriteString(tb.group_by)
 	}
 
-	if len(tb.db_having.Tpl_sql)>0 {
+	if len(tb.db_having.Tpl_sql) > 0 {
 		buffer.WriteString(" having ")
 		buffer.WriteString(tb.db_having.Tpl_sql)
 	}
@@ -312,4 +312,3 @@ func (db *dialectMssql)GenTableFindSql(tb *DbTable) string {
 
 	return buffer.String()
 }
-

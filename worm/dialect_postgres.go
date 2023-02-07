@@ -15,17 +15,17 @@ func (db *postgresDialect) GetName() string {
 	return "postgres"
 }
 
-func (db *postgresDialect) LimitSql(offset int64, limit int64) string  {
+func (db *postgresDialect) LimitSql(offset int64, limit int64) string {
 	return fmt.Sprintf(" limit %d offset %d ", limit, offset)
 }
 
 func (db *postgresDialect) ParsePlaceholder(sql_tpl string) string {
 	tpl_str := sql_tpl
 	var buffer bytes.Buffer
-	for i:=0; i < len(sql_tpl); i++ {
+	for i := 0; i < len(sql_tpl); i++ {
 		index := strings.Index(tpl_str, "?")
 		if index < 0 {
-			break;
+			break
 		}
 		txt_str := tpl_str[0:index]
 		tpl_str = tpl_str[index+1:]
@@ -80,7 +80,7 @@ table_schema = 'public'
 and table_name = '%s'
 order by
 ordinal_position;
- */
+*/
 func (db *postgresDialect) GetColumns(db_raw *sql.DB, tableName string) ([]ColumnInfo, error) {
 	str := `SELECT 
 			A.attname AS col_name,
@@ -121,22 +121,22 @@ func (db *postgresDialect) GetColumns(db_raw *sql.DB, tableName string) ([]Colum
 		cols = append(cols, col)
 	}
 
-	return  cols, nil
+	return cols, nil
 }
 
-func (db *postgresDialect)ModelInsertHasOutput(md *DbModel) bool {
+func (db *postgresDialect) ModelInsertHasOutput(md *DbModel) bool {
 	return true
 }
 
-func (db *postgresDialect)GenModelInsertSql(md *DbModel) string {
+func (db *postgresDialect) GenModelInsertSql(md *DbModel) string {
 	var buffer bytes.Buffer
-	index := 0;
+	index := 0
 	buffer.WriteString(fmt.Sprintf("insert into %s (", md.table_name))
 	for i, item := range md.flds_addr {
 		if md.GetFieldFlag4Insert(i) == false {
 			continue
 		}
-		if index > 0{
+		if index > 0 {
 			buffer.WriteString(",")
 		}
 		buffer.WriteString(item.FName)
@@ -144,7 +144,7 @@ func (db *postgresDialect)GenModelInsertSql(md *DbModel) string {
 	}
 	buffer.WriteString(")")
 
-	index = 0;
+	index = 0
 	buffer.WriteString(" values (")
 	for i, _ := range md.flds_addr {
 		if md.GetFieldFlag4Insert(i) == false {
@@ -171,36 +171,36 @@ func (db *postgresDialect)GenModelInsertSql(md *DbModel) string {
 	return buffer.String()
 }
 
-func (db *postgresDialect)TableInsertHasOutput(tb *DbTable) bool {
+func (db *postgresDialect) TableInsertHasOutput(tb *DbTable) bool {
 	return len(tb.return_str) > 0
 }
 
-func (db *postgresDialect)GenTableInsertSql(tb *DbTable) (string, []interface{}) {
-	index := 0;
-	vals:= []interface{}{}
+func (db *postgresDialect) GenTableInsertSql(tb *DbTable) (string, []interface{}) {
+	index := 0
+	vals := []interface{}{}
 
 	var buffer1 bytes.Buffer
 	buffer1.WriteString(fmt.Sprintf("insert into %s (", tb.table_name))
 
 	var buffer2 bytes.Buffer
 	buffer2.WriteString(" values (")
-	for name, val := range tb.fld_values {
+	for _, fld := range tb.fld_values {
 		if index > 0 {
 			buffer1.WriteString(",")
 			buffer2.WriteString(",")
 		}
 
-		buffer1.WriteString(name)
-		if val == nil {
+		buffer1.WriteString(fld.Key)
+		if fld.Val == nil {
 			buffer2.WriteString("null")
-		} else if exp, ok := val.(SqlExp); ok {
+		} else if exp, ok := fld.Val.(SqlExp); ok {
 			buffer2.WriteString(exp.Tpl_sql)
 			if exp.Values != nil {
 				vals = append(vals, exp.Values...)
 			}
 		} else {
 			buffer2.WriteString("?")
-			vals = append(vals, val)
+			vals = append(vals, fld.Val)
 		}
 
 		index += 1

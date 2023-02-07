@@ -17,7 +17,13 @@ const (
 	SQL_TYPE_SEL int = 4
 )
 
+type KeyVal struct {
+	Key string
+	Val interface{}
+}
 type ValueMap map[string]interface{}
+type ValueArray []KeyVal
+
 type SqlExp struct {
 	Tpl_sql string
 	Values  []interface{}
@@ -27,7 +33,7 @@ type DbTable struct {
 	SqlContex
 	sql_type    int
 	db_ptr      *DbSession
-	fld_values  ValueMap
+	fld_values  ValueArray
 	table_name  string
 	table_alias string
 	select_str  string
@@ -99,16 +105,30 @@ func (tb *DbTable) Alias(alias string) *DbTable {
 }
 
 func (tb *DbTable) Value(col_name string, val interface{}) *DbTable {
+	var item KeyVal
+	item.Key = col_name
+	item.Val = val
+
 	if tb.fld_values == nil {
-		tb.fld_values = make(ValueMap)
+		tb.fld_values = make([]KeyVal, 0, 10)
 	}
-	tb.fld_values[col_name] = val
+	tb.fld_values = append(tb.fld_values, item)
 	return tb
 }
+
 func (tb *DbTable) Values(map_data ValueMap) *DbTable {
-	tb.fld_values = map_data
+	if tb.fld_values == nil {
+		tb.fld_values = make([]KeyVal, 0, len(map_data))
+	}
+	for k, v := range map_data {
+		var item KeyVal
+		item.Key = k
+		item.Val = v
+		tb.fld_values = append(tb.fld_values, item)
+	}
 	return tb
 }
+
 func (tb *DbTable) SetWhere(sqlw *DbWhere) *DbTable {
 	tb.db_where.Init(sqlw.Tpl_sql, sqlw.Values...)
 	return tb

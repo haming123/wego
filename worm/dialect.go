@@ -324,8 +324,8 @@ func (db *DialectBase) GenJointFindSql(lk *DbJoint) string {
 	return buffer.String()
 }
 
-//生成insert sql语句
-//sql语句与values数组必须在一个循环中生成，因为map多次遍历时次序可能不同
+// 生成insert sql语句
+// sql语句与values数组必须在一个循环中生成，因为map多次遍历时次序可能不同
 func (db *DialectBase) GenTableInsertSql(tb *DbTable) (string, []interface{}) {
 	index := 0
 	vals := []interface{}{}
@@ -334,23 +334,23 @@ func (db *DialectBase) GenTableInsertSql(tb *DbTable) (string, []interface{}) {
 	buffer1.WriteString(fmt.Sprintf("insert into %s (", tb.table_name))
 	var buffer2 bytes.Buffer
 	buffer2.WriteString(" values (")
-	for name, val := range tb.fld_values {
+	for _, fld := range tb.fld_values {
 		if index > 0 {
 			buffer1.WriteString(",")
 			buffer2.WriteString(",")
 		}
 
-		buffer1.WriteString(name)
-		if val == nil {
+		buffer1.WriteString(fld.Key)
+		if fld.Val == nil {
 			buffer2.WriteString("null")
-		} else if exp, ok := val.(SqlExp); ok {
+		} else if exp, ok := fld.Val.(SqlExp); ok {
 			buffer2.WriteString(exp.Tpl_sql)
 			if exp.Values != nil {
 				vals = append(vals, exp.Values...)
 			}
 		} else {
 			buffer2.WriteString("?")
-			vals = append(vals, val)
+			vals = append(vals, fld.Val)
 		}
 
 		index += 1
@@ -362,8 +362,8 @@ func (db *DialectBase) GenTableInsertSql(tb *DbTable) (string, []interface{}) {
 	return buffer1.String(), vals
 }
 
-//生成 update sql语句
-//sql语句与values数组必须在一个循环中生成，因为map多次遍历时次序可能不同
+// 生成 update sql语句
+// sql语句与values数组必须在一个循环中生成，因为map多次遍历时次序可能不同
 func (db *DialectBase) GenTableUpdateSql(tb *DbTable) (string, []interface{}) {
 	var buffer bytes.Buffer
 	buffer.WriteString("update ")
@@ -372,14 +372,14 @@ func (db *DialectBase) GenTableUpdateSql(tb *DbTable) (string, []interface{}) {
 
 	index := 0
 	vals := []interface{}{}
-	for name, val := range tb.fld_values {
+	for _, fld := range tb.fld_values {
 		if index > 0 {
 			buffer.WriteString(",")
 		}
-		buffer.WriteString(name)
-		if val == nil {
+		buffer.WriteString(fld.Key)
+		if fld.Val == nil {
 			buffer.WriteString("=null")
-		} else if exp, ok := val.(SqlExp); ok {
+		} else if exp, ok := fld.Val.(SqlExp); ok {
 			buffer.WriteString("=")
 			buffer.WriteString(exp.Tpl_sql)
 			if exp.Values != nil {
@@ -387,7 +387,7 @@ func (db *DialectBase) GenTableUpdateSql(tb *DbTable) (string, []interface{}) {
 			}
 		} else {
 			buffer.WriteString("=?")
-			vals = append(vals, val)
+			vals = append(vals, fld.Val)
 		}
 		index += 1
 	}
