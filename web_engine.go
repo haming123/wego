@@ -422,10 +422,12 @@ func (web *WebEngine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	err := c.Output.Flush()
-	if err != nil {
-		debug_log.Error(err)
-		c.AbortWithError(http.StatusInternalServerError, errors.New("Internal Server Error"))
+	if c.hijacked != true {
+		err := c.Output.Flush()
+		if err != nil {
+			debug_log.Error(err)
+			c.AbortWithError(http.StatusInternalServerError, errors.New("Internal Server Error"))
+		}
 	}
 
 	if web.Config.ShowUrlLog == true {

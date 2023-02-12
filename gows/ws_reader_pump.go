@@ -20,7 +20,6 @@ type StreamReadHandler interface {
 
 func messageReadLoop(ws *WebSocket, handler MessageHandler) {
 	defer func() {
-		logPrint4ws(ws, "exit messageReadLoop!!!")
 		ws.Close()
 	}()
 
@@ -55,7 +54,6 @@ func messageReadLoop(ws *WebSocket, handler MessageHandler) {
 
 func streamReadLoop(ws *WebSocket, handler StreamReadHandler) {
 	defer func() {
-		logPrint4ws(ws, "exit streamReadLoop!!!")
 		ws.Close()
 	}()
 

@@ -6,6 +6,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/haming123/wego/gows"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -60,6 +61,7 @@ type WebContext struct {
 	Start      time.Time
 	filters    []FilterInfo
 	state      WebState
+	hijacked   bool
 }
 
 func (c *WebContext) reset() {
@@ -73,6 +75,7 @@ func (c *WebContext) reset() {
 	c.Data.reset()
 	c.Session.Reset()
 	c.filters = nil
+	c.hijacked = false
 	c.state.Reset()
 }
 
@@ -93,6 +96,16 @@ func (c *WebContext) UseGzip(flag bool, min_size ...int64) *WebContext {
 		c.Output.gzip_size = min_size[0]
 	}
 	return c
+}
+
+// websocket握手
+func (c *WebContext) AcceptWebsocket(opts *gows.AcceptOptions, headers map[string]string) (*gows.WebSocket, error) {
+	ws, err := gows.Accept(c.Output.ResponseWriter, c.Input.Request, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	c.hijacked = true
+	return ws, nil
 }
 
 func (c *WebContext) Ended() bool {

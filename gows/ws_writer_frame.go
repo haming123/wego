@@ -43,11 +43,11 @@ func (w *FrameWriter) Reset(ws *WebSocket, opcode int) error {
 }
 
 // init后，opcode != (Frame_Continue, Frame_Null)
-//写数据后，opcode == (Frame_Continue, Frame_Null)
-//colse后，opcode == Frame_Null
+// 写数据后，opcode == (Frame_Continue, Frame_Null)
+// colse后，opcode == Frame_Null
 //
-//colse前检查是否已经发送了结束帧（opcode == Frame_Null），
-//若已经发送了结束帧，则退出
+// colse前检查是否已经发送了结束帧（opcode == Frame_Null），
+// 若已经发送了结束帧，则退出
 func (w *FrameWriter) Close() error {
 	if w.opcode == Frame_Null {
 		return nil
@@ -201,20 +201,6 @@ func (w *FrameWriter) writeMessageFrame(final bool) error {
 	return nil
 }
 
-//控制帧用于WebSocket协议交换状态信息，控制帧可以插在消息片段之间。
-//所有的控制帧的负载长度均不大于125字节，并且禁止对控制帧进行分片处理。
-//目前控制帧的操作码定义了oxo8(关闭帧)、oxo9(Ping帧)、oxoA(Pong帧)。
-//
-//两端都会在连接建立后、关闭前的任意时间内发送 Ping 帧。Ping 帧可以包含“应用数据”。
-//ping 帧就可以作为 keepalive 心跳包。
-//
-//当接收到 0x9 Ping 操作码的控制帧以后，应当立即发送一个包含 pong 操作码的帧响应，除非接收到了一个关闭帧。
-//Pong 帧必须包含与被响应 Ping 帧的应用程序数据完全相同的数据。
-//如果终端接收到一个 Ping 帧，且还没有对之前的 Ping 帧发送 Pong 响应，终端可能选择发送一个 Pong 帧给最近处理的 Ping 帧。
-//一个 Pong 帧可能被主动发送，这作为单向心跳。尽量不要主动发送 pong 帧。
-//
-//当接收到 0x8 Close 操作码的控制帧以后，可以关闭底层的 TCP 连接了。
-//在 RFC6455 中给出了关闭时候建议的状态码，没有规范的定义，只是给了一个预定义的状态码。
 func (w *FrameWriter) WriteControlFrame(data []byte) error {
 	if len(data) > maxControlFrameSize {
 		return errors.New("websocket: invalid control frame")
