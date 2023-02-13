@@ -39,6 +39,10 @@ func newWebSocket(cnn net.Conn, opts *AcceptOptions, br *bufio.Reader) *WebSocke
 	return ws
 }
 
+func NewWebSocket(cnn net.Conn, opts *AcceptOptions, br *bufio.Reader) *WebSocket {
+	return newWebSocket(cnn, opts, br)
+}
+
 func (ws *WebSocket) Close() error {
 	ws.mux.Lock()
 	defer ws.mux.Unlock()
@@ -155,9 +159,9 @@ func (ws *WebSocket) Serve(handler SocketHandler) {
 	ws.handler = handler
 	switch handler.(type) {
 	case MessageHandler:
-		messageReadLoop(ws, handler.(MessageHandler))
+		go messageReadLoop(ws, handler.(MessageHandler))
 	case StreamReadHandler:
-		streamReadLoop(ws, handler.(StreamReadHandler))
+		go streamReadLoop(ws, handler.(StreamReadHandler))
 	default:
 		panic("incorrect handler type")
 	}
@@ -165,12 +169,12 @@ func (ws *WebSocket) Serve(handler SocketHandler) {
 
 func (ws *WebSocket) ServeMessage(handler MessageHandler) {
 	ws.handler = handler
-	messageReadLoop(ws, handler)
+	go messageReadLoop(ws, handler)
 }
 
 func (ws *WebSocket) ServeStream(handler StreamReadHandler) {
 	ws.handler = handler
-	streamReadLoop(ws, handler)
+	go streamReadLoop(ws, handler)
 }
 
 /*
