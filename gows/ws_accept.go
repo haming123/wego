@@ -128,7 +128,7 @@ func Accept(w http.ResponseWriter, r *http.Request, opts *AcceptOptions, headers
 	wr.Reset(net_cnn)
 	ws := newWebSocket(net_cnn, opts, brw.Reader)
 	ws.flateWrite = compress
-	ws.opts = opts
+	//ws.opts = opts
 
 	wr.WriteString("HTTP/1.1 101 Switching Protocols\r\n")
 	wr.WriteString("Upgrade: websocket\r\n")

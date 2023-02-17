@@ -7,12 +7,12 @@ import (
 )
 
 const (
-	green   = "\033[97;42m"
-	white   = "\033[90;47m"
-	yellow  = "\033[90;43m"
-	red     = "\033[97;41m"
-	blue    = "\033[97;44m"
-	reset   = "\033[0m"
+	green  = "\033[97;42m"
+	white  = "\033[90;47m"
+	yellow = "\033[90;43m"
+	red    = "\033[97;41m"
+	blue   = "\033[97;44m"
+	reset  = "\033[0m"
 )
 
 func GetStatusPrintColor(code int) string {
@@ -21,7 +21,7 @@ func GetStatusPrintColor(code int) string {
 		return green
 	case code >= http.StatusBadRequest && code < http.StatusInternalServerError:
 		return yellow
-	case code >= http.StatusInternalServerError && code < http.StatusNotExtended:
+	case code >= http.StatusInternalServerError && code < http.StatusNetworkAuthenticationRequired:
 		return red
 	default:
 		return reset
