@@ -132,7 +132,7 @@ func (ws *WebSocket) WritePong(data []byte) error {
 var errWroteClose = errors.New("has wrote close frame")
 
 // 连接任一端想关闭websocket，就发一个close frame给对端。
-// 对端收到该frame，若之前没有发过close frame，则必须回复一个close frame。
+// 对端收到该frame后，若之前没有发过close frame，则必须回复一个close frame。
 func (ws *WebSocket) WriteClose(data []byte) error {
 	ws.mux.Lock()
 	wroteClose := ws.wroteClose
