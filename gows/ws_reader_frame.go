@@ -143,7 +143,7 @@ func (mr *FrameReader) readFrameHeader() (FrameHeader, error) {
 
 // 连接任一端想关闭websocket，就发一个close frame给对端。
 // 对端收到该frame，若之前没有发过close frame，则必须回复一个close frame。
-// 收到close frame后，返回errWroteClose错误，外部调用者最终会因为errWroteClose错误而关闭连接
+// 收到close frame后，返回errWroteClose错误，外部调用者最终会因为errWroteClose错误而关闭连接。
 func (mr *FrameReader) handleControlFrame(header *FrameHeader) error {
 	//读取控制帧的payload
 	data, err := mr.framePeekRead(int(header.payload))
