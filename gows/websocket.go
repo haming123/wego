@@ -107,6 +107,8 @@ func (ws *WebSocket) WriteJSON(v interface{}) error {
 	return writer.Close()
 }
 
+// Ping和Pong是websocket里的心跳，用来保证客户端是在线的，
+// 目前浏览器中没有相关api发送ping给服务器，只能由服务器发ping给浏览器，浏览器返回pong消息。
 func (ws *WebSocket) WritePing(data []byte) error {
 	writer := ws.NextWriter(Frame_Ping)
 	err := writer.WriteControlFrame(data)
@@ -191,7 +193,6 @@ func (ws *WebSocket) ServeStream(handler StreamReadHandler) {
 	go streamReadLoop(ws, handler)
 }
 
-/*
 func (ws *WebSocket) ReadMessage() (int, []byte, error) {
 	if ws.handler != nil {
 		return 0, nil, errors.New("WebSocket.handler != nil")
@@ -206,4 +207,4 @@ func (ws *WebSocket) ReadMessage() (int, []byte, error) {
 	reader.Close()
 
 	return head.opcode, p.GetBytes(), err
-}*/
+}
