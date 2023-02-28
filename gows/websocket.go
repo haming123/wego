@@ -107,26 +107,6 @@ func (ws *WebSocket) WriteJSON(v interface{}) error {
 	return writer.Close()
 }
 
-var errWroteClose = errors.New("has wrote close frame")
-
-func (ws *WebSocket) WriteClose(data []byte) error {
-	ws.mux.Lock()
-	wroteClose := ws.wroteClose
-	ws.wroteClose = true
-	ws.mux.Unlock()
-	if wroteClose {
-		return errWroteClose
-	}
-
-	writer := ws.NextWriter(Frame_Close)
-	err := writer.WriteControlFrame(data)
-	if err != nil {
-		writer.Close()
-		return err
-	}
-	return writer.Close()
-}
-
 func (ws *WebSocket) WritePing(data []byte) error {
 	writer := ws.NextWriter(Frame_Ping)
 	err := writer.WriteControlFrame(data)
@@ -147,9 +127,28 @@ func (ws *WebSocket) WritePong(data []byte) error {
 	return writer.Close()
 }
 
-// 连接任一端想关闭websocket，就发一个close frame（opcode为0x8的就是close frame）给对端，
+var errWroteClose = errors.New("has wrote close frame")
+
+// 连接任一端想关闭websocket，就发一个close frame给对端。
 // 对端收到该frame，若之前没有发过close frame，则必须回复一个close frame。
-// 发送或回复close frame后该端就不能再发任何frame，但可以接收数据
+func (ws *WebSocket) WriteClose(data []byte) error {
+	ws.mux.Lock()
+	wroteClose := ws.wroteClose
+	ws.wroteClose = true
+	ws.mux.Unlock()
+	if wroteClose {
+		return errWroteClose
+	}
+
+	writer := ws.NextWriter(Frame_Close)
+	err := writer.WriteControlFrame(data)
+	if err != nil {
+		writer.Close()
+		return err
+	}
+	return writer.Close()
+}
+
 func (ws *WebSocket) WiteCloseText(code CloseCode, text string) error {
 	data, err := MarshalCloseInfo(code, text)
 	if err != nil {
