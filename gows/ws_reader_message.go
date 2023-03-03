@@ -35,9 +35,12 @@ func newMessageReader(ws *WebSocket) *MessageReader {
 // 判断消息头，看看当前消息是否采用了压缩格式， 若是压缩格式，则使用flate来读取数据
 // 否则使用mr.frame来读取数据
 func (mr *MessageReader) getMatchedReader() io.Reader {
-	var reader io.Reader = mr.frame
+	var reader io.Reader
 	if mr.frame.header.flate == true {
 		reader = mr.flate
+	} else {
+		mr.frame.extra.Reset("")
+		reader = mr.frame
 	}
 	return reader
 }
