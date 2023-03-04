@@ -99,6 +99,7 @@ func Accept(w http.ResponseWriter, r *http.Request, opts *AcceptOptions, headers
 			continue
 		}
 		compress = true
+		logPrintf("compress:%v\n", r.Header["Sec-Websocket-Extensions"])
 		break
 	}
 	if opts.compress_alloter == nil {

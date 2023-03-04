@@ -1,6 +1,7 @@
 package gows
 
 import (
+	"errors"
 	"io"
 )
 
@@ -26,38 +27,25 @@ func newMessageReader(ws *WebSocket) *MessageReader {
 	mr := &MessageReader{}
 	mr.opts = ws.opts
 	mr.frame = ws.msgReader
-	if ws.opts.compress_alloter != nil {
-		mr.flate, _ = ws.opts.compress_alloter.NewReader(ws.msgReader)
+	if mr.opts.compress_alloter != nil {
+		mr.flate, _ = mr.opts.compress_alloter.NewReader(ws.msgReader)
 	}
 	return mr
-}
-
-// 判断消息头，看看当前消息是否采用了压缩格式， 若是压缩格式，则使用flate来读取数据
-// 否则使用mr.frame来读取数据
-func (mr *MessageReader) getMatchedReader() io.Reader {
-	var reader io.Reader
-	if mr.frame.header.flate == true {
-		reader = mr.flate
-	} else {
-		mr.frame.extra.Reset("")
-		reader = mr.frame
-	}
-	return reader
 }
 
 // 恢复压缩解码器的状态
 func (mr *MessageReader) reset(ws *WebSocket) {
 	mr.opts = ws.opts
 	mr.frame = ws.msgReader
-	if mr.flate != nil {
-		ws.opts.compress_alloter.ResetReader(mr.flate, ws.msgReader)
+	if mr.flate != nil && mr.opts.compress_alloter != nil {
+		mr.opts.compress_alloter.ResetReader(mr.flate, ws.msgReader)
 	}
 }
 
 // 关闭时将压缩读取器指向一个空的FrameReader
 func (mr *MessageReader) close() error {
 	mr.frame = &frame_reader_idle
-	if mr.flate != nil {
+	if mr.flate != nil && mr.opts.compress_alloter != nil {
 		mr.opts.compress_alloter.ResetReader(mr.flate, &frame_reader_idle)
 	}
 	return nil
@@ -71,13 +59,32 @@ func (mr *MessageReader) readMessageHeader() (FrameHeader, error) {
 	return mr.frame.readMessageHeader()
 }
 
+// 判断消息头，看看当前消息是否采用了压缩格式，若是压缩格式，则使用flate来读取数据
+// 否则使用mr.frame来读取数据
+func (mr *MessageReader) getMatchedReader() io.Reader {
+	var reader io.Reader
+	if mr.frame.header.flate == true {
+		reader = mr.flate
+	} else {
+		mr.frame.extra.Reset("")
+		reader = mr.frame
+	}
+	return reader
+}
+
 func (mr *MessageReader) Read(p []byte) (int, error) {
 	reader := mr.getMatchedReader()
+	if reader == nil {
+		return 0, errors.New("can not allocate flate reader")
+	}
 	return reader.Read(p)
 }
 
 func (mr *MessageReader) ReadAll() (*ByteBuffer, error) {
 	reader := mr.getMatchedReader()
+	if reader == nil {
+		return nil, errors.New("can not allocate flate reader")
+	}
 	mb := GetByteBuffer(mr.opts)
 	err := mb.ReadAll(reader)
 	return mb, err
