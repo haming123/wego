@@ -11,6 +11,7 @@ const (
 )
 
 type CompressAlloter interface {
+	GetReponseExtensions(args []string) string
 	NewWriter(mw *FrameWriter) (io.WriteCloser, error)
 	ResetWriter(fw io.WriteCloser, mw *FrameWriter) error
 	NewReader(mr *FrameReader) (io.ReadCloser, error)

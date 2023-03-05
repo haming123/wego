@@ -79,12 +79,12 @@ func Accept(w http.ResponseWriter, r *http.Request, opts *AcceptOptions, headers
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return nil, err
 	}
-	/*
-		if !OriginHostCheck(r) {
-			err := errors.New("websocket: request origin not allowed")
-			http.Error(w, err.Error(), http.StatusForbidden)
-			return nil, err
-		}*/
+	//if !OriginHostCheck(r) {
+	//	err := errors.New("websocket: request origin not allowed")
+	//	http.Error(w, err.Error(), http.StatusForbidden)
+	//	return nil, err
+	//}
+
 	challengeKey := r.Header.Get("Sec-Websocket-Key")
 	if challengeKey == "" {
 		err := errors.New("websocket: 'Sec-WebSocket-Key' header is missing")
@@ -92,18 +92,19 @@ func Accept(w http.ResponseWriter, r *http.Request, opts *AcceptOptions, headers
 		return nil, err
 	}
 
-	subproto := opts.selectSubProtocol(getSubProtocols(r))
-	var compress bool = false
+	subproto_arr := getSubProtocols(r)
+	subproto_sel := opts.selectSubProtocol(subproto_arr)
+
+	var reponse_header_deflate string = ""
 	for _, ext := range parseHeaderExtensions(r.Header) {
-		if ext.name != "permessage-deflate" {
-			continue
+		if ext.name == "permessage-deflate" {
+			if opts.compress_alloter != nil {
+				reponse_header_deflate = opts.compress_alloter.GetReponseExtensions(ext.params)
+			}
+			logPrintf("permessage-deflate param: %v\n", ext.params)
+			logPrintf("permessage-deflate reponse header: %v\n", reponse_header_deflate)
+			break
 		}
-		compress = true
-		logPrintf("compress:%v\n", r.Header["Sec-Websocket-Extensions"])
-		break
-	}
-	if opts.compress_alloter == nil {
-		compress = false
 	}
 
 	jacker, ok := w.(http.Hijacker)
@@ -128,8 +129,7 @@ func Accept(w http.ResponseWriter, r *http.Request, opts *AcceptOptions, headers
 	wr := brw.Writer
 	wr.Reset(net_cnn)
 	ws := newWebSocket(net_cnn, opts, brw.Reader)
-	ws.flateWrite = compress
-	//ws.opts = opts
+	ws.useFlateWrite = reponse_header_deflate != ""
 
 	wr.WriteString("HTTP/1.1 101 Switching Protocols\r\n")
 	wr.WriteString("Upgrade: websocket\r\n")
@@ -137,14 +137,15 @@ func Accept(w http.ResponseWriter, r *http.Request, opts *AcceptOptions, headers
 	wr.WriteString("Sec-WebSocket-Accept: ")
 	wr.WriteString(genAcceptKey(challengeKey))
 	wr.WriteString("\r\n")
-	if subproto != "" {
+	if subproto_sel != "" {
 		wr.WriteString("Sec-WebSocket-Protocol: ")
-		wr.WriteString(subproto)
+		wr.WriteString(subproto_sel)
 		wr.WriteString("\r\n")
 	}
-	if compress == true {
+	if reponse_header_deflate != "" {
 		wr.WriteString("Sec-WebSocket-Extensions: ")
-		wr.WriteString("permessage-deflate; server_no_context_takeover; client_no_context_takeover")
+		//wr.WriteString("permessage-deflate; server_no_context_takeover; client_no_context_takeover")
+		wr.WriteString(reponse_header_deflate)
 		wr.WriteString("\r\n")
 	}
 	for key, val := range headers {

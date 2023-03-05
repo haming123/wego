@@ -35,7 +35,7 @@ func (w *MessageWriter) init(ws *WebSocket, opcode int) {
 	//初始化非压缩的FrameWriter
 	w.mframe.init(ws, opcode)
 	//若websocket支持压缩，并且握手时协商采用压缩，则创建用于压缩的Writer：w.fwrite
-	if ws.opts.compress_alloter != nil && ws.flateWrite == true {
+	if ws.opts.compress_alloter != nil && ws.useFlateWrite == true {
 		w.fframe.init(ws, opcode)
 		flate_writer, err := ws.opts.compress_alloter.NewWriter(&w.fframe)
 		if err == nil {

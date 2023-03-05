@@ -22,8 +22,8 @@ type WebSocket struct {
 	closed     bool
 	wroteClose bool
 
-	flateWrite   bool
-	writeTimeOut time.Duration
+	useFlateWrite bool
+	writeTimeOut  time.Duration
 
 	msgReader *FrameReader
 	handler   SocketHandler

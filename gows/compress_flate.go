@@ -28,6 +28,10 @@ func NewFlateAlloter(level int) *FlateAlloter {
 	return ent
 }
 
+func (this *FlateAlloter) GetReponseExtensions(params []string) string {
+	return "permessage-deflate; server_no_context_takeover; client_no_context_takeover"
+}
+
 func (this *FlateAlloter) NewWriter(mw *FrameWriter) (io.WriteCloser, error) {
 	//logPrint("new flate.Writer !!!")
 	mw.flate = true
