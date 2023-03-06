@@ -189,6 +189,7 @@ func (w *FrameWriter) writeMessageFrame(final bool) error {
 	}
 
 	//恢复MessageWriter的状态
+	// RSV1 bit must be set only for the first frame.
 	if final == true {
 		w.pos = maxFrameHeaderSize
 		w.opcode = Frame_Null

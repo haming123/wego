@@ -5,6 +5,8 @@ import (
 	"io"
 )
 
+//https://www.rfc-editor.org/rfc/rfc7692
+//
 // 这些字节："\x00\x00\xff\xff"在发送时被要求删除。
 // 因此在进行消息读取时需要将它们添加回，
 // 否则flate.Reader会继续尝试读取更多字节。
@@ -12,6 +14,20 @@ import (
 // 添加结束标志："\x01\x00\x00\xff\xff"来防止flate.reader产生：unexpected EOF错误
 const deflateMessageTail = "\x00\x00\xff\xff\x01\x00\x00\xff\xff"
 
+//Four extension parameters are defined for "permessage-deflate" to help endpoints manage per-connection resource usage.
+//	"server_no_context_takeover"
+//	"client_no_context_takeover"
+//	"server_max_window_bits"
+//	"client_max_window_bits"
+//
+//"use context takeover" :
+//	The term "use context takeover" means that the same LZ77 sliding window
+//	used by the endpoint to build frames of the previous sent message
+//	is reused to build frames of the next message to be sent.
+//
+//"server_no_context_takeover" ：
+// 	Extension Parameter：If the peer server doesn't use context
+//	takeover, the client doesn't need to reserve memory to retain the LZ77 sliding window between messages.
 var flate_default FlateAlloter
 
 func init() {
