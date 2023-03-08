@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-//https://www.rfc-editor.org/rfc/rfc7692
+// https://www.rfc-editor.org/rfc/rfc7692
 //
 // 这些字节："\x00\x00\xff\xff"在发送时被要求删除。
 // 因此在进行消息读取时需要将它们添加回，
@@ -14,19 +14,22 @@ import (
 // 添加结束标志："\x01\x00\x00\xff\xff"来防止flate.reader产生：unexpected EOF错误
 const deflateMessageTail = "\x00\x00\xff\xff\x01\x00\x00\xff\xff"
 
-//Four extension parameters are defined for "permessage-deflate" to help endpoints manage per-connection resource usage.
+// Four extension parameters are defined for "permessage-deflate" to help endpoints manage per-connection resource usage.
+//
 //	"server_no_context_takeover"
 //	"client_no_context_takeover"
 //	"server_max_window_bits"
 //	"client_max_window_bits"
 //
-//"use context takeover" :
+// "use context takeover" :
+//
 //	The term "use context takeover" means that the same LZ77 sliding window
 //	used by the endpoint to build frames of the previous sent message
 //	is reused to build frames of the next message to be sent.
 //
-//"server_no_context_takeover" ：
-// 	Extension Parameter：If the peer server doesn't use context
+// "server_no_context_takeover" ：
+//
+//	Extension Parameter：If the peer server doesn't use context
 //	takeover, the client doesn't need to reserve memory to retain the LZ77 sliding window between messages.
 var flate_default FlateAlloter
 
@@ -49,7 +52,7 @@ func (this *FlateAlloter) GetReponseExtensions(params []string) string {
 }
 
 func (this *FlateAlloter) NewWriter(mw *FrameWriter) (io.WriteCloser, error) {
-	//logPrint("new flate.Writer !!!")
+	//logPrint("new use_flate.Writer !!!")
 	mw.flate = true
 	//用于删除这四个字节"\x00\x00\xff\xff"
 	mw.SetTrimlength(4)
@@ -57,7 +60,7 @@ func (this *FlateAlloter) NewWriter(mw *FrameWriter) (io.WriteCloser, error) {
 }
 
 func (this *FlateAlloter) ResetWriter(fw io.WriteCloser, mw *FrameWriter) error {
-	//logPrint("reset flate.Writer...")
+	//logPrint("reset use_flate.Writer...")
 	mw.flate = true
 	//用于删除这四个字节"\x00\x00\xff\xff"
 	mw.SetTrimlength(4)
@@ -65,15 +68,19 @@ func (this *FlateAlloter) ResetWriter(fw io.WriteCloser, mw *FrameWriter) error 
 	return nil
 }
 
+func (this *FlateAlloter) FlushWriter(fw io.WriteCloser) error {
+	return fw.(*flate.Writer).Flush()
+}
+
 func (this *FlateAlloter) NewReader(mr *FrameReader) (io.ReadCloser, error) {
-	//logPrint("new flate.Reader !!!")
+	//logPrint("new use_flate.Reader !!!")
 	//添加结束标志，防止flate.reader产生：unexpected EOF错误
 	mr.extra.Reset(deflateMessageTail)
 	return flate.NewReader(mr), nil
 }
 
 func (this *FlateAlloter) ResetReader(fr io.ReadCloser, mr *FrameReader) error {
-	//logPrint("reset flate.Reade...")
+	//logPrint("reset use_flate.Reade...")
 	//添加结束标志，防止flate.reader产生：unexpected EOF错误
 	mr.extra.Reset(deflateMessageTail)
 	return fr.(flate.Resetter).Reset(mr, nil)

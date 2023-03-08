@@ -178,7 +178,7 @@ func (w *FrameWriter) writeMessageFrame(final bool) error {
 		buff_temp = buff_temp[nn:]
 	}
 	w.ws.mux.Unlock()
-	logPrintf4ws(w.ws, "send message frame opcode=%d fin=%v len=%d flate=%v\n", w.opcode, final, payload_len, w.flate)
+	logPrintf4ws(w.ws, "send message frame opcode=%d fin=%v len=%d use_flate=%v\n", w.opcode, final, payload_len, w.flate)
 
 	//若是压缩格式，将没有写入ws_cnn.conn的数据添加到w.buff中
 	//若是结束帧，则不用执行此操作

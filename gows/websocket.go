@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"errors"
+	"io"
 	"net"
 	"sync"
 	"time"
@@ -204,6 +205,9 @@ func (ws *WebSocket) ReadMessage() (int, []byte, error) {
 	}
 
 	p, err := reader.ReadAll()
+	if err == io.EOF {
+		err = nil
+	}
 	reader.Close()
 
 	return head.opcode, p.GetBytes(), err
