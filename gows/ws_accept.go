@@ -79,11 +79,11 @@ func Accept(w http.ResponseWriter, r *http.Request, opts *AcceptOptions, headers
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return nil, err
 	}
-	if !OriginHostCheck(r) {
-		err := errors.New("websocket: request origin not allowed")
-		http.Error(w, err.Error(), http.StatusForbidden)
-		return nil, err
-	}
+	//if !OriginHostCheck(r) {
+	//	err := errors.New("websocket: request origin not allowed")
+	//	http.Error(w, err.Error(), http.StatusForbidden)
+	//	return nil, err
+	//}
 
 	challengeKey := r.Header.Get("Sec-Websocket-Key")
 	if challengeKey == "" {
