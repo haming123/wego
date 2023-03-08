@@ -11,7 +11,7 @@ const (
 )
 
 type CompressAlloter interface {
-	GetReponseExtensions(args []string) string
+	WebsocketExtension(args []string) string
 	NewWriter(mw *FrameWriter) (io.WriteCloser, error)
 	ResetWriter(fw io.WriteCloser, mw *FrameWriter) error
 	FlushWriter(fw io.WriteCloser) error

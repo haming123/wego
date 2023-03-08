@@ -29,8 +29,8 @@ const deflateMessageTail = "\x00\x00\xff\xff\x01\x00\x00\xff\xff"
 //
 // "server_no_context_takeover" ：
 //
-//	Extension Parameter：If the peer server doesn't use context
-//	takeover, the client doesn't need to reserve memory to retain the LZ77 sliding window between messages.
+//	Extension Parameter：If the peer server doesn't use context takeover,
+//	the client doesn't need to reserve memory to retain the LZ77 sliding window between messages.
 var flate_default FlateAlloter
 
 func init() {
@@ -47,7 +47,7 @@ func NewFlateAlloter(level int) *FlateAlloter {
 	return ent
 }
 
-func (this *FlateAlloter) GetReponseExtensions(params []string) string {
+func (this *FlateAlloter) WebsocketExtension(params []string) string {
 	return "permessage-deflate; server_no_context_takeover; client_no_context_takeover"
 }
 

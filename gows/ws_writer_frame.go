@@ -38,8 +38,8 @@ func (w *FrameWriter) init(ws *WebSocket, opcode int) {
 
 func (w *FrameWriter) Reset(ws *WebSocket, opcode int) error {
 	w.ws = ws
-	w.pos = maxFrameHeaderSize
 	w.opcode = opcode
+	w.pos = maxFrameHeaderSize
 	return nil
 }
 
@@ -61,6 +61,7 @@ func (w *FrameWriter) Close() error {
 
 	w.ws = nil
 	w.opcode = Frame_Null
+	w.pos = maxFrameHeaderSize
 	return nil
 }
 

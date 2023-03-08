@@ -99,7 +99,7 @@ func Accept(w http.ResponseWriter, r *http.Request, opts *AcceptOptions, headers
 	for _, ext := range parseHeaderExtensions(r.Header) {
 		if ext.name == "permessage-deflate" {
 			if opts.compress_alloter != nil {
-				reponse_header_deflate = opts.compress_alloter.GetReponseExtensions(ext.params)
+				reponse_header_deflate = opts.compress_alloter.WebsocketExtension(ext.params)
 			}
 			logPrintf("permessage-deflate param: %v\n", ext.params)
 			break
