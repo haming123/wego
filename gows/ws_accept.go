@@ -79,11 +79,16 @@ func Accept(w http.ResponseWriter, r *http.Request, opts *AcceptOptions, headers
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return nil, err
 	}
-	//if !OriginHostCheck(r) {
-	//	err := errors.New("websocket: request origin not allowed")
-	//	http.Error(w, err.Error(), http.StatusForbidden)
-	//	return nil, err
-	//}
+
+	checkOrigin := opts.checkOrigin
+	if checkOrigin == nil {
+		checkOrigin = OriginHostCheck
+	}
+	if !checkOrigin(r) {
+		err := errors.New("websocket: request origin not allowed")
+		http.Error(w, err.Error(), http.StatusForbidden)
+		return nil, err
+	}
 
 	challengeKey := r.Header.Get("Sec-Websocket-Key")
 	if challengeKey == "" {
@@ -98,8 +103,8 @@ func Accept(w http.ResponseWriter, r *http.Request, opts *AcceptOptions, headers
 	var reponse_header_deflate string = ""
 	for _, ext := range parseHeaderExtensions(r.Header) {
 		if ext.name == "permessage-deflate" {
-			if opts.compress_alloter != nil {
-				reponse_header_deflate = opts.compress_alloter.WebsocketExtension(ext.params)
+			if opts.compressAlloter != nil {
+				reponse_header_deflate = opts.compressAlloter.WebsocketExtension(ext.params)
 			}
 			logPrintf("permessage-deflate param: %v\n", ext.params)
 			break

@@ -27,8 +27,8 @@ func newMessageReader(ws *WebSocket) *MessageReader {
 	mr := &MessageReader{}
 	mr.opts = ws.opts
 	mr.frame = ws.msgReader
-	if mr.opts.compress_alloter != nil {
-		mr.flate, _ = mr.opts.compress_alloter.NewReader(ws.msgReader)
+	if mr.opts.compressAlloter != nil {
+		mr.flate, _ = mr.opts.compressAlloter.NewReader(ws.msgReader)
 	}
 	return mr
 }
@@ -37,16 +37,16 @@ func newMessageReader(ws *WebSocket) *MessageReader {
 func (mr *MessageReader) reset(ws *WebSocket) {
 	mr.opts = ws.opts
 	mr.frame = ws.msgReader
-	if mr.flate != nil && mr.opts.compress_alloter != nil {
-		mr.opts.compress_alloter.ResetReader(mr.flate, ws.msgReader)
+	if mr.flate != nil && mr.opts.compressAlloter != nil {
+		mr.opts.compressAlloter.ResetReader(mr.flate, ws.msgReader)
 	}
 }
 
 // 关闭时将压缩读取器指向一个空的FrameReader
 func (mr *MessageReader) close() error {
 	mr.frame = &frame_reader_idle
-	if mr.flate != nil && mr.opts.compress_alloter != nil {
-		mr.opts.compress_alloter.ResetReader(mr.flate, &frame_reader_idle)
+	if mr.flate != nil && mr.opts.compressAlloter != nil {
+		mr.opts.compressAlloter.ResetReader(mr.flate, &frame_reader_idle)
 	}
 	return nil
 }

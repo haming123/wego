@@ -10,6 +10,10 @@ func DefaultAcceptOptions() *AcceptOptions {
 	return &accept_options
 }
 
+func SetOriginCheckFunc(fn OriginCheckFunc) {
+	accept_options.checkOrigin = fn
+}
+
 func UseFlate(val ...CompressAlloter) {
 	accept_options.UseFlate(val...)
 }

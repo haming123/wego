@@ -1,6 +1,7 @@
 package gows
 
 import (
+	"net/http"
 	"strings"
 	"sync"
 )
@@ -10,11 +11,13 @@ const frameWriteBuffSize = 4096
 const frameReadBuffSize = 4096
 const messageBufferSize = 4096
 
+type OriginCheckFunc func(r *http.Request) bool
 type AcceptOptions struct {
 	SubProtocols []string
+	checkOrigin  OriginCheckFunc
 
-	compress_alloter CompressAlloter
-	minCompressSize  int
+	compressAlloter CompressAlloter
+	minCompressSize int
 
 	frameWriteBuffSize int
 	frameReadBuffSize  int
@@ -32,7 +35,7 @@ func NewAcceptOptions() *AcceptOptions {
 }
 
 func (opts *AcceptOptions) init() {
-	opts.compress_alloter = nil
+	opts.compressAlloter = nil
 	opts.minCompressSize = minCompressSize
 	opts.frameWriteBuffSize = frameWriteBuffSize
 	opts.frameReadBuffSize = frameReadBuffSize
@@ -50,10 +53,14 @@ func (this *AcceptOptions) selectSubProtocol(cps []string) string {
 	return ""
 }
 
+func (this *AcceptOptions) SetOriginCheckFunc(fn OriginCheckFunc) {
+	this.checkOrigin = fn
+}
+
 func (this *AcceptOptions) UseFlate(val ...CompressAlloter) {
-	this.compress_alloter = &flate_default
+	this.compressAlloter = &flate_default
 	if len(val) == 1 {
-		this.compress_alloter = val[0]
+		this.compressAlloter = val[0]
 	}
 }
 
