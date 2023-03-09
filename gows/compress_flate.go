@@ -52,15 +52,19 @@ func (this *FlateAlloter) WebsocketExtension(params []string) string {
 }
 
 func (this *FlateAlloter) NewWriter(mw *FrameWriter) (io.WriteCloser, error) {
-	//logPrint("new use_flate.Writer !!!")
+	//logPrint("new flate_flag.Writer !!!")
 	mw.flate = true
 	//用于删除这四个字节"\x00\x00\xff\xff"
 	mw.SetTrimlength(4)
 	return flate.NewWriter(mw, this.level)
 }
 
+func (this *FlateAlloter) FlushWriter(fw io.WriteCloser) error {
+	return fw.(*flate.Writer).Flush()
+}
+
 func (this *FlateAlloter) ResetWriter(fw io.WriteCloser, mw *FrameWriter) error {
-	//logPrint("reset use_flate.Writer...")
+	//logPrint("reset flate_flag.Writer...")
 	mw.flate = true
 	//用于删除这四个字节"\x00\x00\xff\xff"
 	mw.SetTrimlength(4)
@@ -68,19 +72,15 @@ func (this *FlateAlloter) ResetWriter(fw io.WriteCloser, mw *FrameWriter) error 
 	return nil
 }
 
-func (this *FlateAlloter) FlushWriter(fw io.WriteCloser) error {
-	return fw.(*flate.Writer).Flush()
-}
-
 func (this *FlateAlloter) NewReader(mr *FrameReader) (io.ReadCloser, error) {
-	//logPrint("new use_flate.Reader !!!")
+	//logPrint("new flate_flag.Reader !!!")
 	//添加结束标志，防止flate.reader产生：unexpected EOF错误
 	mr.extra.Reset(deflateMessageTail)
 	return flate.NewReader(mr), nil
 }
 
 func (this *FlateAlloter) ResetReader(fr io.ReadCloser, mr *FrameReader) error {
-	//logPrint("reset use_flate.Reade...")
+	//logPrint("reset flate_flag.Reade...")
 	//添加结束标志，防止flate.reader产生：unexpected EOF错误
 	mr.extra.Reset(deflateMessageTail)
 	return fr.(flate.Resetter).Reset(mr, nil)

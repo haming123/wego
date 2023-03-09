@@ -137,7 +137,7 @@ func (mr *FrameReader) readFrameHeader() (FrameHeader, error) {
 		copy(fr.maskKey[:], p)
 	}
 
-	logPrintf4ws(mr.ws, "read frame: opcode=%d fin=%v len=%d use_flate=%v", fr.opcode, fr.isfin, fr.payload, fr.flate)
+	logPrintf4ws(mr.ws, "read frame: opcode=%d fin=%v len=%d flate_flag=%v", fr.opcode, fr.isfin, fr.payload, fr.flate)
 	return fr, nil
 }
 

@@ -18,8 +18,8 @@ type MessageReader struct {
 // 创建MessageReader时，若当前环境支持压缩，则创建压缩解码器
 //
 // 若是压缩数据，首先调用MessageReader.read()
-// MessageReader.read() 调用mr.use_flate.read()
-// mr.use_flate.read()调用mr.frame来读取数据
+// MessageReader.read() 调用mr.flate_flag.read()
+// mr.flate_flag.read()调用mr.frame来读取数据
 //
 // 若是非压缩数据，则首先调用MessageReader.read()
 // MessageReader.read() 直接调用mr.frame来读取数据
@@ -75,7 +75,7 @@ func (mr *MessageReader) getMatchedReader() io.Reader {
 func (mr *MessageReader) Read(p []byte) (int, error) {
 	reader := mr.getMatchedReader()
 	if reader == nil {
-		return 0, errors.New("can not allocate use_flate reader")
+		return 0, errors.New("can not allocate flate_flag reader")
 	}
 	return reader.Read(p)
 }
@@ -83,7 +83,7 @@ func (mr *MessageReader) Read(p []byte) (int, error) {
 func (mr *MessageReader) ReadAll() (*ByteBuffer, error) {
 	reader := mr.getMatchedReader()
 	if reader == nil {
-		return nil, errors.New("can not allocate use_flate reader")
+		return nil, errors.New("can not allocate flate_flag reader")
 	}
 	mb := GetByteBuffer(mr.opts)
 	err := mb.ReadAll(reader)
