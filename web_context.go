@@ -101,11 +101,8 @@ func (c *WebContext) UseGzip(flag bool, min_size ...int64) *WebContext {
 // websocket握手
 func (c *WebContext) AcceptWebsocket(opts *gows.AcceptOptions, headers map[string]string) (*gows.WebSocket, error) {
 	ws, err := gows.Accept(c.Output.ResponseWriter, c.Input.Request, nil, nil)
-	if err != nil {
-		return nil, err
-	}
 	c.hijacked = true
-	return ws, nil
+	return ws, err
 }
 
 func (c *WebContext) Ended() bool {
