@@ -11,8 +11,8 @@ type MessageWriter struct {
 
 	//非压缩的数据写到frame_writer中
 	frame_writer FrameWriter
-	//压缩结果写到flate_frame中
-	flate_frame FrameWriter
+	//压缩结果写到frame_flate中
+	frame_flate FrameWriter
 	//用于压缩的Writer
 	flate_writer io.WriteCloser
 	//最终数据是否采用了压缩
@@ -36,8 +36,8 @@ func (w *MessageWriter) init(ws *WebSocket, opcode int) {
 	w.frame_writer.init(ws, opcode)
 	//若AcceptOptions支持压缩，并且握手时协商采用压缩，则创建用于压缩的Writer：w.flate_writer
 	if ws.opts.compress_alloter != nil && ws.useFlateWrite == true {
-		w.flate_frame.init(ws, opcode)
-		w.flate_writer, _ = ws.opts.compress_alloter.NewWriter(&w.flate_frame)
+		w.frame_flate.init(ws, opcode)
+		w.flate_writer, _ = ws.opts.compress_alloter.NewWriter(&w.frame_flate)
 	}
 }
 
@@ -48,23 +48,23 @@ func (w *MessageWriter) reset(ws *WebSocket, opcode int) {
 
 	//重置w.frame_writer
 	w.frame_writer.Reset(ws, opcode)
-	//重置w.flate_frame以及 w.flate_writer
+	//重置w.frame_flate以及 w.flate_writer
 	if w.flate_writer != nil && ws.opts.compress_alloter != nil {
-		w.flate_frame.Reset(ws, opcode)
-		ws.opts.compress_alloter.ResetWriter(w.flate_writer, &w.flate_frame)
+		w.frame_flate.Reset(ws, opcode)
+		ws.opts.compress_alloter.ResetWriter(w.flate_writer, &w.frame_flate)
 	}
 }
 
 func (w *MessageWriter) close() error {
-	//若开启压缩，则先调用w.flate_writer.Flush()，将最后的数据写到w.flate_frame
-	//然后调用w.flate_frame.Close()将最后的数据写到网络接口中
+	//若开启压缩，则先调用w.flate_writer.Flush()，将最后的数据写到w.frame_flate
+	//然后调用w.frame_flate.Close()将最后的数据写到网络接口中
 	//若没有使用压缩，则数据在w.frame_writer中，只需要调用w.frame_writer.Close()即可
 	if w.flate_flag == true && w.flate_writer != nil {
 		err := w.opts.compress_alloter.FlushWriter(w.flate_writer)
 		if err != nil {
 			return err
 		}
-		err = w.flate_frame.Close()
+		err = w.frame_flate.Close()
 		if err != nil {
 			return err
 		}
