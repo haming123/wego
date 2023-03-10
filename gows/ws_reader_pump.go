@@ -1,7 +1,10 @@
 package gows
 
 import (
+	"fmt"
 	"io"
+	"runtime"
+	"strings"
 )
 
 type SocketHandler interface {
@@ -18,8 +21,26 @@ type StreamReadHandler interface {
 	OnData(ws *WebSocket, opcode int, fin bool, buff *ByteBuffer) error
 }
 
+func trace(message string) string {
+	var pcs [32]uintptr
+	n := runtime.Callers(3, pcs[:]) // skip first 3 caller
+
+	var str strings.Builder
+	str.WriteString(message + "\nTraceback:")
+	for _, pc := range pcs[:n] {
+		fn := runtime.FuncForPC(pc)
+		file, line := fn.FileLine(pc)
+		str.WriteString(fmt.Sprintf("\n\t%s:%d", file, line))
+	}
+	return str.String()
+}
+
 func messageReadLoop(ws *WebSocket, handler MessageHandler) {
 	defer func() {
+		if err := recover(); err != nil {
+			message := fmt.Sprintf("%s", err)
+			logPrint4ws(ws, trace(message))
+		}
 		ws.Close()
 	}()
 
@@ -54,6 +75,10 @@ func messageReadLoop(ws *WebSocket, handler MessageHandler) {
 
 func streamReadLoop(ws *WebSocket, handler StreamReadHandler) {
 	defer func() {
+		if err := recover(); err != nil {
+			message := fmt.Sprintf("%s", err)
+			logPrint4ws(ws, trace(message))
+		}
 		ws.Close()
 	}()
 
