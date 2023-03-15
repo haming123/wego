@@ -166,8 +166,8 @@ func (mr *FrameReader) handleControlFrame(header *FrameHeader) error {
 	}
 
 	logPrint4ws(mr.ws, "recieved close frame")
-	logPrint4ws(mr.ws, ce.Code, ce.Text)
-	err = mr.ws.WiteCloseText(ce.Code, ce.Text)
+	logPrint4ws(mr.ws, ce.Code, ce.Info)
+	err = mr.ws.WiteCloseText(ce.Code, ce.Info)
 	if err == nil {
 		err = errWroteClose
 	}

@@ -61,17 +61,21 @@ func isValidCloseCode(code CloseCode) bool {
 
 type CloseInfo struct {
 	Code CloseCode
-	Text string
+	Info string
+}
+
+func (cc *CloseInfo) Error() string {
+	return cc.Info
 }
 
 func parseClosePayload(data []byte) (CloseInfo, error) {
-	ce := CloseInfo{Code: CloseNoCloseRcvd, Text: ""}
+	ce := CloseInfo{Code: CloseNoCloseRcvd, Info: ""}
 	if len(data) >= 2 {
 		ce.Code = CloseCode(binary.BigEndian.Uint16(data))
 		if !isValidCloseCode(ce.Code) {
 			return ce, fmt.Errorf("invalid close code %v", ce.Code)
 		}
-		ce.Text = string(data[2:])
+		ce.Info = string(data[2:])
 	}
 	return ce, nil
 }
