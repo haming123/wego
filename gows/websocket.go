@@ -172,26 +172,14 @@ func (ws *WebSocket) WiteCloseProtocolError(err error) error {
 	return ws.WiteCloseError(CloseProtocolError, err)
 }
 
-func (ws *WebSocket) Serve(handler SocketHandler) {
-	ws.handler = handler
-	switch handler.(type) {
-	case MessageHandler:
-		go messageReadLoop(ws, handler.(MessageHandler))
-	case StreamReadHandler:
-		go streamReadLoop(ws, handler.(StreamReadHandler))
-	default:
-		panic("incorrect handler type")
-	}
-}
-
-func (ws *WebSocket) ServeMessage(handler MessageHandler) {
+func (ws *WebSocket) Serve(handler MessageHandler) {
 	ws.handler = handler
 	go messageReadLoop(ws, handler)
 }
 
-func (ws *WebSocket) ServeStream(handler StreamReadHandler) {
+func (ws *WebSocket) ServeChunk(handler ChuckReadHandler) {
 	ws.handler = handler
-	go streamReadLoop(ws, handler)
+	go chunkReadLoop(ws, handler)
 }
 
 func (ws *WebSocket) ReadMessage() (int, []byte, error) {

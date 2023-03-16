@@ -16,7 +16,7 @@ type MessageHandler interface {
 	OnMessage(ws *WebSocket, opcode int, buff *ByteBuffer) error
 }
 
-type StreamReadHandler interface {
+type ChuckReadHandler interface {
 	SocketHandler
 	OnData(ws *WebSocket, opcode int, fin bool, buff *ByteBuffer) error
 }
@@ -73,7 +73,7 @@ func messageReadLoop(ws *WebSocket, handler MessageHandler) {
 	}
 }
 
-func streamReadLoop(ws *WebSocket, handler StreamReadHandler) {
+func chunkReadLoop(ws *WebSocket, handler ChuckReadHandler) {
 	defer func() {
 		if err := recover(); err != nil {
 			message := fmt.Sprintf("%s", err)
