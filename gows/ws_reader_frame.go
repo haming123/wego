@@ -81,11 +81,11 @@ func (mr *FrameReader) readFrameHeader() (FrameHeader, error) {
 	fr.opcode = int(byte1 & 0xf)
 	if isControlFrame(fr.opcode) == false && isMessageFrame(fr.opcode) == false {
 		err = errors.New("unknown opcode " + strconv.Itoa(fr.opcode))
-		mr.ws.WiteCloseProtocolError(err)
+		mr.ws.WriteCloseProtocolError(err)
 		return fr, err
 	} else if isControlFrame(fr.opcode) && fr.isfin == false {
 		err = errors.New("control frame not final")
-		mr.ws.WiteCloseProtocolError(err)
+		mr.ws.WriteCloseProtocolError(err)
 		return fr, err
 	}
 
@@ -118,11 +118,11 @@ func (mr *FrameReader) readFrameHeader() (FrameHeader, error) {
 	//payload长度检查
 	if fr.payload < 0 {
 		err = errors.New(fmt.Sprintf("received negative payload length: %v", fr.payload))
-		mr.ws.WiteCloseProtocolError(err)
+		mr.ws.WriteCloseProtocolError(err)
 		return fr, err
 	} else if isControlFrame(fr.opcode) && fr.payload > maxControlFrameSize {
 		err = errors.New("control frame length > 125")
-		mr.ws.WiteCloseProtocolError(err)
+		mr.ws.WriteCloseProtocolError(err)
 		return fr, err
 	}
 
@@ -141,9 +141,11 @@ func (mr *FrameReader) readFrameHeader() (FrameHeader, error) {
 	return fr, nil
 }
 
+var errCloseFrame = errors.New("recieved close frame")
+
 // 连接任一端想关闭websocket，就发一个close frame给对端。
 // 对端收到该frame，若之前没有发过close frame，则必须回复一个close frame。
-// 收到close frame后，返回errWroteClose错误，外部调用者最终会因为errWroteClose错误而关闭连接。
+// 收到close frame后，返回errCloseFrame错误，外部调用者最终会因为errCloseFrame错误而关闭连接。
 func (mr *FrameReader) handleControlFrame(header *FrameHeader) error {
 	//读取控制帧的payload
 	data, err := mr.framePeekRead(int(header.payload))
@@ -167,9 +169,9 @@ func (mr *FrameReader) handleControlFrame(header *FrameHeader) error {
 
 	logPrint4ws(mr.ws, "recieved close frame")
 	logPrint4ws(mr.ws, ce.Code, ce.Info)
-	err = mr.ws.WiteCloseText(ce.Code, ce.Info)
+	err = mr.ws.WriteCloseText(ce.Code, ce.Info)
 	if err == nil {
-		err = errWroteClose
+		err = errCloseFrame
 	}
 	return err
 }

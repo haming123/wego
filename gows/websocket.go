@@ -10,7 +10,8 @@ import (
 	"time"
 )
 
-const writeTimeOut = 10 * time.Second
+const g_writeTimeOut = 10 * time.Second
+const g_readTimeOut = 10 * time.Second
 
 var wsConnPool sync.Pool
 
@@ -25,6 +26,7 @@ type WebSocket struct {
 
 	useFlateWrite bool
 	writeTimeOut  time.Duration
+	readTimeOut   time.Duration
 
 	msgReader *FrameReader
 	handler   SocketHandler
@@ -36,7 +38,8 @@ func newWebSocket(cnn net.Conn, opts *AcceptOptions, br *bufio.Reader) *WebSocke
 		cnn:          cnn,
 		opts:         opts,
 		ch_writer:    ch_writer,
-		writeTimeOut: writeTimeOut,
+		writeTimeOut: g_writeTimeOut,
+		readTimeOut:  g_readTimeOut,
 	}
 	ws.msgReader = newFrameReader(ws, br)
 	return ws
@@ -78,6 +81,10 @@ func (ws *WebSocket) RemoteAddr() net.Addr {
 
 func (ws *WebSocket) SetWriteTimeOut(writeTimeOut time.Duration) {
 	ws.writeTimeOut = writeTimeOut
+}
+
+func (ws *WebSocket) SetReadTimeOut(readTimeOut time.Duration) {
+	ws.readTimeOut = readTimeOut
 }
 
 func (ws *WebSocket) WriteMessage(opcode int, data []byte) error {
@@ -152,7 +159,7 @@ func (ws *WebSocket) WriteClose(data []byte) error {
 	return writer.Close()
 }
 
-func (ws *WebSocket) WiteCloseText(code CloseCode, text string) error {
+func (ws *WebSocket) WriteCloseText(code CloseCode, text string) error {
 	data, err := MarshalCloseInfo(code, text)
 	if err != nil {
 		return err
@@ -164,12 +171,12 @@ func (ws *WebSocket) WiteCloseText(code CloseCode, text string) error {
 	return nil
 }
 
-func (ws *WebSocket) WiteCloseError(code CloseCode, err error) error {
-	return ws.WiteCloseText(code, err.Error())
+func (ws *WebSocket) WriteCloseError(code CloseCode, err error) error {
+	return ws.WriteCloseText(code, err.Error())
 }
 
-func (ws *WebSocket) WiteCloseProtocolError(err error) error {
-	return ws.WiteCloseError(CloseProtocolError, err)
+func (ws *WebSocket) WriteCloseProtocolError(err error) error {
+	return ws.WriteCloseError(CloseProtocolError, err)
 }
 
 func (ws *WebSocket) Serve(handler MessageHandler) {
@@ -199,4 +206,55 @@ func (ws *WebSocket) ReadMessage() (int, []byte, error) {
 	reader.Close()
 
 	return head.opcode, p.GetBytes(), err
+}
+
+func (ws *WebSocket) CloseWebsocket(code CloseCode, info string) error {
+	//发送close控制帧
+	err := ws.WriteCloseText(code, info)
+	if err != nil && err != errWroteClose {
+		ws.Close()
+		return err
+	}
+
+	//设置Handshake的响应时间
+	readWait := ws.readTimeOut
+	if readWait < 1 {
+		readWait = 5
+	}
+	tm_wait := time.Now().Add(readWait)
+
+	//读取Handshake响应。
+	//若收到Handshake响应，则回读取到一个error：errCloseFrame
+	for {
+		var reader *MessageReader
+		ws.cnn.SetReadDeadline(tm_wait)
+		_, reader, err = ws.NextReader()
+		if err != nil {
+			reader.Close()
+			break
+		}
+
+		_, err = reader.ReadAll()
+		if err == io.EOF {
+			err = nil
+		}
+		if err != nil {
+			reader.Close()
+			break
+		}
+		reader.Close()
+	}
+
+	if err == nil {
+		err = errors.New("read time out")
+	} else if err == errCloseFrame {
+		err = nil
+	}
+	if err != nil {
+		ws.Close()
+		return err
+	}
+
+	err = ws.Close()
+	return err
 }
