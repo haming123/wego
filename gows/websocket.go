@@ -189,6 +189,7 @@ func (ws *WebSocket) ServeChunk(handler ChuckReadHandler) {
 	go chunkReadLoop(ws, handler)
 }
 
+/*
 func (ws *WebSocket) ReadMessage() (int, []byte, error) {
 	if ws.handler != nil {
 		return 0, nil, errors.New("WebSocket.handler != nil")
@@ -207,6 +208,7 @@ func (ws *WebSocket) ReadMessage() (int, []byte, error) {
 
 	return head.opcode, p.GetBytes(), err
 }
+*/
 
 func (ws *WebSocket) CloseWebsocket(code CloseCode, info string) error {
 	//发送close控制帧
