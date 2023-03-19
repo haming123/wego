@@ -50,23 +50,23 @@ func onReadError(ws *WebSocket, err error) {
 
 	//发送close控制帧
 	err_write := ws.writeCloseFrame(err_code, err.Error())
-	if err_write != nil && err_write != errWroteClose {
+	if err_write != nil {
 		ws.Close()
 		return
 	}
 
-	//设置Handshake的响应时间
+	//设置响应时间
 	readWait := ws.readTimeOut
 	if readWait < 1 {
 		readWait = 5
 	}
 	tm_wait := time.Now().Add(readWait)
+	ws.cnn.SetReadDeadline(tm_wait)
 
 	//读取Handshake响应。
 	//若收到Handshake响应，则回读取到一个error：errCloseFrame
 	for {
 		var reader *MessageReader
-		ws.cnn.SetReadDeadline(tm_wait)
 		_, reader, err = ws.NextReader()
 		if err != nil {
 			reader.Close()
