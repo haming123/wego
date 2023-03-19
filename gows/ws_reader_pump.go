@@ -5,6 +5,7 @@ import (
 	"io"
 	"runtime"
 	"strings"
+	"time"
 )
 
 type SocketHandler interface {
@@ -35,37 +36,93 @@ func trace(message string) string {
 	return str.String()
 }
 
-func messageReadLoop(ws *WebSocket, handler MessageHandler) {
-	defer func() {
-		if err := recover(); err != nil {
-			message := fmt.Sprintf("%s", err)
-			logPrint4ws(ws, trace(message))
-		}
+func onReadError(ws *WebSocket, err error) {
+	//接收到客户端的关闭请求则直接关闭链接
+	if err == errCloseFrame {
 		ws.Close()
-	}()
+		return
+	}
 
+	err_code := ws.err_code
+	if err_code < 1 {
+		err_code = CloseProtocolError
+	}
+
+	//发送close控制帧
+	err_write := ws.writeCloseFrame(err_code, err.Error())
+	if err_write != nil && err_write != errWroteClose {
+		ws.Close()
+		return
+	}
+
+	//设置Handshake的响应时间
+	readWait := ws.readTimeOut
+	if readWait < 1 {
+		readWait = 5
+	}
+	tm_wait := time.Now().Add(readWait)
+
+	//读取Handshake响应。
+	//若收到Handshake响应，则回读取到一个error：errCloseFrame
 	for {
-		head, reader, err := ws.NextReader()
+		var reader *MessageReader
+		ws.cnn.SetReadDeadline(tm_wait)
+		_, reader, err = ws.NextReader()
 		if err != nil {
 			reader.Close()
-			logPrint4ws(ws, err)
-			return
+			break
 		}
 
-		p, err := reader.ReadAll()
+		_, err = reader.ReadAll()
 		if err == io.EOF {
 			err = nil
 		}
 		if err != nil {
 			reader.Close()
-			logPrint4ws(ws, err)
+			break
+		}
+		reader.Close()
+	}
+
+	ws.Close()
+}
+
+func messageReadLoop(ws *WebSocket, handler MessageHandler) {
+	var err error
+	defer func() {
+		logPrint4ws(ws, err)
+		if err_recover := recover(); err_recover != nil {
+			message := fmt.Sprintf("%s", err_recover)
+			logPrint4ws(ws, trace(message))
+		}
+		onReadError(ws, err)
+	}()
+
+	for {
+		var head FrameHeader
+		var reader *MessageReader
+		head, reader, err = ws.NextReader()
+		if err != nil {
+			reader.Close()
+			return
+		}
+
+		var p *ByteBuffer
+		p, err = reader.ReadAll()
+		if err == io.EOF {
+			err = nil
+		}
+		if err != nil {
+			reader.Close()
 			return
 		}
 
 		err = handler.OnMessage(ws, head.opcode, p)
 		if err != nil {
+			if ws.err_code < 1 {
+				ws.err_code = CloseUnsupportedData
+			}
 			reader.Close()
-			logPrint4ws(ws, err)
 			return
 		}
 
@@ -74,19 +131,21 @@ func messageReadLoop(ws *WebSocket, handler MessageHandler) {
 }
 
 func chunkReadLoop(ws *WebSocket, handler ChuckReadHandler) {
+	var err error
 	defer func() {
-		if err := recover(); err != nil {
-			message := fmt.Sprintf("%s", err)
+		if err_recover := recover(); err_recover != nil {
+			message := fmt.Sprintf("%s", err_recover)
 			logPrint4ws(ws, trace(message))
 		}
-		ws.Close()
+		onReadError(ws, err)
 	}()
 
 	for {
-		head, reader, err := ws.NextReader()
+		var head FrameHeader
+		var reader *MessageReader
+		head, reader, err = ws.NextReader()
 		if err != nil {
 			reader.Close()
-			logPrint4ws(ws, err)
 			return
 		}
 
@@ -100,14 +159,15 @@ func chunkReadLoop(ws *WebSocket, handler ChuckReadHandler) {
 			}
 			if err != nil {
 				reader.Close()
-				logPrint4ws(ws, err)
 				return
 			}
 
 			handler.OnData(ws, head.opcode, fin, mb)
 			if err != nil {
+				if ws.err_code < 1 {
+					ws.err_code = CloseUnsupportedData
+				}
 				reader.Close()
-				logPrint4ws(ws, err)
 				return
 			}
 			if fin == true {

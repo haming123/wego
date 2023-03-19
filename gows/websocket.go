@@ -4,14 +4,13 @@ import (
 	"bufio"
 	"encoding/json"
 	"errors"
-	"io"
 	"net"
 	"sync"
 	"time"
 )
 
-const g_writeTimeOut = 10 * time.Second
-const g_readTimeOut = 10 * time.Second
+const g_writeTimeOut = 5 * time.Second
+const g_readTimeOut = 5 * time.Second
 
 var wsConnPool sync.Pool
 
@@ -23,6 +22,7 @@ type WebSocket struct {
 	ch_writer  chan struct{}
 	closed     bool
 	wroteClose bool
+	err_code   CloseCode
 
 	useFlateWrite bool
 	writeTimeOut  time.Duration
@@ -141,7 +141,12 @@ var errWroteClose = errors.New("has wrote close frame")
 
 // 连接任一端想关闭websocket，就发一个close frame给对端。
 // 对端收到该frame后，若之前没有发过close frame，则必须回复一个close frame。
-func (ws *WebSocket) WriteClose(data []byte) error {
+func (ws *WebSocket) writeCloseFrame(code CloseCode, text string) error {
+	data, err := MarshalCloseInfo(code, text)
+	if err != nil {
+		return err
+	}
+
 	ws.mux.Lock()
 	wroteClose := ws.wroteClose
 	ws.wroteClose = true
@@ -151,32 +156,32 @@ func (ws *WebSocket) WriteClose(data []byte) error {
 	}
 
 	writer := ws.NextWriter(Frame_Close)
-	err := writer.WriteControlFrame(data)
+	err = writer.WriteControlFrame(data)
 	if err != nil {
 		writer.Close()
 		return err
 	}
-	return writer.Close()
-}
+	err = writer.Close()
+	if err != nil {
+		return err
+	}
 
-func (ws *WebSocket) WriteCloseText(code CloseCode, text string) error {
-	data, err := MarshalCloseInfo(code, text)
-	if err != nil {
-		return err
+	readWait := ws.readTimeOut
+	if readWait < 1 {
+		readWait = 5
 	}
-	err = ws.WriteClose(data)
-	if err != nil {
-		return err
-	}
+	tm_wait := time.Now().Add(readWait)
+	ws.cnn.SetReadDeadline(tm_wait)
 	return nil
 }
 
-func (ws *WebSocket) WriteCloseError(code CloseCode, err error) error {
-	return ws.WriteCloseText(code, err.Error())
-}
-
-func (ws *WebSocket) WriteCloseProtocolError(err error) error {
-	return ws.WriteCloseError(CloseProtocolError, err)
+func (ws *WebSocket) CloseWebsocket(code CloseCode, text string) error {
+	err := ws.writeCloseFrame(code, text)
+	if err != nil {
+		ws.Close()
+		return err
+	}
+	return nil
 }
 
 func (ws *WebSocket) Serve(handler MessageHandler) {
@@ -187,76 +192,4 @@ func (ws *WebSocket) Serve(handler MessageHandler) {
 func (ws *WebSocket) ServeChunk(handler ChuckReadHandler) {
 	ws.handler = handler
 	go chunkReadLoop(ws, handler)
-}
-
-/*
-func (ws *WebSocket) ReadMessage() (int, []byte, error) {
-	if ws.handler != nil {
-		return 0, nil, errors.New("WebSocket.handler != nil")
-	}
-
-	head, reader, err := ws.NextReader()
-	if err != nil {
-		return head.opcode, nil, err
-	}
-
-	p, err := reader.ReadAll()
-	if err == io.EOF {
-		err = nil
-	}
-	reader.Close()
-
-	return head.opcode, p.GetBytes(), err
-}
-*/
-
-func (ws *WebSocket) CloseWebsocket(code CloseCode, info string) error {
-	//发送close控制帧
-	err := ws.WriteCloseText(code, info)
-	if err != nil && err != errWroteClose {
-		ws.Close()
-		return err
-	}
-
-	//设置Handshake的响应时间
-	readWait := ws.readTimeOut
-	if readWait < 1 {
-		readWait = 5
-	}
-	tm_wait := time.Now().Add(readWait)
-
-	//读取Handshake响应。
-	//若收到Handshake响应，则回读取到一个error：errCloseFrame
-	for {
-		var reader *MessageReader
-		ws.cnn.SetReadDeadline(tm_wait)
-		_, reader, err = ws.NextReader()
-		if err != nil {
-			reader.Close()
-			break
-		}
-
-		_, err = reader.ReadAll()
-		if err == io.EOF {
-			err = nil
-		}
-		if err != nil {
-			reader.Close()
-			break
-		}
-		reader.Close()
-	}
-
-	if err == nil {
-		err = errors.New("read time out")
-	} else if err == errCloseFrame {
-		err = nil
-	}
-	if err != nil {
-		ws.Close()
-		return err
-	}
-
-	err = ws.Close()
-	return err
 }

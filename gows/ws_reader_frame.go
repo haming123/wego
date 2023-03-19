@@ -81,11 +81,11 @@ func (mr *FrameReader) readFrameHeader() (FrameHeader, error) {
 	fr.opcode = int(byte1 & 0xf)
 	if isControlFrame(fr.opcode) == false && isMessageFrame(fr.opcode) == false {
 		err = errors.New("unknown opcode " + strconv.Itoa(fr.opcode))
-		mr.ws.WriteCloseProtocolError(err)
+		mr.ws.err_code = CloseProtocolError
 		return fr, err
 	} else if isControlFrame(fr.opcode) && fr.isfin == false {
 		err = errors.New("control frame not final")
-		mr.ws.WriteCloseProtocolError(err)
+		mr.ws.err_code = CloseProtocolError
 		return fr, err
 	}
 
@@ -118,11 +118,11 @@ func (mr *FrameReader) readFrameHeader() (FrameHeader, error) {
 	//payload长度检查
 	if fr.payload < 0 {
 		err = errors.New(fmt.Sprintf("received negative payload length: %v", fr.payload))
-		mr.ws.WriteCloseProtocolError(err)
+		mr.ws.err_code = CloseProtocolError
 		return fr, err
 	} else if isControlFrame(fr.opcode) && fr.payload > maxControlFrameSize {
 		err = errors.New("control frame length > 125")
-		mr.ws.WriteCloseProtocolError(err)
+		mr.ws.err_code = CloseProtocolError
 		return fr, err
 	}
 
@@ -169,10 +169,10 @@ func (mr *FrameReader) handleControlFrame(header *FrameHeader) error {
 
 	logPrint4ws(mr.ws, "recieved close frame")
 	logPrint4ws(mr.ws, ce.Code, ce.Info)
-	err = mr.ws.WriteCloseText(ce.Code, ce.Info)
-	if err == nil {
-		err = errCloseFrame
-	}
+	//err = mr.ws.writeCloseText(ce.Code, ce.Info)
+	//if err == nil {
+	err = errCloseFrame
+	//}
 	return err
 }
 
