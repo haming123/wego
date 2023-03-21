@@ -175,7 +175,7 @@ func (ws *WebSocket) writeCloseFrame(code CloseCode, text string) error {
 	return nil
 }
 
-func (ws *WebSocket) CloseWebsocket(code CloseCode, text string) error {
+func (ws *WebSocket) CloseHandshake(code CloseCode, text string) error {
 	err := ws.writeCloseFrame(code, text)
 	if err != nil {
 		ws.Close()
