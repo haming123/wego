@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-type CloseCode int
+type CloseCode uint16
 
 const (
 	//正常关闭; 无论为何目的而创建, 该链接都已成功完成任务.

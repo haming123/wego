@@ -19,17 +19,17 @@ type WebSocket struct {
 	opts *AcceptOptions
 
 	mux        sync.Mutex
-	ch_writer  chan struct{}
 	closed     bool
 	wroteClose bool
-	err_code   CloseCode
+	errCode    CloseCode
 
 	useFlateWrite bool
+	writeChan     chan struct{}
 	writeTimeOut  time.Duration
-	readTimeOut   time.Duration
 
-	msgReader *FrameReader
-	handler   SocketHandler
+	msgReader   *FrameReader
+	readTimeOut time.Duration
+	handler     SocketHandler
 }
 
 func newWebSocket(cnn net.Conn, opts *AcceptOptions, br *bufio.Reader) *WebSocket {
@@ -37,7 +37,7 @@ func newWebSocket(cnn net.Conn, opts *AcceptOptions, br *bufio.Reader) *WebSocke
 	ws := &WebSocket{
 		cnn:          cnn,
 		opts:         opts,
-		ch_writer:    ch_writer,
+		writeChan:    ch_writer,
 		writeTimeOut: g_writeTimeOut,
 		readTimeOut:  g_readTimeOut,
 	}
@@ -168,7 +168,7 @@ func (ws *WebSocket) writeCloseFrame(code CloseCode, text string) error {
 
 	readWait := ws.readTimeOut
 	if readWait < 1 {
-		readWait = 5
+		readWait = g_readTimeOut
 	}
 	tm_wait := time.Now().Add(readWait)
 	ws.cnn.SetReadDeadline(tm_wait)

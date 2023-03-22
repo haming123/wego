@@ -20,7 +20,7 @@ func putMessageWriter(ws *WebSocket, w *MessageWriter) {
 // Frame_Binary、Frame_Text消息不允许并发发送
 func lockNextWriter(ws *WebSocket, opcode int) {
 	if opcode == Frame_Binary || opcode == Frame_Text {
-		ws.ch_writer <- struct{}{}
+		ws.writeChan <- struct{}{}
 	}
 }
 
@@ -28,7 +28,7 @@ func lockNextWriter(ws *WebSocket, opcode int) {
 // Frame_Binary、Frame_Text消息不允许并发发送
 func unlockNextWriter(ws *WebSocket, opcode int) {
 	if opcode == Frame_Binary || opcode == Frame_Text {
-		<-ws.ch_writer
+		<-ws.writeChan
 	}
 }
 

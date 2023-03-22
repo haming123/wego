@@ -43,7 +43,7 @@ func onReadError(ws *WebSocket, err error) {
 		return
 	}
 
-	err_code := ws.err_code
+	err_code := ws.errCode
 	if err_code < 1 {
 		err_code = CloseProtocolError
 	}
@@ -58,7 +58,7 @@ func onReadError(ws *WebSocket, err error) {
 	//设置响应时间
 	readWait := ws.readTimeOut
 	if readWait < 1 {
-		readWait = 5
+		readWait = g_readTimeOut
 	}
 	tm_wait := time.Now().Add(readWait)
 	ws.cnn.SetReadDeadline(tm_wait)
@@ -119,8 +119,8 @@ func messageReadLoop(ws *WebSocket, handler MessageHandler) {
 
 		err = handler.OnMessage(ws, head.opcode, p)
 		if err != nil {
-			if ws.err_code < 1 {
-				ws.err_code = CloseUnsupportedData
+			if ws.errCode < 1 {
+				ws.errCode = CloseUnsupportedData
 			}
 			reader.Close()
 			return
@@ -164,8 +164,8 @@ func chunkReadLoop(ws *WebSocket, handler ChuckReadHandler) {
 
 			handler.OnData(ws, head.opcode, fin, mb)
 			if err != nil {
-				if ws.err_code < 1 {
-					ws.err_code = CloseUnsupportedData
+				if ws.errCode < 1 {
+					ws.errCode = CloseUnsupportedData
 				}
 				reader.Close()
 				return
