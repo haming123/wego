@@ -8,17 +8,17 @@ import (
 func GetByteBuffer(opts *AcceptOptions) *ByteBuffer {
 	b, ok := opts.messageBufferPool.Get().(*ByteBuffer)
 	if !ok {
-		logPrint("new ByteBuffer !!!")
+		//logPrint("new ByteBuffer !!!")
 		return newByteBuffer(opts)
 	}
 	b.Reset()
-	logPrint("get ByteBuffer from poll")
+	//logPrint("get ByteBuffer from poll")
 	return b
 }
 
 func PutByteBuffer(b *ByteBuffer) {
 	b.opts.messageBufferPool.Put(b)
-	logPrint("free ByteBuffer")
+	//logPrint("free ByteBuffer")
 }
 
 type ByteBuffer struct {
