@@ -8,10 +8,10 @@ wego框架包括：路由模块、ORM模块、websocket模块、session模块。
 5. 为JSON、XML和HTML渲染提供了易于使用的API。
 6. 支持过滤器中间件，方便您对Web框架进行扩展。
 7. 支持BeforeRoute、BeforeExec、AfterExec拦截器，方便您进行身份验证、日志输出。
-8. 内置Crash处理机制，wego可以recover一个HTTP请求中的panic，这样可确保您的服务器始终可用。
+8. 支持Crash处理机制，wego可以recover一个HTTP请求中的panic，这样可确保您的服务器始终可用。
 9. 内置Session模块，您可以选择cookie、redis、memcache、memory缓存引擎存储Session数据。
 10. 内置[ORM模块](http://39.108.252.54:8080/docs/worm/worm)，使用方便，功能强大。
-11. 内置websocket模块，采用更加高效的内存分配机制，使得每台服务器可接入更多的客户端。
+11. 内置websocket模块，采用更加经济的内存分配机制，使得每台服务器可接入更多的客户端。
 12. 内置配置模块，方便对应用的参数进行管理。
 13. 内置高性能LOG模块，支持日志分级，支持按照天轮换日志文件。
 14. 采用缓存来管理HTML的Template，既方便输出Html页面，又可以使用缓存提升系统性能。
