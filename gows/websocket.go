@@ -97,12 +97,16 @@ func (ws *WebSocket) WriteMessage(opcode int, data []byte) error {
 	return writer.Close()
 }
 
+func (ws *WebSocket) WriteBinary(data []byte) error {
+	return ws.WriteMessage(Frame_Binary, data)
+}
+
 func (ws *WebSocket) WriteText(data []byte) error {
 	return ws.WriteMessage(Frame_Text, data)
 }
 
-func (ws *WebSocket) WriteBinary(data []byte) error {
-	return ws.WriteMessage(Frame_Binary, data)
+func (ws *WebSocket) WriteString(data string) error {
+	return ws.WriteText(StringToBytes(data))
 }
 
 func (ws *WebSocket) WriteJSON(v interface{}) error {
