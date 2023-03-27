@@ -188,12 +188,7 @@ func (ws *WebSocket) CloseHandshake(code CloseCode, text string) error {
 	return nil
 }
 
-func (ws *WebSocket) Serve(handler MessageHandler) {
+func (ws *WebSocket) ServeRead(handler MessageHandler) {
 	ws.handler = handler
 	go messageReadLoop(ws, handler)
-}
-
-func (ws *WebSocket) ServeChunk(handler ChuckReadHandler) {
-	ws.handler = handler
-	go chunkReadLoop(ws, handler)
 }

@@ -19,7 +19,7 @@ type MessageHandler interface {
 
 type ChuckReadHandler interface {
 	SocketHandler
-	OnData(ws *WebSocket, opcode int, fin bool, buff *ByteBuffer) error
+	OnRead(ws *WebSocket, opcode int, fin bool, buff *ByteBuffer) error
 }
 
 func trace(message string) string {
@@ -162,7 +162,7 @@ func chunkReadLoop(ws *WebSocket, handler ChuckReadHandler) {
 				return
 			}
 
-			handler.OnData(ws, head.opcode, fin, mb)
+			handler.OnRead(ws, head.opcode, fin, mb)
 			if err != nil {
 				if ws.errCode < 1 {
 					ws.errCode = CloseUnsupportedData

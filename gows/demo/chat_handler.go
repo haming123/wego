@@ -32,5 +32,5 @@ func HandlerWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	client := &Client{ws: ws, user: user}
 	AddClient(user, client)
-	ws.Serve(client)
+	ws.ServeRead(client)
 }
