@@ -27,6 +27,7 @@ type DbModel struct {
 	db_where  DbWhere
 	group_by  string
 	order_by  string
+	lock_str  string
 	db_limit  int64
 	db_offset int64
 
@@ -68,8 +69,8 @@ func NewModel(dbs *DbSession, ent_ptr interface{}, flag bool) *DbModel {
 	return md
 }
 
-//重置model状态，保留以下字段的内容：
-//ent_ptr、flds_info、flds_addr、table_name、field_id、name_map_db、name_map_go
+// 重置model状态，保留以下字段的内容：
+// ent_ptr、flds_info、flds_addr、table_name、field_id、name_map_db、name_map_go
 func (md *DbModel) Reset() {
 	md.SqlContex.Reset()
 	md.db_where.Reset()
@@ -263,7 +264,7 @@ func (md *DbModel) OmitALL() *DbModel {
 	return md
 }
 
-//追加选中一批字段
+// 追加选中一批字段
 func (md *DbModel) AddField(fields ...string) *DbModel {
 	md.flag_edit = true
 	for _, field := range fields {
@@ -278,7 +279,7 @@ func (md *DbModel) AddField(fields ...string) *DbModel {
 	return md
 }
 
-//追加选中一批字段
+// 追加选中一批字段
 func (md *DbModel) AddFieldX(fields ...interface{}) *DbModel {
 	md.flag_edit = true
 	for _, fld_ptr := range fields {
@@ -295,7 +296,7 @@ func (md *DbModel) AddFieldX(fields ...interface{}) *DbModel {
 	return md
 }
 
-//选中一批字段
+// 选中一批字段
 func (md *DbModel) Select(fields ...string) *DbModel {
 	md.flag_edit = true
 	//每次都要清空当前选择集
@@ -303,7 +304,7 @@ func (md *DbModel) Select(fields ...string) *DbModel {
 	return md.AddField(fields...)
 }
 
-//选中一批字段
+// 选中一批字段
 func (md *DbModel) SelectX(fields ...interface{}) *DbModel {
 	md.flag_edit = true
 	//每次都要清空当前选择集
@@ -311,7 +312,7 @@ func (md *DbModel) SelectX(fields ...interface{}) *DbModel {
 	return md.AddFieldX(fields...)
 }
 
-//排除若干字段，其余全部选中
+// 排除若干字段，其余全部选中
 func (md *DbModel) Omit(fields ...string) *DbModel {
 	md.flag_edit = true
 	md.SelectALL()
@@ -327,7 +328,7 @@ func (md *DbModel) Omit(fields ...string) *DbModel {
 	return md
 }
 
-//排除若干字段，其余全部选中
+// 排除若干字段，其余全部选中
 func (md *DbModel) OmitX(fields ...interface{}) *DbModel {
 	md.flag_edit = true
 	md.SelectALL()
@@ -461,6 +462,10 @@ func (md *DbModel) OrNotIn(sql string, vals ...interface{}) *DbModel {
 }
 func (md *DbModel) OrderBy(val string) *DbModel {
 	md.order_by = val
+	return md
+}
+func (md *DbModel) Lock(val string) *DbModel {
+	md.lock_str = val
 	return md
 }
 func (md *DbModel) Top(rows int64) *DbModel {

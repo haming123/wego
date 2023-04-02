@@ -46,6 +46,7 @@ type DbTable struct {
 	order_by    string
 	db_limit    int64
 	db_offset   int64
+	lock_str    string
 	ctx         context.Context
 	sql_err     error
 }
@@ -243,6 +244,11 @@ func (tb *DbTable) Offset(offset int64) *DbTable {
 func (tb *DbTable) Page(rows int64, page_no int64) *DbTable {
 	tb.db_offset = page_no * rows
 	tb.db_limit = rows
+	return tb
+}
+
+func (tb *DbTable) Lock(val string) *DbTable {
+	tb.lock_str = val
 	return tb
 }
 
