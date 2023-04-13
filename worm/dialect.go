@@ -182,6 +182,12 @@ func (db *DialectBase) GenModelGetSql(md *DbModel) string {
 	}
 
 	buffer.WriteString(" limit 1")
+
+	if len(md.lock_str) > 0 {
+		buffer.WriteString(" ")
+		buffer.WriteString(md.lock_str)
+	}
+
 	return buffer.String()
 }
 
@@ -216,6 +222,11 @@ func (db *DialectBase) GenModelFindSql(md *DbModel) string {
 		dialect := md.db_ptr.engine.db_dialect
 		str_val := dialect.LimitSql(md.db_offset, md.db_limit)
 		buffer.WriteString(str_val)
+	}
+
+	if len(md.lock_str) > 0 {
+		buffer.WriteString(" ")
+		buffer.WriteString(md.lock_str)
 	}
 
 	return buffer.String()
@@ -445,6 +456,11 @@ func (db *DialectBase) GenTableGetSql(tb *DbTable) string {
 	}
 
 	buffer.WriteString(" limit 1")
+	if len(tb.lock_str) > 0 {
+		buffer.WriteString(" ")
+		buffer.WriteString(tb.lock_str)
+	}
+
 	return buffer.String()
 }
 
@@ -488,6 +504,11 @@ func (db *DialectBase) GenTableFindSql(tb *DbTable) string {
 		dialect := tb.db_ptr.engine.db_dialect
 		str_val := dialect.LimitSql(tb.db_offset, tb.db_limit)
 		buffer.WriteString(str_val)
+	}
+
+	if len(tb.lock_str) > 0 {
+		buffer.WriteString(" ")
+		buffer.WriteString(tb.lock_str)
 	}
 
 	return buffer.String()
