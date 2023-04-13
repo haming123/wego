@@ -212,6 +212,9 @@ func (mr *FrameReader) ReadMessagePayload(p []byte) (int, error) {
 	for {
 		//读取帧数据
 		if mr.header.payload > 0 {
+			if len(p) > int(mr.header.payload){
+				p = p[:mr.header.payload]
+			}
 			nn, err := mr.buffr.Read(p)
 			mr.maskPos = maskBytes(mr.header.maskKey, mr.maskPos, p[:nn])
 			mr.header.payload -= int64(nn)
